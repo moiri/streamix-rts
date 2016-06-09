@@ -31,6 +31,3 @@
 
 # Debug files
 *.dSYM/
-
-# Temp Files
-*.swp
