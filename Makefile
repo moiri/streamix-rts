@@ -25,4 +25,4 @@ debug: $(PROJECT)
 
 # compile project
 $(PROJECT): $(SOURCES) $(INCLUDES)
-	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) -o $(PROJECT)
+	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) -o $(PROJECT).out
