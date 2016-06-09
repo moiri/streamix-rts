@@ -13,6 +13,7 @@
 *.a
 *.la
 *.lo
+*.pyc
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -30,3 +31,6 @@
 
 # Debug files
 *.dSYM/
+
+# Temp Files
+*.swp
