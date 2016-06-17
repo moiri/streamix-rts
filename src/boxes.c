@@ -8,56 +8,51 @@ enum COM_STATE { SYN, SYN_ACK, ACK, DONE };
 void* box_impl_a( void* handler )
 {
     int state = SYN;
-    int* val = malloc( sizeof(int) );
-    *val = 33;
-    void *data;
+    int* data;
     while( state != DONE ) {
         switch( state ) {
             case SYN:
-                data = SMX_CHANNEL_READ( handler, a, syn );
-                printf("in SYN: %d\n", *( int* )data );
-                free( data );
+                data = ( int* )SMX_CHANNEL_READ( handler, a, syn );
+                printf("in SYN: %d\n", *data );
                 state = SYN_ACK;
                 break;
             case SYN_ACK:
-                SMX_CHANNEL_WRITE( handler, a, syn_ack, ( void* )val );
+                *data -= 3;
+                SMX_CHANNEL_WRITE( handler, a, syn_ack, ( void* )data );
                 state = ACK;
                 break;
             case ACK:
-                data = SMX_CHANNEL_READ( handler, a, ack );
-                printf("in ACK: %d\n", *( int* )data );
-                free( data );
+                data = ( int* )SMX_CHANNEL_READ( handler, a, ack );
+                printf("in ACK: %d\n", *data );
                 state = DONE;
                 break;
             default:
                 state = DONE;
         }
     }
+    free( data );
     pthread_exit( NULL );
 }
 
 void* box_impl_b( void* handler )
 {
     int state = SYN;
-    int* syn = malloc( sizeof(int) );
-    *syn = 22;
-    int* ack = malloc( sizeof(int) );
-    *ack = 44;
-    void *data;
+    int* data = malloc( sizeof( int ) );
     while( state != DONE ) {
         switch( state ) {
             case SYN:
-                SMX_CHANNEL_WRITE( handler, b, syn, ( void* )syn );
+                *data = 42;
+                SMX_CHANNEL_WRITE( handler, b, syn, ( void* )data );
                 state = SYN_ACK;
                 break;
             case SYN_ACK:
-                data = SMX_CHANNEL_READ( handler, b, syn_ack );
-                printf("in SYN_ACK: %d\n", *( int* )data );
-                free( data );
+                data = ( int* )SMX_CHANNEL_READ( handler, b, syn_ack );
+                printf("in SYN_ACK: %d\n", *data );
                 state = ACK;
                 break;
             case ACK:
-                SMX_CHANNEL_WRITE( handler, b, ack, ( void* )ack );
+                *data += 5;
+                SMX_CHANNEL_WRITE( handler, b, ack, ( void* )data );
                 state = DONE;
                 break;
             default:
