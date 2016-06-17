@@ -12,6 +12,8 @@ INCLUDES = $(LOC_INC_DIR)/*
 INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I.
 
+LINK_FILE = -lpthread
+
 CFLAGS = -Wall
 DEBUG_FLAGS = -g -O0
 
@@ -25,4 +27,4 @@ debug: $(PROJECT)
 
 # compile project
 $(PROJECT): $(SOURCES) $(INCLUDES)
-	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) -o $(PROJECT).out
+	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) $(LINK_FILE) -o $(PROJECT).out
