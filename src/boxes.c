@@ -5,7 +5,7 @@
 
 enum COM_STATE { SYN, SYN_ACK, ACK, DONE };
 
-void *box_impl_a( void *handler )
+void* box_impl_a( void* handler )
 {
     int state = SYN;
     int* val = malloc( sizeof(int) );
@@ -36,7 +36,7 @@ void *box_impl_a( void *handler )
     pthread_exit( NULL );
 }
 
-void *box_impl_b( void *handler )
+void* box_impl_b( void* handler )
 {
     int state = SYN;
     int* syn = malloc( sizeof(int) );
