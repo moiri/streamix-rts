@@ -3,6 +3,9 @@
 
 #include "pthread.h"
 
+#define SMX_CHANNEL_IN( h, box, port ) smx_channel_in( h, BOX_##box##_##port )
+#define SMX_CHANNEL_OUT( h, box, port, data ) smx_channel_out( h, BOX_##box##_##port, data )
+
 typedef struct smx_channel_s
 {
     void*   data;

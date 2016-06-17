@@ -3,8 +3,8 @@
  */
 
 #include "boxes.h"
+#include "handler.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <pthread.h>
 
 int main( void )
@@ -18,17 +18,17 @@ int main( void )
     smx_channel_t* syn_ack = malloc( sizeof( struct smx_channel_s ) );
 
     ha->in = malloc( sizeof( smx_channel_t* ) * 2 );
-    ha->in[0] = syn;
-    ha->in[1] = syn_ack;
+    ha->in[BOX_a_syn] = syn;
+    ha->in[BOX_a_ack] = ack;
     ha->out = malloc( sizeof( smx_channel_t* ) );
-    ha->out[0] = ack;
+    ha->out[BOX_a_syn_ack] = syn_ack;
     ha->th_id = pthread_create( &thread_a, NULL, box_impl_a, ( void* )ha );
 
     hb->in = malloc( sizeof( void* ) );
-    hb->in[0] = ack;
+    hb->in[BOX_b_syn_ack] = syn_ack;
     hb->out = malloc( sizeof( void* ) * 2 );
-    hb->out[0] = syn;
-    hb->out[1] = syn_ack;
+    hb->out[BOX_b_syn] = syn;
+    hb->out[BOX_b_ack] = ack;
     hb->th_id = pthread_create( &thread_b, NULL, box_impl_b, ( void* )hb );
 
     pthread_exit( NULL );
