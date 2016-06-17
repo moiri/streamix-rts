@@ -18,6 +18,8 @@ void smx_box_destroy( void* box )
 smx_channel_t* smx_channel_create( void )
 {
     smx_channel_t* channel = malloc( sizeof( struct smx_channel_s ) );
+    pthread_mutex_init( &channel->channel_mutex, NULL );
+    pthread_cond_init( &channel->channel_cv, NULL );
     channel->data = NULL;
     channel->ready = 0;
     return channel;
