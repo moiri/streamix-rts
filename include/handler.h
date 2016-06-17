@@ -3,8 +3,13 @@
 
 #include "pthread.h"
 
-#define SMX_CHANNEL_READ( h, box, port ) smx_channel_read( h, PORT_##box##_##port )
-#define SMX_CHANNEL_WRITE( h, box, port, data ) smx_channel_write( h, PORT_##box##_##port, data )
+#define SMX_CONNECT( channel, box )\
+    box->ports[ PORT_ ## box ## _ ## channel ] = channel
+
+#define SMX_CHANNEL_READ( h, box, port )\
+    smx_channel_read( h, PORT_##box##_##port )
+#define SMX_CHANNEL_WRITE( h, box, port, data )\
+    smx_channel_write( h, PORT_##box##_##port, data )
 
 /**
  * @brief Streamix channel structure
@@ -27,8 +32,7 @@ typedef struct smx_channel_s
  */
 typedef struct smx_box_s {
     int             th_id;  /**< id of the pthread */
-    smx_channel_t** in;     /**< input ports */
-    smx_channel_t** out;    /**< output ports */
+    smx_channel_t** ports;  /**< ports */
 } smx_box_t;
 
 /**
@@ -56,5 +60,10 @@ void* smx_channel_read( void*, int );
  * @param void*     pointer to the data structure
  */
 void smx_channel_write( void*, int, void* );
+
+smx_box_t* smx_box_create( int );
+void smx_box_destroy( void* );
+smx_channel_t* smx_channel_create( void );
+void smx_channel_destroy( void* );
 
 #endif // HANDLER_H
