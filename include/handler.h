@@ -10,8 +10,8 @@ typedef struct smx_channel_s
 {
     void*   data;
     int     ready;
-    pthread_mutex_t ready_mutex;
-    pthread_cond_t  ready_cv;
+    pthread_mutex_t channel_mutex;
+    pthread_cond_t  channel_cv;
 } smx_channel_t;
 
 typedef struct smx_box_s {
