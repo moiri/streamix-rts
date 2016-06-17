@@ -1,6 +1,6 @@
 #include "handler.h"
 
-void* smx_channel_in( void* h, int idx )
+void* smx_channel_read( void* h, int idx )
 {
     void* data;
     smx_channel_t* ch = ( ( smx_box_t* )h )->in[ idx ];
@@ -13,7 +13,7 @@ void* smx_channel_in( void* h, int idx )
     return data;
 }
 
-void smx_channel_out( void* h, int idx, void* data )
+void smx_channel_write( void* h, int idx, void* data )
 {
     smx_channel_t* ch = ( ( smx_box_t* )h )->out[ idx ];
     pthread_mutex_lock( &ch->channel_mutex );

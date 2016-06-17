@@ -18,17 +18,17 @@ int main( void )
     smx_channel_t* syn_ack = malloc( sizeof( struct smx_channel_s ) );
 
     ha->in = malloc( sizeof( smx_channel_t* ) * 2 );
-    ha->in[BOX_a_syn] = syn;
-    ha->in[BOX_a_ack] = ack;
+    ha->in[PORT_a_syn] = syn;
+    ha->in[PORT_a_ack] = ack;
     ha->out = malloc( sizeof( smx_channel_t* ) );
-    ha->out[BOX_a_syn_ack] = syn_ack;
+    ha->out[PORT_a_syn_ack] = syn_ack;
     ha->th_id = pthread_create( &thread_a, NULL, box_impl_a, ( void* )ha );
 
     hb->in = malloc( sizeof( void* ) );
-    hb->in[BOX_b_syn_ack] = syn_ack;
+    hb->in[PORT_b_syn_ack] = syn_ack;
     hb->out = malloc( sizeof( void* ) * 2 );
-    hb->out[BOX_b_syn] = syn;
-    hb->out[BOX_b_ack] = ack;
+    hb->out[PORT_b_syn] = syn;
+    hb->out[PORT_b_ack] = ack;
     hb->th_id = pthread_create( &thread_b, NULL, box_impl_b, ( void* )hb );
 
     pthread_exit( NULL );
