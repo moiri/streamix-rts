@@ -3,8 +3,7 @@
  */
 
 #include "boxes.h"
-#include "handler.h"
-#include <stdlib.h>
+#include "smxrts.h"
 #include <pthread.h>
 
 int main( void )
