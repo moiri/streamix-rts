@@ -32,7 +32,6 @@ typedef struct smx_channel_s
  * box via named ports
  */
 typedef struct smx_box_s {
-    int             th_id;  /**< id of the pthread */
     smx_channel_t** ports;  /**< ports */
 } smx_box_t;
 

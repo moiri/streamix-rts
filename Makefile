@@ -12,7 +12,8 @@ INCLUDES = $(LOC_INC_DIR)/*
 INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I.
 
-LINK_FILE = -lpthread
+LINK_FILE = -lpthread \
+			-lzlog
 
 CFLAGS = -Wall
 DEBUG_FLAGS = -g -O0

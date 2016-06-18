@@ -2,6 +2,7 @@
 #include "smxrts.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <zlog.h>
 
 enum COM_STATE { SYN, SYN_ACK, ACK, DONE };
 
@@ -13,7 +14,7 @@ void a( void* handler )
         switch( state ) {
             case SYN:
                 data = ( int* )SMX_CHANNEL_READ( handler, a, syn );
-                printf("in SYN: %d\n", *data );
+                dzlog_info( "a, received data: %d", *data );
                 state = SYN_ACK;
                 break;
             case SYN_ACK:
@@ -23,7 +24,7 @@ void a( void* handler )
                 break;
             case ACK:
                 data = ( int* )SMX_CHANNEL_READ( handler, a, ack );
-                printf("in ACK: %d\n", *data );
+                dzlog_info( "a, received data: %d", *data );
                 state = DONE;
                 break;
             default:
@@ -46,7 +47,7 @@ void b( void* handler )
                 break;
             case SYN_ACK:
                 data = ( int* )SMX_CHANNEL_READ( handler, b, syn_ack );
-                printf("in SYN_ACK: %d\n", *data );
+                dzlog_info( "b, received data: %d", *data );
                 state = ACK;
                 break;
             case ACK:
