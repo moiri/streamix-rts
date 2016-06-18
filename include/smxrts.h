@@ -2,6 +2,7 @@
 #define HANDLER_H
 
 #include "pthread.h"
+#include "boxgen.h"
 
 #define SMX_CONNECT( channel, box )\
     box->ports[ PORT_ ## box ## _ ## channel ] = channel

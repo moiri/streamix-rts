@@ -1,5 +1,5 @@
-#ifndef BOXES_H
-#define BOXES_H
+#ifndef BOXGEN_H
+#define BOXGEN_H
 
 /**
  * Simple example of a connection initiation
@@ -11,4 +11,4 @@ void *box_impl_a( void* );
 typedef enum box_b_e { PORT_b_syn_ack, PORT_b_syn, PORT_b_ack } box_b_t;
 void *box_impl_b( void* );
 
-#endif // BOXES_H
+#endif // BOXGEN_H

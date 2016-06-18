@@ -2,9 +2,11 @@
  * Firts stepts to play with the interface between a box and its implementation
  */
 
-#include "boxes.h"
+#include "boxgen.h"
 #include "smxrts.h"
 #include <pthread.h>
+
+
 
 int main( void )
 {

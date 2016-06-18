@@ -1,11 +1,11 @@
-#include "boxes.h"
+#include "boximpl.h"
 #include "smxrts.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 enum COM_STATE { SYN, SYN_ACK, ACK, DONE };
 
-void* box_impl_a( void* handler )
+void a( void* handler )
 {
     int state = SYN;
     int* data;
@@ -31,10 +31,9 @@ void* box_impl_a( void* handler )
         }
     }
     free( data );
-    pthread_exit( NULL );
 }
 
-void* box_impl_b( void* handler )
+void b( void* handler )
 {
     int state = SYN;
     int* data = malloc( sizeof( int ) );
@@ -59,5 +58,4 @@ void* box_impl_b( void* handler )
                 state = DONE;
         }
     }
-    pthread_exit( NULL );
 }
