@@ -2,15 +2,23 @@
 #define HANDLER_H
 
 #include "pthread.h"
-#include "boxgen.h"
 
-#define SMX_CONNECT( channel, box )\
-    box->ports[ PORT_ ## box ## _ ## channel ] = channel
+#define SMX_BOX_CREATE( box )\
+    malloc( sizeof( struct box_impl_##box##_s ) );
+#define SMX_BOX_DESTROY( box )\
+    free( box )
+#define SMX_CHANNEL_CREATE()\
+    smx_channel_create()
+#define SMX_CHANNEL_DESTROY( ch )\
+    smx_channel_destroy( ch )
+#define SMX_CONNECT( h, ptr, box_name, ch_name )\
+    ( ( box_impl_##box_name##_t* )h )->port_##ch_name = ptr
 
-#define SMX_CHANNEL_READ( h, box, port )\
-    smx_channel_read( h, PORT_##box##_##port )
-#define SMX_CHANNEL_WRITE( h, box, port, data )\
-    smx_channel_write( h, PORT_##box##_##port, data )
+#define SMX_CHANNEL_READ( h, box_name, ch_name )\
+    smx_channel_read( ( ( box_impl_ ## box_name ## _t* )h )->port_ ## ch_name )
+#define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
+    smx_channel_write( ( ( box_impl_ ## box_name ## _t* )h )->port_ ## ch_name,\
+            data )
 
 /**
  * @brief Streamix channel structure
@@ -26,16 +34,6 @@ typedef struct smx_channel_s
 } smx_channel_t;
 
 /**
- * @brief Streamix box structure
- *
- * The box structure provides an interface to access channels connected to the
- * box via named ports
- */
-typedef struct smx_box_s {
-    smx_channel_t** ports;  /**< ports */
-} smx_box_t;
-
-/**
  * @brief Read the data from an input port
  *
  * Allows to access the channel and read data. The channel ist protected by
@@ -46,7 +44,7 @@ typedef struct smx_box_s {
  * @param int       index of the port to access
  * @return void*    pointer to the data structure
  */
-void* smx_channel_read( void*, int );
+void* smx_channel_read( smx_channel_t* );
 
 /**
  * @brief Write data to an output port
@@ -59,10 +57,8 @@ void* smx_channel_read( void*, int );
  * @param int       index of the port to access
  * @param void*     pointer to the data structure
  */
-void smx_channel_write( void*, int, void* );
+void smx_channel_write( smx_channel_t*, void* );
 
-smx_box_t* smx_box_create( int );
-void smx_box_destroy( void* );
 smx_channel_t* smx_channel_create( void );
 void smx_channel_destroy( void* );
 

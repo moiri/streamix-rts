@@ -1,15 +1,16 @@
 #include "boximpl.h"
+#include "boxgen.h"
 #include "smxrts.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <zlog.h>
 
-enum COM_STATE { SYN, SYN_ACK, ACK, DONE };
+enum com_state_e { SYN, SYN_ACK, ACK, DONE };
 
 void a( void* handler )
 {
     int state = SYN;
-    int* data;
+    int* data = NULL;
     while( state != DONE ) {
         switch( state ) {
             case SYN:
