@@ -1,7 +1,5 @@
 #include "boximpl.h"
-#include "boxgen.h"
 #include "smxrts.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <zlog.h>
 

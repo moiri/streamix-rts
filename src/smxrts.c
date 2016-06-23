@@ -1,5 +1,13 @@
 #include "smxrts.h"
+#include "pthread.h"
 #include <stdlib.h>
+
+pthread_t smx_box_run( void* box_impl( void* ), void* arg )
+{
+    pthread_t thread;
+    pthread_create( &thread, NULL, box_impl, arg );
+    return thread;
+}
 
 smx_channel_t* smx_channel_create( void )
 {
