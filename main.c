@@ -22,8 +22,8 @@ int main( void )
     channels[1] = SMX_CHANNEL_CREATE();
     channels[2] = SMX_CHANNEL_CREATE();
 
-    SMX_BOX_RUN( a, channels );
-    SMX_BOX_RUN( b, channels );
+    SMX_BOX_INIT( a, channels );
+    SMX_BOX_INIT( b, channels );
     SMX_BOX_CLEANUP( a );
     SMX_BOX_CLEANUP( b );
 

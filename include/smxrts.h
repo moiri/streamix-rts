@@ -23,7 +23,7 @@ typedef struct smx_channel_s
     malloc( sizeof( struct box_##box##_s ) );
 
 /*****************************************************************************/
-#define SMX_BOX_RUN( box_name, arg )\
+#define SMX_BOX_INIT( box_name, arg )\
     pthread_t th_ ## box_name = smx_box_run( box_ ## box_name, arg )
 
 /**
