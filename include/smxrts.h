@@ -20,10 +20,10 @@ typedef struct smx_channel_s
 
 /*****************************************************************************/
 #define SMX_BOX_CREATE( box )\
-    malloc( sizeof( struct box_##box##_s ) );
+    ( void* )malloc( sizeof( struct box_##box##_s ) );
 
 /*****************************************************************************/
-#define SMX_BOX_INIT( box_name, arg )\
+#define SMX_BOX_RUN( box_name, arg )\
     pthread_t th_ ## box_name = smx_box_run( box_ ## box_name, arg )
 
 /**
@@ -32,7 +32,7 @@ typedef struct smx_channel_s
 pthread_t smx_box_run( void*( void* ), void* );
 
 /*****************************************************************************/
-#define SMX_BOX_CLEANUP( box_name )\
+#define SMX_BOX_WAIT_END( box_name )\
     pthread_join( th_ ## box_name, NULL )
 
 
@@ -42,7 +42,7 @@ pthread_t smx_box_run( void*( void* ), void* );
 
 /*****************************************************************************/
 #define SMX_CHANNEL_CREATE()\
-    smx_channel_create()
+    ( void* )smx_channel_create()
 
 /**
  *
@@ -110,8 +110,8 @@ smx_channel_t** smx_channels_create();
 void smx_channels_destroy( smx_channel_t**, int );
 
 /*****************************************************************************/
-#define SMX_CONNECT( box, ch, idx, ch_name )\
-    box->port_##ch_name = ( ( smx_channel_t** )ch )[idx]
+#define SMX_CONNECT( box, box_name, ch, ch_name )\
+    ( ( box_ ## box_name ## _t* )box )->port_##ch_name = ( smx_channel_t* )ch
 
 /*****************************************************************************/
 #define SMX_PROGRAM_INIT()\
@@ -124,7 +124,7 @@ void smx_program_init();
 
 /*****************************************************************************/
 #define SMX_PROGRAM_CLEANUP()\
-    smx_program_cleanup();
+    smx_program_cleanup()
 
 /**
  *

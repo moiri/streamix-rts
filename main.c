@@ -8,14 +8,32 @@ int main( void )
 {
     SMX_PROGRAM_INIT();
 
-    void* channels = SMX_CHANNELS_CREATE( 3 );
+    void* ch_0_0 = SMX_CHANNEL_CREATE();
+    void* ch_1_0 = SMX_CHANNEL_CREATE();
+    void* ch_2_0 = SMX_CHANNEL_CREATE();
 
-    SMX_BOX_INIT( a, channels );
-    SMX_BOX_INIT( b, channels );
-    SMX_BOX_CLEANUP( a );
-    SMX_BOX_CLEANUP( b );
+    void* box_0_0 = SMX_BOX_CREATE( a );
+    SMX_CONNECT( box_0_0, a, ch_0_0, syn );
+    SMX_CONNECT( box_0_0, a, ch_1_0, ack );
+    SMX_CONNECT( box_0_0, a, ch_2_0, syn_ack );
 
-    SMX_CHANNELS_DESTROY( channels, 3 );
+    void* box_1_0 = SMX_BOX_CREATE( b );
+    SMX_CONNECT( box_1_0, b, ch_0_0, syn );
+    SMX_CONNECT( box_1_0, b, ch_1_0, ack );
+    SMX_CONNECT( box_1_0, b, ch_2_0, syn_ack );
+
+    SMX_BOX_RUN( a, box_0_0 );
+    SMX_BOX_RUN( b, box_1_0 );
+
+    SMX_BOX_WAIT_END( a );
+    SMX_BOX_DESTROY( box_0_0 );
+
+    SMX_BOX_WAIT_END( b );
+    SMX_BOX_DESTROY( box_1_0 );
+
+    SMX_CHANNEL_DESTROY( ch_0_0 );
+    SMX_CHANNEL_DESTROY( ch_1_0 );
+    SMX_CHANNEL_DESTROY( ch_2_0 );
 
     SMX_PROGRAM_CLEANUP();
 }
