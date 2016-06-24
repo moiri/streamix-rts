@@ -22,13 +22,13 @@ int main( void )
     SMX_CONNECT( box_1_0, ch_1_0, b, ack );
     SMX_CONNECT( box_1_0, ch_2_0, b, syn_ack );
 
-    SMX_BOX_RUN( a, box_0_0 );
-    SMX_BOX_RUN( b, box_1_0 );
+    SMX_BOX_RUN( box_0_0, a );
+    SMX_BOX_RUN( box_1_0, b );
 
     SMX_BOX_WAIT_END( a );
-    SMX_BOX_DESTROY( box_0_0 );
-
     SMX_BOX_WAIT_END( b );
+
+    SMX_BOX_DESTROY( box_0_0 );
     SMX_BOX_DESTROY( box_1_0 );
 
     SMX_CHANNEL_DESTROY( ch_0_0 );
