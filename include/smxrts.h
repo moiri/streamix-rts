@@ -110,7 +110,7 @@ smx_channel_t** smx_channels_create();
 void smx_channels_destroy( smx_channel_t**, int );
 
 /*****************************************************************************/
-#define SMX_CONNECT( box, box_name, ch, ch_name )\
+#define SMX_CONNECT( box, ch, box_name, ch_name )\
     ( ( box_ ## box_name ## _t* )box )->port_##ch_name = ( smx_channel_t* )ch
 
 /*****************************************************************************/
