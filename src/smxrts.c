@@ -1,6 +1,7 @@
 #include "smxrts.h"
 #include "pthread.h"
 #include <stdlib.h>
+#include <zlog.h>
 
 pthread_t smx_box_run( void* box_impl( void* ), void* arg )
 {
@@ -45,4 +46,40 @@ void smx_channel_write( smx_channel_t* ch, void* data )
     ch->data = data;
     pthread_cond_signal( &ch->channel_cv );
     pthread_mutex_unlock( &ch->channel_mutex );
+}
+
+smx_channel_t** smx_channels_create( int count )
+{
+    int i;
+    smx_channel_t** channels = malloc( sizeof( smx_channel_t* ) * count );
+    for( i = 0; i < count; i++ )
+        channels[i] = SMX_CHANNEL_CREATE();
+    return channels;
+}
+
+void smx_channels_destroy( smx_channel_t** channels, int count )
+{
+    int i;
+    for( i = 0; i < count; i++ )
+        SMX_CHANNEL_DESTROY( channels[i] );
+    free( channels );
+}
+
+void smx_program_init()
+{
+    int rc = dzlog_init("test_default.conf", "my_cat");
+
+    if( rc ) {
+        printf("init failed\n");
+        pthread_exit( NULL );
+    }
+
+    dzlog_info("start thread main");
+}
+
+void smx_program_cleanup()
+{
+    dzlog_info("end thread main");
+    zlog_fini();
+    pthread_exit( NULL );
 }

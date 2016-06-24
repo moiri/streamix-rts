@@ -93,14 +93,42 @@ void smx_channel_write( smx_channel_t*, void* );
 
 /*****************************************************************************/
 #define SMX_CHANNELS_CREATE( num )\
-    malloc( sizeof( smx_channel_t* ) * num )
+    smx_channels_create( num )
+
+/**
+ *
+ */
+smx_channel_t** smx_channels_create();
 
 /*****************************************************************************/
-#define SMX_CHANNELS_DESTROY( chs )\
-    free( chs )
+#define SMX_CHANNELS_DESTROY( chs, num )\
+    smx_channels_destroy( chs, num )
+
+/**
+ *
+ */
+void smx_channels_destroy( smx_channel_t**, int );
 
 /*****************************************************************************/
-#define SMX_CONNECT( box, ch, ch_name )\
-    box->port_##ch_name = ch
+#define SMX_CONNECT( box, ch, idx, ch_name )\
+    box->port_##ch_name = ( ( smx_channel_t** )ch )[idx]
+
+/*****************************************************************************/
+#define SMX_PROGRAM_INIT()\
+    smx_program_init();
+
+/**
+ *
+ */
+void smx_program_init();
+
+/*****************************************************************************/
+#define SMX_PROGRAM_CLEANUP()\
+    smx_program_cleanup();
+
+/**
+ *
+ */
+void smx_program_cleanup();
 
 #endif // HANDLER_H
