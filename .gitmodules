@@ -4,3 +4,6 @@
 [submodule "zlog"]
 	path = zlog
 	url = git@github.com:HardySimpson/zlog.git
+[submodule "gml2c"]
+	path = gml2c
+	url = git@github.com:moiri/streamix-gml2c.git
