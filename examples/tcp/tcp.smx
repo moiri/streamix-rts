@@ -1,0 +1,4 @@
+A = box a( in syn, out syn_ack, in ack)
+B = box b( out syn, in syn_ack, out ack )
+
+connect A.B

@@ -1,11 +1,15 @@
 SHELL := /bin/bash
-PROJECT = streamix
+PROJECT = smxrts
 
 LOC_INC_DIR = include
 LOC_SRC_DIR = src
+LOC_LIB_DIR = lib
 
-SOURCES = main.c \
-		  $(LOC_SRC_DIR)/*
+STATLIB = $(LOC_LIB_DIR)/lib$(PROJECT).a
+
+SOURCES = $(wildcard $(LOC_SRC_DIR)/*.c)
+
+OBJECTS = $(SOURCES:%.c=%.o)
 
 INCLUDES = $(LOC_INC_DIR)/*
 
@@ -15,17 +19,26 @@ INCLUDES_DIR = -I$(LOC_INC_DIR) \
 LINK_FILE = -lpthread \
 			-lzlog
 
-CFLAGS = -Wall
+CFLAGS = -Wall -c
 DEBUG_FLAGS = -g -O0
 
 CC = gcc
 
-all: $(PROJECT)
+all: $(STATLIB)
 
 # compile with dot stuff and debug flags
 debug: CFLAGS += $(DEBUG_FLAGS)
-debug: $(PROJECT)
+debug: $(LOC_SRC_DIR)/$(PROJECT).o
+
+$(STATLIB): $(OBJECTS)
+	ar -cq $@ $^
 
 # compile project
-$(PROJECT): $(SOURCES) $(INCLUDES)
-	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) $(LINK_FILE) -o $(PROJECT).out
+$(OBJECTS): $(SOURCES) $(INCLUDES)
+	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) $(LINK_FILE) -o $@
+
+.PHONY: clean
+
+clean:
+	rm -f $(LOC_SRC_DIR)/$(PROJECT).o
+	rm -f $(LOC_LIB_DIR)/lib$(PROJECT).a

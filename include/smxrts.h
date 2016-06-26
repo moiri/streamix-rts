@@ -2,7 +2,6 @@
 #define HANDLER_H
 
 #include "pthread.h"
-#include "boxgen.h"
 #include <stdlib.h>
 
 /**
