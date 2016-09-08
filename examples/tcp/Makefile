@@ -40,10 +40,11 @@ $(PROJECT).out: $(SOURCES) $(INCLUDES)
 	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) $(LINK_DIR) $(LINK_FILE) -o $@
 
 $(OUTSRC) $(OUTINC): $(OUTGML)
-	gml2c $^
+	gml2c $^ -p $(GENPATH)/
 
 $(OUTGML): $(PROJECT).smx
-	smxc $^ > $@
+	smxc $^
+	mv streamix.gml $@
 
 clean:
 	rm -f $(OUTGML)
