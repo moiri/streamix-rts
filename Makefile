@@ -38,7 +38,7 @@ $(STATLIB): $(OBJECTS)
 $(OBJECTS): $(SOURCES) $(INCLUDES)
 	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) $(LINK_FILE) -o $@
 
-.PHONY: clean
+.PHONY: clean install
 
 install:
 	mkdir -p /usr/local/include /usr/local/lib
