@@ -1,15 +1,14 @@
 # streamix-rts
 Runtime system for the coordination language Streamix
 
-Requires
- - [`zlog`](https://github.com/HardySimpson/zlog)
- - [`pthread`](https://computing.llnl.gov/tutorials/pthreads/)
-
 ## Installation
 
     make
     sudo make install
 
+Requires
+ - [`zlog`](https://github.com/HardySimpson/zlog)
+ - [`pthread`](https://computing.llnl.gov/tutorials/pthreads/)
 
 ## Examples
 In the folder `examples` choose an example and run
