@@ -31,6 +31,7 @@ debug: CFLAGS += $(DEBUG_FLAGS)
 debug: $(LOC_SRC_DIR)/$(PROJECT).o
 
 $(STATLIB): $(OBJECTS)
+	mkdir -p lib
 	ar -cq $@ $^
 
 # compile project
@@ -38,6 +39,12 @@ $(OBJECTS): $(SOURCES) $(INCLUDES)
 	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) $(LINK_FILE) -o $@
 
 .PHONY: clean
+
+install:
+	mkdir -p /usr/local/include /usr/local/lib
+	cp -a $(LOC_INC_DIR)/$(PROJECT).h /usr/local/include/.
+	cp -a $(LOC_SRC_DIR)/$(PROJECT).o /usr/local/lib/.
+	cp -a $(LOC_LIB_DIR)/lib$(PROJECT).a /usr/local/lib/.
 
 clean:
 	rm -f $(LOC_SRC_DIR)/$(PROJECT).o

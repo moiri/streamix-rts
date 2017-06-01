@@ -44,6 +44,7 @@ $(OUTSRC) $(OUTINC): $(OUTGML)
 
 $(OUTGML): $(PROJECT).smx
 	smxc $^
+	mkdir -p $(GENPATH)
 	mv streamix.gml $@
 
 clean:
