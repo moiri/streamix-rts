@@ -18,4 +18,4 @@ In the folder `examples` choose an example and run
 
 Requires
  - [`smxc`](https://github.com/moiri/streamix-c) to compile the streamix code
- - [`graph2c`](https://github.com/moiri/streamix-graph2c) to translate the gml dependency graph into c code
+ - [`graph2c`](https://github.com/moiri/streamix-graph2c) to translate the streamix dependency graph into c code
