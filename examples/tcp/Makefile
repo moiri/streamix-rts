@@ -3,8 +3,9 @@ SHELL := /bin/bash
 PROJECT = tcp
 BOXGEN = boxgen
 GENPATH = smx_gen
+FORMAT = graphml
 
-OUTGML = $(GENPATH)/$(PROJECT).gml
+OUTGRAPH = $(GENPATH)/$(PROJECT).$(FORMAT)
 OUTSRC = $(GENPATH)/$(PROJECT).c \
 		 $(GENPATH)/$(BOXGEN).c
 OUTINC = $(GENPATH)/$(BOXGEN).h
@@ -39,16 +40,15 @@ debug: $(PROJECT)
 $(PROJECT).out: $(SOURCES) $(INCLUDES)
 	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) $(LINK_DIR) $(LINK_FILE) -o $@
 
-$(OUTSRC) $(OUTINC): $(OUTGML)
-	gml2c $^ -p $(GENPATH)/
+$(OUTSRC) $(OUTINC): $(OUTGRAPH)
+	graph2c $^ -p $(GENPATH)/ -f $(FORMAT)
 
-$(OUTGML): $(PROJECT).smx
-	smxc $^
+$(OUTGRAPH): $(PROJECT).smx
 	mkdir -p $(GENPATH)
-	mv streamix.gml $@
+	smxc -f $(FORMAT) -o $(OUTGRAPH) $^
 
 clean:
-	rm -f $(OUTGML)
+	rm -f $(OUTGRAPH)
 	rm -f $(OUTSRC)
 	rm -f $(OUTINC)
 	rm -f $(PROJECT).out
