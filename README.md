@@ -12,7 +12,7 @@ Requires
 
 
 ## Examples
-In the folder `examples` choose an <example> and run
+In the folder `examples` choose an example and run
 
     make
     ./<example>.out
