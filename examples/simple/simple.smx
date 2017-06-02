@@ -1,0 +1,4 @@
+A = box a( out x, out y )
+B = box b( in y, in x )
+
+connect A.B
