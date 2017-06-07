@@ -62,7 +62,7 @@ flags = [
 '-isystem', '/usr/include',
 '-I', '.',
 '-I', './include',
-'-I', './smx_gen',
+'-I', './build',
 ]
 
 

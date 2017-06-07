@@ -3,6 +3,7 @@
 #include "smxrts.h"
 #include <stdlib.h>
 #include <zlog.h>
+#include <unistd.h>
 
 enum com_state_e { SYN, SYN_ACK, ACK, DONE };
 
@@ -19,6 +20,7 @@ void* a( void* handler )
                 break;
             case SYN_ACK:
                 *data -= 3;
+                sleep(1);
                 SMX_CHANNEL_WRITE( handler, A, syn_ack, ( void* )data );
                 state = ACK;
                 break;
@@ -43,6 +45,7 @@ void* b( void* handler )
         switch( state ) {
             case SYN:
                 *data = 42;
+                sleep(1);
                 SMX_CHANNEL_WRITE( handler, B, syn, ( void* )data );
                 state = SYN_ACK;
                 break;
@@ -53,6 +56,7 @@ void* b( void* handler )
                 break;
             case ACK:
                 *data += 5;
+                sleep(1);
                 SMX_CHANNEL_WRITE( handler, B, ack, ( void* )data );
                 state = DONE;
                 break;
