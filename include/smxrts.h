@@ -4,6 +4,27 @@
 #include "pthread.h"
 #include <stdlib.h>
 
+#define FIFO_LEN 5
+
+typedef struct smx_port_s
+{
+    void* ch;
+    void* (*init)();
+    void* (*copy)();
+    void  (*free)();
+} smx_port_t;
+
+/**
+ *
+ */
+typedef struct smx_channel_item_s smx_channel_item_t;
+struct smx_channel_item_s
+{
+    void*   data;                   /**< pointer to the data */
+    smx_channel_item_t* next;       /**< pointer to the next item */
+    smx_channel_item_t* prev;       /**< pointer to the previous item */
+};
+
 /**
  * @brief Streamix channel structure
  *
@@ -11,15 +32,26 @@
  */
 typedef struct smx_channel_s
 {
-    void*   data;                   /**< pointer to the data */
-    int     ready;                  /**< flag to indicate if data is ready */
+    smx_channel_item_t*  head;      /**< pointer to the heda of the FIFO */
+    smx_channel_item_t*  tail;      /**< pointer to the tail of the FIFO */
+    int     count;                  /**< counts occupied space */
+    int     length;                 /**< siye of the FIFO */
     pthread_mutex_t channel_mutex;  /**< mutual exclusion */
     pthread_cond_t  channel_cv;     /**< conditional variable to trigger box */
 } smx_channel_t;
 
+typedef struct smx_blackboard_s
+{
+    void**  data;
+    int     read;
+    int     write;
+    pthread_mutex_t mutex_read;  /**< mutual exclusion */
+    pthread_mutex_t mutex_write;  /**< mutual exclusion */
+} smx_blackboard_t;
+
 /*****************************************************************************/
 #define SMX_BOX_CREATE( box )\
-    ( void* )malloc( sizeof( struct box_##box##_s ) );
+    ( void* )malloc( sizeof( struct box_##box##_s ) )
 
 /*****************************************************************************/
 #define SMX_BOX_RUN( arg, box_name )\
@@ -41,12 +73,12 @@ pthread_t smx_box_run( void*( void* ), void* );
 
 /*****************************************************************************/
 #define SMX_CHANNEL_CREATE()\
-    ( void* )smx_channel_create()
+    ( void* )smx_channel_create( FIFO_LEN )
 
 /**
  *
  */
-smx_channel_t* smx_channel_create( void );
+smx_channel_t* smx_channel_create( int );
 
 /*****************************************************************************/
 #define SMX_CHANNEL_DESTROY( ch )\
@@ -55,11 +87,11 @@ smx_channel_t* smx_channel_create( void );
 /**
  *
  */
-void smx_channel_destroy( void* );
+void smx_channel_destroy( smx_channel_t* );
 
 /*****************************************************************************/
 #define SMX_CHANNEL_READ( h, box_name, ch_name )\
-    smx_channel_read( ( ( box_ ## box_name ## _t* )h )->port_ ## ch_name )
+    smx_channel_read( ( ( box_ ## box_name ## _t* )h )->port_ ## ch_name->ch )
 
 /**
  * @brief Read the data from an input port
@@ -75,7 +107,7 @@ void* smx_channel_read( smx_channel_t* );
 
 /*****************************************************************************/
 #define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
-    smx_channel_write( ( ( box_ ## box_name ## _t* )h )->port_ ## ch_name,\
+    smx_channel_write( ( ( box_ ## box_name ## _t* )h )->port_ ## ch_name->ch,\
             data )
 
 /**
@@ -109,8 +141,18 @@ smx_channel_t** smx_channels_create();
 void smx_channels_destroy( smx_channel_t**, int );
 
 /*****************************************************************************/
-#define SMX_CONNECT( box, ch, box_name, ch_name )\
-    ( ( box_ ## box_name ## _t* )box )->port_##ch_name = ( smx_channel_t* )ch
+#define SMX_CONNECT( box, ch_v, box_name, ch_name )\
+    ( ( box_ ## box_name ## _t* )box )->port_ ## ch_name->ch =\
+            ( smx_channel_t* )ch_v
+
+/*****************************************************************************/
+#define SMX_PORT_CREATE( box, box_name, ch_name )\
+    ( ( box_ ## box_name ## _t* )box )->port_ ## ch_name =\
+            malloc( sizeof( struct smx_port_s ) )
+
+/*****************************************************************************/
+#define SMX_PORT_DESTROY( box, box_name, ch_name )\
+    free( ( ( box_ ## box_name ## _t* )box )->port_ ## ch_name )
 
 /*****************************************************************************/
 #define SMX_PROGRAM_INIT()\
