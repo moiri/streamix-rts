@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <zlog.h>
 
+/*****************************************************************************/
 smx_blackboard_t* smx_blackboard_create()
 {
     smx_blackboard_t* bb = malloc( sizeof( struct smx_blackboard_s ) );
@@ -14,6 +15,14 @@ smx_blackboard_t* smx_blackboard_create()
     return bb;
 }
 
+/*****************************************************************************/
+void smx_blackboard_destroy( smx_blackboard_t* bb )
+{
+    free( bb->data );
+    free( bb );
+}
+
+/*****************************************************************************/
 void* smx_blackboard_read( smx_blackboard_t* bb )
 {
     void* data;
@@ -24,6 +33,7 @@ void* smx_blackboard_read( smx_blackboard_t* bb )
     return data;
 }
 
+/*****************************************************************************/
 void smx_blackboard_write( smx_blackboard_t* bb, void* data )
 {
     int read;
@@ -38,6 +48,7 @@ void smx_blackboard_write( smx_blackboard_t* bb, void* data )
     pthread_mutex_unlock( &bb->mutex_write );
 }
 
+/*****************************************************************************/
 pthread_t smx_box_run( void* box_impl( void* ), void* arg )
 {
     pthread_t thread;
@@ -45,87 +56,133 @@ pthread_t smx_box_run( void* box_impl( void* ), void* arg )
     return thread;
 }
 
-smx_channel_t* smx_channel_create( int length )
+/*****************************************************************************/
+smx_channel_t* smx_channel_create( int len, smx_channel_type_t type )
 {
-    smx_channel_item_t* last_item = NULL;
-    smx_channel_t* channel = malloc( sizeof( struct smx_channel_s ) );
+    smx_channel_t* ch = malloc( sizeof( struct smx_channel_s ) );
+    ch->type = type;
+    switch( type ){
+        case SMX_FIFO:
+            ch->ch_fifo = smx_fifo_create( len );
+            break;
+        case SMX_BLACKBOARD:
+            ch->ch_bb = smx_blackboard_create();
+            break;
+    }
+    return ch;
+}
+
+/*****************************************************************************/
+smx_fifo_t* smx_fifo_create( int length )
+{
+    smx_fifo_item_t* last_item = NULL;
+    smx_fifo_t* fifo = malloc( sizeof( struct smx_fifo_s ) );
     for( int i=0; i < length; i++ ) {
-        channel->head = malloc( sizeof( struct smx_channel_item_s ) );
-        channel->head->data = NULL;
-        channel->head->prev = last_item;
+        fifo->head = malloc( sizeof( struct smx_fifo_item_s ) );
+        fifo->head->data = NULL;
+        fifo->head->prev = last_item;
         if( last_item == NULL )
-            channel->tail = channel->head;
+            fifo->tail = fifo->head;
         else
-            last_item->next = channel->head;
-        last_item = channel->head;
+            last_item->next = fifo->head;
+        last_item = fifo->head;
     }
-    channel->head->next = channel->tail;
-    channel->tail->prev = channel->head;
-    channel->tail = channel->head;
-    pthread_mutex_init( &channel->channel_mutex, NULL );
-    pthread_cond_init( &channel->channel_cv, NULL );
-    channel->count = 0;
-    channel->length = length;
-    return channel;
+    fifo->head->next = fifo->tail;
+    fifo->tail->prev = fifo->head;
+    fifo->tail = fifo->head;
+    pthread_mutex_init( &fifo->fifo_mutex, NULL );
+    pthread_cond_init( &fifo->fifo_cv, NULL );
+    fifo->count = 0;
+    fifo->length = length;
+    return fifo;
 }
 
-void smx_channel_destroy( smx_channel_t* channel )
+/*****************************************************************************/
+void smx_channel_destroy( smx_channel_t* ch )
 {
-    pthread_mutex_destroy( &( (smx_channel_t* )channel )->channel_mutex );
-    pthread_cond_destroy( &( ( smx_channel_t* )channel )->channel_cv );
-    for( int i=0; i < channel->length; i++ ) {
-        channel->tail = channel->head;
-        channel->head = channel->head->next;
-        free( channel->tail );
+    switch( ch->type ) {
+        case SMX_FIFO:
+            smx_fifo_destroy( ch->ch_fifo );
+            break;
+        case SMX_BLACKBOARD:
+            smx_blackboard_destroy( ch->ch_bb );
+            break;
     }
-    free( channel );
+    free( ch );
 }
 
-void* smx_channel_read( smx_channel_t* ch )
+/*****************************************************************************/
+void smx_fifo_destroy( smx_fifo_t* fifo )
+{
+    pthread_mutex_destroy( &( (smx_fifo_t* )fifo )->fifo_mutex );
+    pthread_cond_destroy( &( ( smx_fifo_t* )fifo )->fifo_cv );
+    for( int i=0; i < fifo->length; i++ ) {
+        fifo->tail = fifo->head;
+        fifo->head = fifo->head->next;
+        free( fifo->tail );
+    }
+    free( fifo );
+}
+
+/*****************************************************************************/
+void* smx_channel_read( smx_port_t* port )
 {
     void* data;
-    pthread_mutex_lock( &ch->channel_mutex );
-    while( ch->count == 0 )
-        pthread_cond_wait( &ch->channel_cv, &ch->channel_mutex );
-    data = ch->head->data;
-    ch->head = ch->head->prev;
-    ch->count--;
-    dzlog_debug("read from channel %p (new count: %d)", ch, ch->count );
-    pthread_cond_signal( &ch->channel_cv );
-    pthread_mutex_unlock( &ch->channel_mutex );
+    switch( port->ch->type ) {
+        case SMX_FIFO:
+            data = smx_fifo_read( port->ch->ch_fifo );
+            break;
+        case SMX_BLACKBOARD:
+            data = smx_blackboard_read( port->ch->ch_bb );
+            break;
+    }
     return data;
 }
 
-void smx_channel_write( smx_channel_t* ch, void* data )
+/*****************************************************************************/
+void* smx_fifo_read( smx_fifo_t* fifo )
 {
-    pthread_mutex_lock( &ch->channel_mutex );
-    while( ch->count == ch->length )
-        pthread_cond_wait( &ch->channel_cv, &ch->channel_mutex );
-    ch->tail->data = data;
-    ch->tail = ch->tail->prev;
-    ch->count++;
-    dzlog_debug("write to channel %p (new count: %d)", ch, ch->count );
-    pthread_cond_signal( &ch->channel_cv );
-    pthread_mutex_unlock( &ch->channel_mutex );
+    void* data;
+    pthread_mutex_lock( &fifo->fifo_mutex );
+    while( fifo->count == 0 )
+        pthread_cond_wait( &fifo->fifo_cv, &fifo->fifo_mutex );
+    data = fifo->head->data;
+    fifo->head = fifo->head->prev;
+    fifo->count--;
+    dzlog_debug("read from fifo %p (new count: %d)", fifo, fifo->count );
+    pthread_cond_signal( &fifo->fifo_cv );
+    pthread_mutex_unlock( &fifo->fifo_mutex );
+    return data;
 }
 
-smx_channel_t** smx_channels_create( int count )
+/*****************************************************************************/
+void smx_channel_write( smx_port_t* port, void* data )
 {
-    int i;
-    smx_channel_t** channels = malloc( sizeof( smx_channel_t* ) * count );
-    for( i = 0; i < count; i++ )
-        channels[i] = SMX_CHANNEL_CREATE();
-    return channels;
+    switch( port->ch->type ) {
+        case SMX_FIFO:
+            smx_fifo_write( port->ch->ch_fifo, data );
+            break;
+        case SMX_BLACKBOARD:
+            smx_blackboard_write( port->ch->ch_bb, data );
+            break;
+    }
 }
 
-void smx_channels_destroy( smx_channel_t** channels, int count )
+/*****************************************************************************/
+void smx_fifo_write( smx_fifo_t* fifo, void* data )
 {
-    int i;
-    for( i = 0; i < count; i++ )
-        SMX_CHANNEL_DESTROY( channels[i] );
-    free( channels );
+    pthread_mutex_lock( &fifo->fifo_mutex );
+    while( fifo->count == fifo->length )
+        pthread_cond_wait( &fifo->fifo_cv, &fifo->fifo_mutex );
+    fifo->tail->data = data;
+    fifo->tail = fifo->tail->prev;
+    fifo->count++;
+    dzlog_debug("write to fifo %p (new count: %d)", fifo, fifo->count );
+    pthread_cond_signal( &fifo->fifo_cv );
+    pthread_mutex_unlock( &fifo->fifo_mutex );
 }
 
+/*****************************************************************************/
 void smx_program_init()
 {
     int rc = dzlog_init("test_default.conf", "my_cat");
@@ -138,6 +195,7 @@ void smx_program_init()
     dzlog_info("start thread main");
 }
 
+/*****************************************************************************/
 void smx_program_cleanup()
 {
     dzlog_info("end thread main");
