@@ -4,14 +4,12 @@
 #include "pthread.h"
 #include <stdlib.h>
 
-#define FIFO_LEN 5
-
 // TYPEDEFS -------------------------------------------------------------------
 typedef struct smx_fifo_item_s smx_fifo_item_t;
 typedef struct smx_fifo_s smx_fifo_t;
 typedef struct smx_blackboard_s smx_blackboard_t;
 typedef struct smx_channel_s smx_channel_t;
-typedef struct smx_port_s smx_port_t;
+typedef struct smx_msg_s smx_msg_t;
 typedef enum smx_channel_type_e smx_channel_type_t;
 
 // ENUMS ----------------------------------------------------------------------
@@ -34,7 +32,7 @@ enum smx_channel_type_e
  */
 struct smx_blackboard_s
 {
-    void**  data;                 /**< array of data */
+    smx_msg_t**  msgs;            /**< array of message pointers, ::smx_msg_s */
     int     read;                 /**< read index to data array */
     int     write;                /**< write index to data array */
     pthread_mutex_t mutex_read;   /**< mutual exclusion for reding*/
@@ -74,7 +72,7 @@ struct smx_fifo_s
  */
 struct smx_fifo_item_s
 {
-    void*   data;                /**< pointer to the data */
+    smx_msg_t*       msg;        /**< ::smx_msg_s */
     smx_fifo_item_t* next;       /**< pointer to the next item */
     smx_fifo_item_t* prev;       /**< pointer to the previous item */
 };
@@ -85,18 +83,18 @@ struct smx_fifo_item_s
  * The structure contains handlers that can be used to manipulate data.
  * This handler is provided by the box implementation.
  */
-struct smx_port_s
+struct smx_msg_s
 {
-    smx_channel_t* ch;  /**< ::smx_channel_s */
-    void* (*init)();    /**< pointer to a function that initialiyes data */
-    void* (*copy)();    /**< pointer to a function that makes a deep copy */
-    void  (*free)();    /**< pointer to a function that frees data */
+    void* data;                 /**< pointer to the data */
+    void* (*init)();            /**< pointer to a fct that initialiyes data */
+    void* (*copy)( void* );     /**< pointer to a fct that makes a deep copy */
+    void  (*destroy)( void* );  /**< pointer to a fct that frees data */
 };
 
-// FUNCTIONS ------------------------------------------------------------------
+// FUNCTIONS BOX --------------------------------------------------------------
 /*****************************************************************************/
 #define SMX_BOX_CREATE( box )\
-    ( void* )malloc( sizeof( struct box_##box##_s ) )
+    malloc( sizeof( struct box_##box##_s ) )
 
 /*****************************************************************************/
 #define SMX_BOX_RUN( arg, box_name )\
@@ -105,9 +103,9 @@ struct smx_port_s
 /**
  * @brief create pthred of box
  *
- * @param box_impl:     function pointer to the box implementation
- * @param arg:          pointer to the box handler
- * @return              pointer to a pthread
+ * @param void*( void* ):   function pointer to the box implementation
+ * @param void*:            pointer to the box handler
+ * @return pthread_t:       a pthreadi id
  */
 pthread_t smx_box_run( void*( void* ), void* );
 
@@ -119,6 +117,7 @@ pthread_t smx_box_run( void*( void* ), void* );
 #define SMX_BOX_DESTROY( box )\
     free( box )
 
+// FUNCTIONS CHANNEL-----------------------------------------------------------
 /*****************************************************************************/
 #define SMX_CHANNEL_CREATE( len, type )\
     smx_channel_create( len, type )
@@ -126,24 +125,24 @@ pthread_t smx_box_run( void*( void* ), void* );
 /**
  * @brief Create Streamix channel
  *
- * @param len:      length of a FIFO
- * @param type:     type of the buffer, #smx_channel_type_e
- * @return          pointer to the created channel
+ * @param int                   length of a FIFO
+ * @param smx_channel_type_t    type of the buffer, #smx_channel_type_e
+ * @return smx_channel_t*       pointer to the created channel
  */
 smx_channel_t* smx_channel_create( int, smx_channel_type_t );
 
 /**
  * @brief Create Streamix FIFO channel
  *
- * @param len:      length of the FIFO
- * @return          pointer to the created FIFO
+ * @param int           length of the FIFO
+ * @return smx_fifo_t*  pointer to the created FIFO
  */
 smx_fifo_t* smx_fifo_create( int );
 
 /**
  * @brief Create Streamix blackboard channel
  *
- * @return          pointer to the created blackboard
+ * @return smx_blackboart_t*    pointer to the created blackboard
  */
 smx_blackboard_t* smx_blackboard_create();
 
@@ -154,21 +153,21 @@ smx_blackboard_t* smx_blackboard_create();
 /**
  * @brief Destroy Streamix channel structure
  *
- * @param ch    pointer to the channel to destroy
+ * @param smx_channel_t*    pointer to the channel to destroy
  */
 void smx_channel_destroy( smx_channel_t* );
 
 /**
  * @brief Destroy Streamix FIFO channel structure
  *
- * @param fifo  pointer to the channel to destroy
+ * @param smx_fifo_t*   pointer to the channel to destroy
  */
 void smx_fifo_destroy( smx_fifo_t* );
 
 /**
  * @brief Destroy Streamix blackboard channel structure
  *
- * @param bb    pointer to the channel to destroy
+ * @param smx_balckboart_t* pointer to the channel to destroy
  */
 void smx_blackboard_destroy( smx_blackboard_t* );
 
@@ -184,25 +183,25 @@ void smx_blackboard_destroy( smx_blackboard_t* );
  * convenient interface to access the ports by name.
  *
  * @param smx_channel_t*    pointer to the channel
- * @return void*            pointer to the data structure
+ * @return smx_msg_t*       pointer to the data structure
  */
-void* smx_channel_read( smx_port_t* );
+smx_msg_t* smx_channel_read( smx_channel_t* );
 
 /**
  * @brief read from a Streamix FIFO channel
  *
- * @param fifo  pointer to a FIFO channel
- * @param data  pointer to the data
+ * @param smx_fifo_t*   pointer to a FIFO channel
+ * @return smx_msg_t*   pointer to the data
  */
-void* smx_fifo_read( smx_fifo_t* );
+smx_msg_t* smx_fifo_read( smx_fifo_t* );
 
 /**
  * @brief read from a Streamix blackboard channel
  *
- * @param fifo  pointer to a blackboard channel
- * @param data  pointer to the data
+ * @param smx_blackboard_t* pointer to a blackboard channel
+ * @return smx_msg_t*       pointer to the data
  */
-void* smx_blackboard_read( smx_blackboard_t* );
+smx_msg_t* smx_blackboard_read( smx_blackboard_t* );
 
 /*****************************************************************************/
 #define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
@@ -217,40 +216,72 @@ void* smx_blackboard_read( smx_blackboard_t* );
  * a convenient interface to access the ports by name.
  *
  * @param smx_channel_t*    pointer to the channel
- * @param void*             pointer to the data structure
+ * @param smx_msg_t*        pointer to the data structure
  */
-void smx_channel_write( smx_port_t*, void* );
+void smx_channel_write( smx_channel_t*, smx_msg_t* );
 
 /**
  * @brief write to a Streamix FIFO channel
  *
- * @param fifo  pointer to a FIFO channel
- * @param data  pointer to the data
+ * @param smx_fifo_t*   pointer to a FIFO channel
+ * @param smx_msg_t*    pointer to the data
  */
-void smx_fifo_write( smx_fifo_t*, void* );
+void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
 
 /**
  * @brief write to a Streamix blackboard channel
  *
- * @param fifo  pointer to a blackboard channel
- * @param data  pointer to the data
+ * @param smx_blackboart_t* pointer to a blackboard channel
+ * @param smx_msg_t*        pointer to the data
  */
-void smx_blackboard_write( smx_blackboard_t*, void* );
+void smx_blackboard_write( smx_blackboard_t*, smx_msg_t* );
 
 /*****************************************************************************/
-#define SMX_CONNECT( box, ch_v, box_name, ch_name )\
-    ( ( box_ ## box_name ## _t* )box )->port_ ## ch_name->ch =\
-            ( smx_channel_t* )ch_v
+#define SMX_CONNECT( box, ch, box_name, ch_name )\
+    ( ( box_ ## box_name ## _t* )box )->port_ ## ch_name = ( smx_channel_t* )ch
 
 /*****************************************************************************/
-#define SMX_PORT_CREATE( box, box_name, ch_name )\
-    ( ( box_ ## box_name ## _t* )box )->port_ ## ch_name =\
-            malloc( sizeof( struct smx_port_s ) )
+#define SMX_MSG_CREATE( f_init, f_copy, f_destroy )\
+    smx_msg_create( f_init, f_copy, f_destroy )
+
+/**
+ * @brief Create a message structure
+ *
+ * Allows to create a message structure and attach handlers to modify the data
+ * in the message structure. If defined, the init function handler is called
+ * after the message structure is created.
+ *
+ * @param void*( void )     a pointer to a function that initializes the data
+ *                          in the message structure. The function must return a
+ *                          void pointer to the initilaiyed data structure.
+ * @param void*( void* )    a pointer to a function perfroming a deep copy of
+ *                          the data in the message structure. The function
+ *                          takes a void pointer as an argument that points to
+ *                          the data structure to copy. The function must return
+ *                          a void pointer to the copied data structure.
+ * @param void( void* )     a pointer to a function freeing the memory of the
+ *                          data in the message structure. The function takes a
+ *                          void pointer as an argument that points to the data
+ *                          structure to free.
+ * @return smx_msg_t*       a pointer to the created message structure
+ */
+smx_msg_t* smx_msg_create( void*( void ), void*( void* ), void( void* ) );
 
 /*****************************************************************************/
-#define SMX_PORT_DESTROY( box, box_name, ch_name )\
-    free( ( ( box_ ## box_name ## _t* )box )->port_ ## ch_name )
+#define SMX_MSG_DESTROY( msg )\
+    smx_msg_destroy( msg )
 
+/**
+ * @brief Destroy a message structure
+ *
+ * Allows to destroy a message structure. If defined (see smx_msg_create()), the
+ * destroy function handler is called before the message structure is freed.
+ *
+ * @param smx_msg_t*    a pointer to the message structure to be destroyed
+ */
+void smx_msg_destroy( smx_msg_t* );
+
+// FUNCTIONS PROGRAM ----------------------------------------------------------
 /*****************************************************************************/
 #define SMX_PROGRAM_INIT()\
     smx_program_init();

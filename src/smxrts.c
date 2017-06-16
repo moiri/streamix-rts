@@ -9,36 +9,36 @@ smx_blackboard_t* smx_blackboard_create()
     smx_blackboard_t* bb = malloc( sizeof( struct smx_blackboard_s ) );
     bb->read = 0;
     bb->write = 1;
-    bb->data = malloc( sizeof( void* ) * 2 );
-    bb->data[bb->write] = NULL;
-    bb->data[bb->read] = NULL;
+    bb->msgs = malloc( sizeof( smx_msg_t* ) * 2 );
+    bb->msgs[bb->write] = NULL;
+    bb->msgs[bb->read] = NULL;
     return bb;
 }
 
 /*****************************************************************************/
 void smx_blackboard_destroy( smx_blackboard_t* bb )
 {
-    free( bb->data );
+    free( bb->msgs );
     free( bb );
 }
 
 /*****************************************************************************/
-void* smx_blackboard_read( smx_blackboard_t* bb )
+smx_msg_t* smx_blackboard_read( smx_blackboard_t* bb )
 {
-    void* data;
+    smx_msg_t* msg;
     pthread_mutex_lock( &bb->mutex_read );
-    data = bb->data[bb->read];
+    msg = bb->msgs[bb->read];
     dzlog_debug("read from blackboard %p (position: %d)", bb, bb->read );
     pthread_mutex_unlock( &bb->mutex_read );
-    return data;
+    return msg;
 }
 
 /*****************************************************************************/
-void smx_blackboard_write( smx_blackboard_t* bb, void* data )
+void smx_blackboard_write( smx_blackboard_t* bb, smx_msg_t* msg )
 {
     int read;
     pthread_mutex_lock( &bb->mutex_write );
-    bb->data[bb->write] = data;
+    bb->msgs[bb->write] = msg;
     read = bb->read;
     pthread_mutex_lock( &bb->mutex_read );
     bb->read = bb->write;
@@ -79,7 +79,7 @@ smx_fifo_t* smx_fifo_create( int length )
     smx_fifo_t* fifo = malloc( sizeof( struct smx_fifo_s ) );
     for( int i=0; i < length; i++ ) {
         fifo->head = malloc( sizeof( struct smx_fifo_item_s ) );
-        fifo->head->data = NULL;
+        fifo->head->msg = NULL;
         fifo->head->prev = last_item;
         if( last_item == NULL )
             fifo->tail = fifo->head;
@@ -125,61 +125,82 @@ void smx_fifo_destroy( smx_fifo_t* fifo )
 }
 
 /*****************************************************************************/
-void* smx_channel_read( smx_port_t* port )
+smx_msg_t* smx_channel_read( smx_channel_t* ch )
 {
-    void* data;
-    switch( port->ch->type ) {
+    smx_msg_t* msg;
+    switch( ch->type ) {
         case SMX_FIFO:
-            data = smx_fifo_read( port->ch->ch_fifo );
+            msg = smx_fifo_read( ch->ch_fifo );
             break;
         case SMX_BLACKBOARD:
-            data = smx_blackboard_read( port->ch->ch_bb );
+            msg = smx_blackboard_read( ch->ch_bb );
             break;
     }
-    return data;
+    return msg;
 }
 
 /*****************************************************************************/
-void* smx_fifo_read( smx_fifo_t* fifo )
+smx_msg_t* smx_fifo_read( smx_fifo_t* fifo )
 {
-    void* data;
+    smx_msg_t* msg;
     pthread_mutex_lock( &fifo->fifo_mutex );
     while( fifo->count == 0 )
         pthread_cond_wait( &fifo->fifo_cv, &fifo->fifo_mutex );
-    data = fifo->head->data;
+    msg = fifo->head->msg;
     fifo->head = fifo->head->prev;
     fifo->count--;
     dzlog_debug("read from fifo %p (new count: %d)", fifo, fifo->count );
     pthread_cond_signal( &fifo->fifo_cv );
     pthread_mutex_unlock( &fifo->fifo_mutex );
-    return data;
+    return msg;
 }
 
 /*****************************************************************************/
-void smx_channel_write( smx_port_t* port, void* data )
+void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
 {
-    switch( port->ch->type ) {
+    switch( ch->type ) {
         case SMX_FIFO:
-            smx_fifo_write( port->ch->ch_fifo, data );
+            smx_fifo_write( ch->ch_fifo, msg );
             break;
         case SMX_BLACKBOARD:
-            smx_blackboard_write( port->ch->ch_bb, data );
+            smx_blackboard_write( ch->ch_bb, msg );
             break;
     }
 }
 
 /*****************************************************************************/
-void smx_fifo_write( smx_fifo_t* fifo, void* data )
+void smx_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
 {
     pthread_mutex_lock( &fifo->fifo_mutex );
     while( fifo->count == fifo->length )
         pthread_cond_wait( &fifo->fifo_cv, &fifo->fifo_mutex );
-    fifo->tail->data = data;
+    fifo->tail->msg = msg;
     fifo->tail = fifo->tail->prev;
     fifo->count++;
     dzlog_debug("write to fifo %p (new count: %d)", fifo, fifo->count );
     pthread_cond_signal( &fifo->fifo_cv );
     pthread_mutex_unlock( &fifo->fifo_mutex );
+}
+
+/*****************************************************************************/
+smx_msg_t* smx_msg_create( void* ( *init )(), void* ( *copy )( void* ),
+        void ( *destroy )( void* ) )
+{
+    smx_msg_t* msg = malloc( sizeof( struct smx_msg_s ) );
+    msg->init = init;
+    msg->copy = copy;
+    msg->destroy = destroy;
+    if( msg->init != NULL )
+        msg->data = msg->init();
+    return msg;
+}
+
+/*****************************************************************************/
+void smx_msg_destroy( smx_msg_t* msg )
+{
+    if( msg->destroy != NULL )
+        msg->destroy( msg->data );
+    free( msg );
 }
 
 /*****************************************************************************/
