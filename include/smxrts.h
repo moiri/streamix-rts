@@ -10,6 +10,7 @@ typedef struct smx_fifo_s smx_fifo_t;
 typedef struct smx_blackboard_s smx_blackboard_t;
 typedef struct smx_channel_s smx_channel_t;
 typedef struct smx_msg_s smx_msg_t;
+typedef struct box_smx_cp_s box_smx_cp_t;
 typedef enum smx_channel_type_e smx_channel_type_t;
 
 // ENUMS ----------------------------------------------------------------------
@@ -91,14 +92,35 @@ struct smx_msg_s
     void  (*destroy)( void* );  /**< pointer to a fct that frees data */
 };
 
+struct box_smx_cp_s
+{
+    struct {
+        smx_channel_t** ports;
+        int count;
+    } in;
+    struct {
+        smx_channel_t** ports;
+        int count;
+    } out;
+};
+
 // FUNCTIONS BOX --------------------------------------------------------------
+void* box_smx_cp( void* );
 /*****************************************************************************/
+#define SMX_BOX_CP_INIT( box, indegree, outdegree )\
+    ( ( box_smx_cp_t* )box )->in.count = 0;\
+    ( ( box_smx_cp_t* )box )->in.ports\
+        = malloc( sizeof( smx_channel_t* ) * indegree );\
+    ( ( box_smx_cp_t* )box )->out.count = 0;\
+    ( ( box_smx_cp_t* )box )->out.ports\
+        = malloc( sizeof( smx_channel_t* ) * outdegree )
+
 #define SMX_BOX_CREATE( box )\
     malloc( sizeof( struct box_##box##_s ) )
 
 /*****************************************************************************/
 #define SMX_BOX_RUN( arg, box_name )\
-    pthread_t th_ ## box_name = smx_box_run( box_ ## box_name, arg )
+    pthread_t th_ ## arg = smx_box_run( box_ ## box_name, arg )
 
 /**
  * @brief create pthred of box
@@ -116,6 +138,11 @@ pthread_t smx_box_run( void*( void* ), void* );
 /*****************************************************************************/
 #define SMX_BOX_DESTROY( box )\
     free( box )
+
+/*****************************************************************************/
+#define SMX_BOX_CP_DESTROY( box )\
+    free( ( ( box_smx_cp_t* )box )->in.ports );\
+    free( ( ( box_smx_cp_t* )box )->out.ports )
 
 // FUNCTIONS CHANNEL-----------------------------------------------------------
 /*****************************************************************************/
@@ -173,7 +200,7 @@ void smx_blackboard_destroy( smx_blackboard_t* );
 
 /*****************************************************************************/
 #define SMX_CHANNEL_READ( h, box_name, ch_name )\
-    smx_channel_read( ( ( box_ ## box_name ## _t* )h )->port_ ## ch_name )
+    smx_channel_read( ( ( box_ ## box_name ## _t* )h )->in.port_ ## ch_name )
 
 /**
  * @brief Read the data from an input port
@@ -205,7 +232,7 @@ smx_msg_t* smx_blackboard_read( smx_blackboard_t* );
 
 /*****************************************************************************/
 #define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
-    smx_channel_write( ( ( box_ ## box_name ## _t* )h )->port_ ## ch_name,\
+    smx_channel_write( ( ( box_ ## box_name ## _t* )h )->out.port_ ## ch_name,\
             data )
 
 /**
@@ -237,8 +264,15 @@ void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
 void smx_blackboard_write( smx_blackboard_t*, smx_msg_t* );
 
 /*****************************************************************************/
-#define SMX_CONNECT( box, ch, box_name, ch_name )\
-    ( ( box_ ## box_name ## _t* )box )->port_ ## ch_name = ( smx_channel_t* )ch
+#define SMX_CONNECT( box, ch, box_name, ch_name, mode )\
+    ( ( box_ ## box_name ## _t* )box )->mode.port_ ## ch_name\
+        = ( smx_channel_t* )ch
+
+/*****************************************************************************/
+#define SMX_CONNECT_CP( box, ch, mode )\
+    ( ( box_smx_cp_t* )box )->mode.ports[( ( box_smx_cp_t* )box )->mode.count]\
+        = ( smx_channel_t* )ch;\
+    ( ( box_smx_cp_t* )box )->mode.count++
 
 /*****************************************************************************/
 #define SMX_MSG_CREATE( f_init, f_copy, f_destroy )\

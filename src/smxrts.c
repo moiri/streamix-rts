@@ -49,6 +49,25 @@ void smx_blackboard_write( smx_blackboard_t* bb, smx_msg_t* msg )
 }
 
 /*****************************************************************************/
+void* box_smx_cp( void* handler )
+{
+    int i, count;
+    smx_channel_t** ports;
+    smx_msg_t* msg;
+    smx_msg_t* msg_copy;
+    ports = ( ( box_smx_cp_t* )handler )->in.ports;
+    msg = smx_fifo_read( ports[0]->ch_fifo );
+    count = ( ( box_smx_cp_t* )handler )->out.count;
+    ports = ( ( box_smx_cp_t* )handler )->out.ports;
+    for( i=0; i<count; i++ ) {
+        msg_copy = SMX_MSG_CREATE( msg->init, msg->copy, msg->destroy );
+        msg_copy->data = msg->copy( msg->data );
+        smx_fifo_write( ports[i]->ch_fifo, msg_copy );
+    }
+    return NULL;
+}
+
+/*****************************************************************************/
 pthread_t smx_box_run( void* box_impl( void* ), void* arg )
 {
     pthread_t thread;
