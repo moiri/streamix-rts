@@ -11,7 +11,9 @@ typedef struct smx_blackboard_s smx_blackboard_t;
 typedef struct smx_channel_s smx_channel_t;
 typedef struct smx_msg_s smx_msg_t;
 typedef struct box_smx_cp_s box_smx_cp_t;
+typedef struct smx_collector_s smx_collector_t;
 typedef enum smx_channel_type_e smx_channel_type_t;
+typedef enum smx_channel_state_e smx_channel_state_t;
 
 // ENUMS ----------------------------------------------------------------------
 /**
@@ -21,6 +23,19 @@ enum smx_channel_type_e
 {
     SMX_FIFO,           /**< ::smx_fifo_t */
     SMX_BLACKBOARD      /**< ::smx_blackboard_t */
+};
+
+enum smx_channel_state_e
+{
+    SMX_CHANNEL_READY,      /**< */
+    SMX_CHANNEL_PENDING,    /**< */
+    SMX_CHANNEL_END         /**< */
+};
+
+enum smx_thread_state_e
+{
+    SMX_BOX_TERMINATE,
+    SMX_BOX_CONTINUE
 };
 
 // STRUCTS --------------------------------------------------------------------
@@ -50,6 +65,22 @@ struct smx_channel_s
         smx_fifo_t*         ch_fifo;    /**< ::smx_fifo_s */
         smx_blackboard_t*   ch_bb;      /**< ::smx_blackboard_s */
     };
+    smx_collector_t*    collector;
+    smx_channel_state_t state;
+    pthread_mutex_t     ch_mutex;  /**< mutual exclusion */
+    pthread_cond_t      ch_cv;     /**< conditional variable to trigger box */
+};
+
+/**
+ *
+ */
+struct smx_collector_s
+{
+    pthread_mutex_t     col_mutex;  /**< mutual exclusion */
+    pthread_cond_t      col_cv;     /**< conditional variable to trigger box */
+    int                 count;
+    int                 end_count;
+    smx_channel_state_t state;
 };
 
 /**
@@ -63,7 +94,7 @@ struct smx_fifo_s
     smx_fifo_item_t*  head;      /**< pointer to the heda of the FIFO */
     smx_fifo_item_t*  tail;      /**< pointer to the tail of the FIFO */
     int     count;               /**< counts occupied space */
-    int     length;              /**< siye of the FIFO */
+    int     length;              /**< size of the FIFO */
     pthread_mutex_t fifo_mutex;  /**< mutual exclusion */
     pthread_cond_t  fifo_cv;     /**< conditional variable to trigger box */
 };
@@ -92,11 +123,15 @@ struct smx_msg_s
     void  (*destroy)( void* );  /**< pointer to a fct that frees data */
 };
 
+/**
+ *
+ */
 struct box_smx_cp_s
 {
     struct {
         smx_channel_t** ports;
         int count;
+        smx_collector_t* collector;
     } in;
     struct {
         smx_channel_t** ports;
@@ -105,18 +140,31 @@ struct box_smx_cp_s
 };
 
 // FUNCTIONS BOX --------------------------------------------------------------
+int smx_cp( void* );
 void* box_smx_cp( void* );
 /*****************************************************************************/
-#define SMX_BOX_CP_INIT( box, indegree, outdegree )\
-    ( ( box_smx_cp_t* )box )->in.count = 0;\
-    ( ( box_smx_cp_t* )box )->in.ports\
-        = malloc( sizeof( smx_channel_t* ) * indegree );\
-    ( ( box_smx_cp_t* )box )->out.count = 0;\
-    ( ( box_smx_cp_t* )box )->out.ports\
-        = malloc( sizeof( smx_channel_t* ) * outdegree )
+#define SMX_BOX_CP_INIT( box )\
+    smx_box_cp_init( ( box_smx_cp_t* )box )
 
+/**
+ * @brief Initialize copy synchronizer structure
+ *
+ * @param box_smx_cp_t*     pointer to the copy sync structure
+ */
+void smx_box_cp_init( box_smx_cp_t* );
+
+/*****************************************************************************/
 #define SMX_BOX_CREATE( box )\
     malloc( sizeof( struct box_##box##_s ) )
+
+/*****************************************************************************/
+#define SMX_BOX_INIT( box_name, box, indegree, outdegree )\
+    ( ( box_ ## box_name ## _t* )box )->in.count = 0;\
+    ( ( box_ ## box_name ## _t* )box )->in.ports\
+        = malloc( sizeof( smx_channel_t* ) * indegree );\
+    ( ( box_ ## box_name ## _t* )box )->out.count = 0;\
+    ( ( box_ ## box_name ## _t* )box )->out.ports\
+        = malloc( sizeof( smx_channel_t* ) * outdegree )
 
 /*****************************************************************************/
 #define SMX_BOX_RUN( arg, box_name )\
@@ -136,13 +184,21 @@ pthread_t smx_box_run( void*( void* ), void* );
     pthread_join( th_ ## box_name, NULL )
 
 /*****************************************************************************/
-#define SMX_BOX_DESTROY( box )\
+#define SMX_BOX_DESTROY( box_name, box )\
+    free( ( ( box_ ## box_name ## _t* )box )->in.ports );\
+    free( ( ( box_ ## box_name ## _t* )box )->out.ports );\
     free( box )
 
 /*****************************************************************************/
 #define SMX_BOX_CP_DESTROY( box )\
-    free( ( ( box_smx_cp_t* )box )->in.ports );\
-    free( ( ( box_smx_cp_t* )box )->out.ports )
+    smx_box_cp_destroy( ( box_smx_cp_t* )box )
+
+/**
+ * @brief Destroy copy sync structure
+ *
+ * @param box_smx_cp_t*     pointer to the cp sync structure
+ */
+void smx_box_cp_destroy( box_smx_cp_t* );
 
 // FUNCTIONS CHANNEL-----------------------------------------------------------
 /*****************************************************************************/
@@ -215,12 +271,21 @@ void smx_blackboard_destroy( smx_blackboard_t* );
 smx_msg_t* smx_channel_read( smx_channel_t* );
 
 /**
+ * @brief Returns the number of available messages in channel
+ *
+ * @param smx_channel_t*    pointer to the channel
+ * @return int              number of available messages in channel
+ */
+int smx_channel_ready_to_read( smx_channel_t* );
+
+/**
  * @brief read from a Streamix FIFO channel
  *
- * @param smx_fifo_t*   pointer to a FIFO channel
- * @return smx_msg_t*   pointer to the data
+ * @param smx_channel_t*    pointer to channel struct of the FIFO
+ * @param smx_fifo_t*       pointer to a FIFO channel
+ * @return smx_msg_t*       pointer to the data
  */
-smx_msg_t* smx_fifo_read( smx_fifo_t* );
+smx_msg_t* smx_fifo_read( smx_channel_t*, smx_fifo_t* );
 
 /**
  * @brief read from a Streamix blackboard channel
@@ -264,15 +329,29 @@ void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
 void smx_blackboard_write( smx_blackboard_t*, smx_msg_t* );
 
 /*****************************************************************************/
+#define SMX_CHANNELS_TERMINATE( h, box_name )\
+    smx_channels_terminate( ( ( box_ ## box_name ## _t* )h )->out.ports,\
+            ( ( box_ ## box_name ## _t* )h )->out.count )
+
+/**
+ *
+ */
+void smx_channels_terminate( smx_channel_t**, int );
+
+/*****************************************************************************/
 #define SMX_CONNECT( box, ch, box_name, ch_name, mode )\
     ( ( box_ ## box_name ## _t* )box )->mode.port_ ## ch_name\
         = ( smx_channel_t* )ch
 
 /*****************************************************************************/
-#define SMX_CONNECT_CP( box, ch, mode )\
-    ( ( box_smx_cp_t* )box )->mode.ports[( ( box_smx_cp_t* )box )->mode.count]\
-        = ( smx_channel_t* )ch;\
-    ( ( box_smx_cp_t* )box )->mode.count++
+#define SMX_CONNECT_ARR( box, ch, box_name, ch_name, mode )\
+    ( ( box_ ## box_name ## _t* )box )->mode.ports[\
+        ( ( box_ ## box_name ## _t* )box )->mode.count++] = ( smx_channel_t* )ch
+
+/*****************************************************************************/
+#define SMX_CONNECT_CP( box, ch )\
+    ( ( smx_channel_t* )ch )->collector\
+        = ( ( box_smx_cp_t* )box )->in.collector;\
 
 /*****************************************************************************/
 #define SMX_MSG_CREATE( f_init, f_copy, f_destroy )\
@@ -303,7 +382,7 @@ smx_msg_t* smx_msg_create( void*( void ), void*( void* ), void( void* ) );
 
 /*****************************************************************************/
 #define SMX_MSG_DESTROY( msg )\
-    smx_msg_destroy( msg )
+    smx_msg_destroy( msg, 1 )
 
 /**
  * @brief Destroy a message structure
@@ -312,8 +391,10 @@ smx_msg_t* smx_msg_create( void*( void ), void*( void* ), void( void* ) );
  * destroy function handler is called before the message structure is freed.
  *
  * @param smx_msg_t*    a pointer to the message structure to be destroyed
+ * @param int           a flag to indicate whether the data shoudl be deleted as
+ *                      well if msg->destroy() is NULL this flag is ignored
  */
-void smx_msg_destroy( smx_msg_t* );
+void smx_msg_destroy( smx_msg_t*, int );
 
 // FUNCTIONS PROGRAM ----------------------------------------------------------
 /*****************************************************************************/

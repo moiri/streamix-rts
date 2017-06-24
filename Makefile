@@ -28,7 +28,7 @@ all: $(STATLIB)
 
 # compile with dot stuff and debug flags
 debug: CFLAGS += $(DEBUG_FLAGS)
-debug: $(LOC_SRC_DIR)/$(PROJECT).o
+debug: $(STATLIB)
 
 $(STATLIB): $(OBJECTS)
 	mkdir -p lib
