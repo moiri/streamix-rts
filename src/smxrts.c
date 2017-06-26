@@ -151,6 +151,9 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type )
         case SMX_BLACKBOARD:
             ch->ch_bb = smx_blackboard_create();
             break;
+        default:
+            dzlog_error("undefined channel type '%d'", ch->type );
+
     }
     ch->collector = NULL;
     pthread_mutex_init( &ch->ch_mutex, NULL );
@@ -196,6 +199,8 @@ void smx_channel_destroy( smx_channel_t* ch )
         case SMX_BLACKBOARD:
             smx_blackboard_destroy( ch->ch_bb );
             break;
+        default:
+            dzlog_error("undefined channel type '%d'", ch->type );
     }
     free( ch );
 }
@@ -221,6 +226,8 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
             return ch->ch_fifo->count;
         case SMX_BLACKBOARD:
             return 1;
+        default:
+            dzlog_error("undefined channel type '%d'", ch->type );
     }
     return 0;
 }
@@ -228,7 +235,7 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
 /*****************************************************************************/
 smx_msg_t* smx_channel_read( smx_channel_t* ch )
 {
-    smx_msg_t* msg;
+    smx_msg_t* msg = NULL;
     pthread_mutex_lock( &ch->ch_mutex );
     while( ch->state == SMX_CHANNEL_PENDING )
         pthread_cond_wait( &ch->ch_cv, &ch->ch_mutex );
@@ -239,6 +246,8 @@ smx_msg_t* smx_channel_read( smx_channel_t* ch )
         case SMX_BLACKBOARD:
             msg = smx_blackboard_read( ch->ch_bb );
             break;
+        default:
+            dzlog_error("undefined channel type '%d'", ch->type );
     }
     pthread_mutex_unlock( &ch->ch_mutex );
     return msg;
@@ -275,6 +284,8 @@ void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
         case SMX_BLACKBOARD:
             smx_blackboard_write( ch->ch_bb, msg );
             break;
+        default:
+            dzlog_error("undefined channel type '%d'", ch->type );
     }
     if( ch->collector != NULL ) {
         pthread_mutex_lock( &ch->collector->col_mutex );
