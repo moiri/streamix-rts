@@ -22,6 +22,9 @@ typedef enum smx_channel_state_e smx_channel_state_t;
 enum smx_channel_type_e
 {
     SMX_FIFO,           /**< ::smx_fifo_t */
+    SMX_FIFO_D,         /**< ::smx_fifo_t */
+    SMX_D_FIFO,         /**< ::smx_fifo_t */
+    SMX_D_FIFO_D,       /**< ::smx_fifo_t */
     SMX_BLACKBOARD      /**< ::smx_blackboard_t */
 };
 
