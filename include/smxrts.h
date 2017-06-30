@@ -96,6 +96,7 @@ struct smx_fifo_s
 {
     smx_fifo_item_t*  head;      /**< pointer to the heda of the FIFO */
     smx_fifo_item_t*  tail;      /**< pointer to the tail of the FIFO */
+    smx_msg_t*        backup;    /**< ::smx_msg_s */
     int     count;               /**< counts occupied space */
     int     length;              /**< size of the FIFO */
     pthread_mutex_t fifo_mutex;  /**< mutual exclusion */
@@ -120,10 +121,10 @@ struct smx_fifo_item_s
  */
 struct smx_msg_s
 {
-    void* data;                 /**< pointer to the data */
-    void* (*init)();            /**< pointer to a fct that initialiyes data */
-    void* (*copy)( void* );     /**< pointer to a fct that makes a deep copy */
-    void  (*destroy)( void* );  /**< pointer to a fct that frees data */
+    void* data;                     /**< pointer to the data */
+    int   size;                     /**< size of the data */
+    void* (*copy)( void*, size_t ); /**< pointer to a fct making a deep copy */
+    void  (*destroy)( void* );      /**< pointer to a fct that frees data */
 };
 
 /**
@@ -291,6 +292,19 @@ int smx_channel_ready_to_read( smx_channel_t* );
 smx_msg_t* smx_fifo_read( smx_channel_t*, smx_fifo_t* );
 
 /**
+ * @brief read from a Streamix FIFO_D channel
+ *
+ * Read from a channel that is decoupled at the output (the consumer is
+ * decoupled at the input). This means that the msg at the head of the FIFO_D
+ * will potentially be duplicated. However, the consumer is blocked on this
+ * channel until a first message is available.
+ *
+ * @param smx_fifo_t*       pointer to a FIFO_D channel
+ * @return smx_msg_t*       pointer to the data
+ */
+smx_msg_t* smx_fifo_d_read( smx_fifo_t* );
+
+/**
  * @brief read from a Streamix blackboard channel
  *
  * @param smx_blackboard_t* pointer to a blackboard channel
@@ -327,7 +341,8 @@ void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
  * @brief write to a Streamix D_FIFO channel
  *
  * Write to a channel that is decoupled at the input (the produced is decoupled
- * at the output). This means that the tail of the D_FIFO will be overwritten
+ * at the output). This means that the tail of the D_FIFO will potentially be
+ * overwritten.
  *
  * @param smx_fifo_t*   pointer to a D_FIFO channel
  * @param smx_msg_t*    pointer to the data
@@ -367,10 +382,6 @@ void smx_channels_terminate( smx_channel_t**, int );
     ( ( smx_channel_t* )ch )->collector\
         = ( ( box_smx_cp_t* )box )->in.collector;\
 
-/*****************************************************************************/
-#define SMX_MSG_CREATE( f_init, f_copy, f_destroy )\
-    smx_msg_create( f_init, f_copy, f_destroy )
-
 /**
  * @brief Create a message structure
  *
@@ -378,26 +389,50 @@ void smx_channels_terminate( smx_channel_t**, int );
  * in the message structure. If defined, the init function handler is called
  * after the message structure is created.
  *
- * @param void*( void )     a pointer to a function that initializes the data
- *                          in the message structure. The function must return a
- *                          void pointer to the initilaiyed data structure.
- * @param void*( void* )    a pointer to a function perfroming a deep copy of
- *                          the data in the message structure. The function
+ * @param void*             a pointer to the data to be added to the message
+ * @param size_t            the size of the data
+ * @param void*( void*,     a pointer to a function perfroming a deep copy of
+ *              size_t )    the data in the message structure. The function
  *                          takes a void pointer as an argument that points to
- *                          the data structure to copy. The function must return
- *                          a void pointer to the copied data structure.
+ *                          the data structure to copy and the size of the data
+ *                          structure. The function must return a void pointer
+ *                          to the copied data structure.
  * @param void( void* )     a pointer to a function freeing the memory of the
  *                          data in the message structure. The function takes a
  *                          void pointer as an argument that points to the data
  *                          structure to free.
  * @return smx_msg_t*       a pointer to the created message structure
  */
-smx_msg_t* smx_msg_create( void*( void ), void*( void* ), void( void* ) );
+smx_msg_t* smx_msg_create( void*, size_t, void*( void*, size_t ),
+        void( void* ) );
+
+/**
+ * @brief make a deep copy of a message
+ *
+ * @param smx_msg_t*    pointer to the message structure to copy
+ * @return smx_msg_t*   pointer to the newly created message structure
+ */
+smx_msg_t* smx_msg_copy( smx_msg_t* );
+
+/**
+ * @brief Default copy function to perform a shallow copy of the message data
+ *
+ * @param void*     a void pointer to the data structure
+ * @param size_t    the size of the data
+ * @return void*    a void pointer to the data
+ */
+void* smx_data_copy( void*, size_t );
+
+/**
+ * @brief Default destroy function to destroy the data inside a message
+ *
+ * @param void*     a void pointer to the data to be freed (shallow)
+ */
+void smx_data_destroy( void* );
 
 /*****************************************************************************/
 #define SMX_MSG_DESTROY( msg )\
     smx_msg_destroy( msg, 1 )
-
 /**
  * @brief Destroy a message structure
  *
@@ -413,7 +448,7 @@ void smx_msg_destroy( smx_msg_t*, int );
 // FUNCTIONS PROGRAM ----------------------------------------------------------
 /*****************************************************************************/
 #define SMX_PROGRAM_INIT()\
-    smx_program_init();
+    smx_program_init()
 
 /**
  * @brief Perfrom some initialisation tasks

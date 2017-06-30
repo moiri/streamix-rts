@@ -1,6 +1,7 @@
 #include "smxrts.h"
 #include "pthread.h"
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 #include <zlog.h>
 
@@ -90,10 +91,10 @@ int smx_cp( void* handler )
     count = ( ( box_smx_cp_t* )handler )->out.count;
     chs = ( ( box_smx_cp_t* )handler )->out.ports;
     for( i=0; i<count; i++ ) {
-        msg_copy = smx_msg_create( msg->init, msg->copy, msg->destroy );
+        msg_copy = smx_msg_copy( msg );
         smx_channel_write( chs[i], msg_copy );
     }
-    smx_msg_destroy( msg, ( msg->copy != NULL ) );
+    smx_msg_destroy( msg, true );
     return SMX_BOX_CONTINUE;
 }
 
@@ -136,8 +137,12 @@ pthread_t smx_box_run( void* box_impl( void* ), void* arg )
 void smx_channels_terminate( smx_channel_t** chs, int len )
 {
     int i;
-    for( i=0; i<len; i++ )
+    for( i=0; i<len; i++ ) {
+        pthread_mutex_lock( &chs[i]->ch_mutex );
         chs[i]->state = SMX_CHANNEL_END;
+        pthread_cond_signal( &chs[i]->ch_cv );
+        pthread_mutex_unlock( &chs[i]->ch_mutex );
+    }
 }
 
 /*****************************************************************************/
@@ -148,6 +153,7 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type )
     switch( type ){
         case SMX_FIFO:
         case SMX_D_FIFO:
+        case SMX_FIFO_D:
             ch->ch_fifo = smx_fifo_create( len );
             break;
         case SMX_BLACKBOARD:
@@ -182,6 +188,7 @@ smx_fifo_t* smx_fifo_create( int length )
     fifo->head->next = fifo->tail;
     fifo->tail->prev = fifo->head;
     fifo->tail = fifo->head;
+    fifo->backup = NULL;
     pthread_mutex_init( &fifo->fifo_mutex, NULL );
     pthread_cond_init( &fifo->fifo_cv, NULL );
     fifo->count = 0;
@@ -197,6 +204,7 @@ void smx_channel_destroy( smx_channel_t* ch )
     switch( ch->type ) {
         case SMX_FIFO:
         case SMX_D_FIFO:
+        case SMX_FIFO_D:
             smx_fifo_destroy( ch->ch_fifo );
             break;
         case SMX_BLACKBOARD:
@@ -214,10 +222,12 @@ void smx_fifo_destroy( smx_fifo_t* fifo )
     pthread_mutex_destroy( &fifo->fifo_mutex );
     pthread_cond_destroy( &fifo->fifo_cv );
     for( int i=0; i < fifo->length; i++ ) {
+        if( fifo->head->msg != NULL ) smx_msg_destroy( fifo->head->msg, true );
         fifo->tail = fifo->head;
         fifo->head = fifo->head->next;
         free( fifo->tail );
     }
+    if( fifo->backup != NULL ) smx_msg_destroy( fifo->backup, true );
     free( fifo );
 }
 
@@ -228,6 +238,7 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
         case SMX_FIFO:
         case SMX_D_FIFO:
             return ch->ch_fifo->count;
+        case SMX_FIFO_D:
         case SMX_BLACKBOARD:
             return 1;
         default:
@@ -248,6 +259,9 @@ smx_msg_t* smx_channel_read( smx_channel_t* ch )
         case SMX_D_FIFO:
             msg = smx_fifo_read( ch, ch->ch_fifo );
             break;
+        case SMX_FIFO_D:
+            msg = smx_fifo_d_read( ch->ch_fifo );
+            break;
         case SMX_BLACKBOARD:
             msg = smx_blackboard_read( ch->ch_bb );
             break;
@@ -266,6 +280,7 @@ smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo )
     if( fifo->count > 0 ) {
         // messages are available
         msg = fifo->head->msg;
+        fifo->head->msg = NULL;
         fifo->head = fifo->head->prev;
         fifo->count--;
         dzlog_debug("read from fifo %p (new count: %d)", fifo, fifo->count );
@@ -280,10 +295,39 @@ smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo )
 }
 
 /*****************************************************************************/
+smx_msg_t* smx_fifo_d_read( smx_fifo_t* fifo )
+{
+    smx_msg_t* msg = NULL;
+    pthread_mutex_lock( &fifo->fifo_mutex );
+    if( fifo->count > 0 ) {
+        // messages are available
+        msg = fifo->head->msg;
+        fifo->head->msg = NULL;
+        fifo->head = fifo->head->prev;
+        if( fifo->count == 1 ) {
+            // last message, backup for later duplication
+            if( fifo->backup != NULL ) // delete old backup
+                smx_msg_destroy( fifo->backup, 1);
+            fifo->backup = smx_msg_copy( msg );
+        }
+        fifo->count--;
+        dzlog_debug("read from fifo %p (new count: %d)", fifo, fifo->count );
+        pthread_cond_signal( &fifo->fifo_cv );
+    }
+    else {
+        msg = smx_msg_copy( fifo->backup );
+        dzlog_debug("fifo %p is empty, duplicate backup", fifo );
+    }
+    pthread_mutex_unlock( &fifo->fifo_mutex );
+    return msg;
+}
+
+/*****************************************************************************/
 void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
 {
     switch( ch->type ) {
         case SMX_FIFO:
+        case SMX_FIFO_D:
             smx_fifo_write( ch->ch_fifo, msg );
             break;
         case SMX_D_FIFO:
@@ -348,23 +392,46 @@ void smx_d_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
 }
 
 /*****************************************************************************/
-smx_msg_t* smx_msg_create( void* ( *init )(), void* ( *copy )( void* ),
-        void ( *destroy )( void* ) )
+void* smx_data_copy( void* data, size_t size ) {
+    void* data_copy = malloc( size );
+    memcpy( data_copy, data, size );
+    return data_copy;
+}
+
+/*****************************************************************************/
+void smx_data_destroy( void* data ) {
+    free( data );
+}
+
+/*****************************************************************************/
+smx_msg_t* smx_msg_copy( smx_msg_t* msg )
+{
+    smx_msg_t* msg_copy = malloc( sizeof( struct smx_msg_s ) );
+    msg_copy->data = msg->copy( msg->data, msg->size );
+    msg_copy->size = msg->size;
+    msg_copy->copy = msg->copy;
+    msg_copy->destroy = msg->destroy;
+    return msg_copy;
+}
+
+/*****************************************************************************/
+smx_msg_t* smx_msg_create( void* data, size_t size,
+        void* ( *copy )( void*, size_t ), void ( *destroy )( void* ) )
 {
     smx_msg_t* msg = malloc( sizeof( struct smx_msg_s ) );
-    msg->init = init;
-    msg->copy = copy;
-    msg->destroy = destroy;
-    if( msg->init != NULL )
-        msg->data = msg->init();
+    msg->data = data;
+    msg->size = size;
+    if( copy == NULL ) msg->copy = ( *smx_data_copy );
+    else msg->copy = copy;
+    if( destroy == NULL ) msg->destroy = ( *smx_data_destroy );
+    else msg->destroy = destroy;
     return msg;
 }
 
 /*****************************************************************************/
 void smx_msg_destroy( smx_msg_t* msg, int deep )
 {
-    if( deep && ( msg->destroy != NULL ) )
-        msg->destroy( msg->data );
+    if( deep ) msg->destroy( msg->data );
     free( msg );
 }
 
