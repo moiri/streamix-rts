@@ -324,6 +324,17 @@ void smx_channel_write( smx_channel_t*, smx_msg_t* );
 void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
 
 /**
+ * @brief write to a Streamix D_FIFO channel
+ *
+ * Write to a channel that is decoupled at the input (the produced is decoupled
+ * at the output). This means that the tail of the D_FIFO will be overwritten
+ *
+ * @param smx_fifo_t*   pointer to a D_FIFO channel
+ * @param smx_msg_t*    pointer to the data
+ */
+void smx_d_fifo_write( smx_fifo_t*, smx_msg_t* );
+
+/**
  * @brief write to a Streamix blackboard channel
  *
  * @param smx_blackboart_t* pointer to a blackboard channel

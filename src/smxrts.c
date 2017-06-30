@@ -1,6 +1,7 @@
 #include "smxrts.h"
 #include "pthread.h"
 #include <stdlib.h>
+#include <stdbool.h>
 #include <zlog.h>
 
 /*****************************************************************************/
@@ -146,6 +147,7 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type )
     ch->type = type;
     switch( type ){
         case SMX_FIFO:
+        case SMX_D_FIFO:
             ch->ch_fifo = smx_fifo_create( len );
             break;
         case SMX_BLACKBOARD:
@@ -194,6 +196,7 @@ void smx_channel_destroy( smx_channel_t* ch )
     pthread_cond_destroy( &ch->ch_cv );
     switch( ch->type ) {
         case SMX_FIFO:
+        case SMX_D_FIFO:
             smx_fifo_destroy( ch->ch_fifo );
             break;
         case SMX_BLACKBOARD:
@@ -223,6 +226,7 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
 {
     switch( ch->type ) {
         case SMX_FIFO:
+        case SMX_D_FIFO:
             return ch->ch_fifo->count;
         case SMX_BLACKBOARD:
             return 1;
@@ -241,6 +245,7 @@ smx_msg_t* smx_channel_read( smx_channel_t* ch )
         pthread_cond_wait( &ch->ch_cv, &ch->ch_mutex );
     switch( ch->type ) {
         case SMX_FIFO:
+        case SMX_D_FIFO:
             msg = smx_fifo_read( ch, ch->ch_fifo );
             break;
         case SMX_BLACKBOARD:
@@ -281,6 +286,9 @@ void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
         case SMX_FIFO:
             smx_fifo_write( ch->ch_fifo, msg );
             break;
+        case SMX_D_FIFO:
+            smx_d_fifo_write( ch->ch_fifo, msg );
+            break;
         case SMX_BLACKBOARD:
             smx_blackboard_write( ch->ch_bb, msg );
             break;
@@ -314,6 +322,29 @@ void smx_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
     dzlog_debug("write to fifo %p (new count: %d)", fifo, fifo->count );
     pthread_cond_signal( &fifo->fifo_cv );
     pthread_mutex_unlock( &fifo->fifo_mutex );
+}
+
+/*****************************************************************************/
+void smx_d_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
+{
+    bool overwrite = false;
+    smx_msg_t* msg_tmp = NULL;
+    pthread_mutex_lock( &fifo->fifo_mutex );
+    msg_tmp = fifo->tail->msg;
+    fifo->tail->msg = msg;
+    if( fifo->count < fifo->length ) {
+        fifo->tail = fifo->tail->prev;
+        fifo->count++;
+        dzlog_debug("write to fifo %p (new count: %d)", fifo, fifo->count );
+    }
+    else {
+        overwrite = true;
+        dzlog_debug("overwrite tail of fifo %p (new count: %d)",
+                fifo, fifo->count );
+    }
+    pthread_cond_signal( &fifo->fifo_cv );
+    pthread_mutex_unlock( &fifo->fifo_mutex );
+    if( overwrite ) smx_msg_destroy( msg_tmp, true );
 }
 
 /*****************************************************************************/
