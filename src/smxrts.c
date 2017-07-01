@@ -154,6 +154,7 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type )
         case SMX_FIFO:
         case SMX_D_FIFO:
         case SMX_FIFO_D:
+        case SMX_D_FIFO_D:
             ch->ch_fifo = smx_fifo_create( len );
             break;
         case SMX_BLACKBOARD:
@@ -205,6 +206,7 @@ void smx_channel_destroy( smx_channel_t* ch )
         case SMX_FIFO:
         case SMX_D_FIFO:
         case SMX_FIFO_D:
+        case SMX_D_FIFO_D:
             smx_fifo_destroy( ch->ch_fifo );
             break;
         case SMX_BLACKBOARD:
@@ -238,6 +240,7 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
         case SMX_FIFO:
         case SMX_D_FIFO:
             return ch->ch_fifo->count;
+        case SMX_D_FIFO_D:
         case SMX_FIFO_D:
         case SMX_BLACKBOARD:
             return 1;
@@ -260,6 +263,7 @@ smx_msg_t* smx_channel_read( smx_channel_t* ch )
             msg = smx_fifo_read( ch, ch->ch_fifo );
             break;
         case SMX_FIFO_D:
+        case SMX_D_FIFO_D:
             msg = smx_fifo_d_read( ch->ch_fifo );
             break;
         case SMX_BLACKBOARD:
@@ -331,6 +335,7 @@ void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
             smx_fifo_write( ch->ch_fifo, msg );
             break;
         case SMX_D_FIFO:
+        case SMX_D_FIFO_D:
             smx_d_fifo_write( ch->ch_fifo, msg );
             break;
         case SMX_BLACKBOARD:
