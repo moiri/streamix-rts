@@ -6,52 +6,24 @@
 #include <zlog.h>
 
 /*****************************************************************************/
-smx_blackboard_t* smx_blackboard_create()
+void* box_smx_cp( void* handler )
 {
-    smx_blackboard_t* bb = malloc( sizeof( struct smx_blackboard_s ) );
-    bb->read = 0;
-    bb->write = 1;
-    bb->msgs = malloc( sizeof( smx_msg_t* ) * 2 );
-    bb->msgs[bb->write] = NULL;
-    bb->msgs[bb->read] = NULL;
-    return bb;
+    while( smx_box_cp_impl( handler ) );
+    smx_channels_terminate( ( ( box_smx_cp_t* )handler )->out.ports,
+            ( ( box_smx_cp_t* )handler )->out.count );
+    return NULL;
 }
 
 /*****************************************************************************/
-void smx_blackboard_destroy( smx_blackboard_t* bb )
+void smx_box_cp_destroy( box_smx_cp_t* cp )
 {
-    free( bb->msgs );
-    free( bb );
+    pthread_mutex_destroy( &cp->in.collector->col_mutex );
+    pthread_cond_destroy( &cp->in.collector->col_cv );
+    free( cp->in.collector );
 }
 
 /*****************************************************************************/
-smx_msg_t* smx_blackboard_read( smx_blackboard_t* bb )
-{
-    smx_msg_t* msg;
-    pthread_mutex_lock( &bb->mutex_read );
-    msg = bb->msgs[bb->read];
-    dzlog_debug("read from blackboard %p (position: %d)", bb, bb->read );
-    pthread_mutex_unlock( &bb->mutex_read );
-    return msg;
-}
-
-/*****************************************************************************/
-void smx_blackboard_write( smx_blackboard_t* bb, smx_msg_t* msg )
-{
-    int read;
-    pthread_mutex_lock( &bb->mutex_write );
-    bb->msgs[bb->write] = msg;
-    read = bb->read;
-    pthread_mutex_lock( &bb->mutex_read );
-    bb->read = bb->write;
-    pthread_mutex_unlock( &bb->mutex_read );
-    bb->write = read;
-    dzlog_debug("write to blackboard %p (position: %d)", bb, bb->write );
-    pthread_mutex_unlock( &bb->mutex_write );
-}
-
-/*****************************************************************************/
-int smx_cp( void* handler )
+int smx_box_cp_impl( void* handler )
 {
     int i, count = ( ( box_smx_cp_t* )handler )->in.count;
     int end = 1;
@@ -99,15 +71,6 @@ int smx_cp( void* handler )
 }
 
 /*****************************************************************************/
-void* box_smx_cp( void* handler )
-{
-    while( smx_cp( handler ) );
-    smx_channels_terminate( ( ( box_smx_cp_t* )handler )->out.ports,
-            ( ( box_smx_cp_t* )handler )->out.count );
-    return NULL;
-}
-
-/*****************************************************************************/
 void smx_box_cp_init( box_smx_cp_t* cp )
 {
     cp->in.collector = malloc( sizeof( struct smx_collector_s ) );
@@ -115,14 +78,6 @@ void smx_box_cp_init( box_smx_cp_t* cp )
     pthread_cond_init( &cp->in.collector->col_cv, NULL );
     cp->in.collector->count = 0;
     cp->in.collector->state = SMX_CHANNEL_PENDING;
-}
-
-/*****************************************************************************/
-void smx_box_cp_destroy( box_smx_cp_t* cp )
-{
-    pthread_mutex_destroy( &cp->in.collector->col_mutex );
-    pthread_cond_destroy( &cp->in.collector->col_cv );
-    free( cp->in.collector );
 }
 
 /*****************************************************************************/
@@ -150,25 +105,90 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type )
 {
     smx_channel_t* ch = malloc( sizeof( struct smx_channel_s ) );
     ch->type = type;
-    switch( type ){
-        case SMX_FIFO:
-        case SMX_D_FIFO:
-        case SMX_FIFO_D:
-        case SMX_D_FIFO_D:
-            ch->ch_fifo = smx_fifo_create( len );
-            break;
-        case SMX_BLACKBOARD:
-            ch->ch_bb = smx_blackboard_create();
-            break;
-        default:
-            dzlog_error("undefined channel type '%d'", ch->type );
-
-    }
+    ch->ch_fifo = smx_fifo_create( len );
     ch->collector = NULL;
     pthread_mutex_init( &ch->ch_mutex, NULL );
     pthread_cond_init( &ch->ch_cv, NULL );
     ch->state = SMX_CHANNEL_PENDING;
     return ch;
+}
+
+/*****************************************************************************/
+void smx_channel_destroy( smx_channel_t* ch )
+{
+    pthread_mutex_destroy( &ch->ch_mutex );
+    pthread_cond_destroy( &ch->ch_cv );
+    smx_fifo_destroy( ch->ch_fifo );
+    free( ch );
+}
+
+/*****************************************************************************/
+int smx_channel_ready_to_read( smx_channel_t* ch )
+{
+    switch( ch->type ) {
+        case SMX_FIFO:
+        case SMX_D_FIFO:
+            return ch->ch_fifo->count;
+        case SMX_D_FIFO_D:
+        case SMX_FIFO_D:
+            return 1;
+        default:
+            dzlog_error("undefined channel type '%d'", ch->type );
+    }
+    return 0;
+}
+
+/*****************************************************************************/
+smx_msg_t* smx_channel_read( smx_channel_t* ch )
+{
+    smx_msg_t* msg = NULL;
+    pthread_mutex_lock( &ch->ch_mutex );
+    while( ch->state == SMX_CHANNEL_PENDING )
+        pthread_cond_wait( &ch->ch_cv, &ch->ch_mutex );
+    switch( ch->type ) {
+        case SMX_FIFO:
+        case SMX_D_FIFO:
+            msg = smx_fifo_read( ch, ch->ch_fifo );
+            break;
+        case SMX_FIFO_D:
+        case SMX_D_FIFO_D:
+            msg = smx_fifo_d_read( ch->ch_fifo );
+            break;
+        default:
+            dzlog_error("undefined channel type '%d'", ch->type );
+    }
+    pthread_mutex_unlock( &ch->ch_mutex );
+    return msg;
+}
+
+/*****************************************************************************/
+void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
+{
+    switch( ch->type ) {
+        case SMX_FIFO:
+        case SMX_FIFO_D:
+            smx_fifo_write( ch->ch_fifo, msg );
+            break;
+        case SMX_D_FIFO:
+        case SMX_D_FIFO_D:
+            smx_d_fifo_write( ch->ch_fifo, msg );
+            break;
+        default:
+            dzlog_error("undefined channel type '%d'", ch->type );
+    }
+    if( ch->collector != NULL ) {
+        pthread_mutex_lock( &ch->collector->col_mutex );
+        ch->collector->count++;
+        ch->collector->state = SMX_CHANNEL_READY;
+        dzlog_debug("write to collector %p (new count: %d)", ch->collector,
+                ch->collector->count );
+        pthread_cond_signal( &ch->collector->col_cv );
+        pthread_mutex_unlock( &ch->collector->col_mutex );
+    }
+    pthread_mutex_lock( &ch->ch_mutex );
+    ch->state = SMX_CHANNEL_READY;
+    pthread_cond_signal( &ch->ch_cv );
+    pthread_mutex_unlock( &ch->ch_mutex );
 }
 
 /*****************************************************************************/
@@ -198,27 +218,6 @@ smx_fifo_t* smx_fifo_create( int length )
 }
 
 /*****************************************************************************/
-void smx_channel_destroy( smx_channel_t* ch )
-{
-    pthread_mutex_destroy( &ch->ch_mutex );
-    pthread_cond_destroy( &ch->ch_cv );
-    switch( ch->type ) {
-        case SMX_FIFO:
-        case SMX_D_FIFO:
-        case SMX_FIFO_D:
-        case SMX_D_FIFO_D:
-            smx_fifo_destroy( ch->ch_fifo );
-            break;
-        case SMX_BLACKBOARD:
-            smx_blackboard_destroy( ch->ch_bb );
-            break;
-        default:
-            dzlog_error("undefined channel type '%d'", ch->type );
-    }
-    free( ch );
-}
-
-/*****************************************************************************/
 void smx_fifo_destroy( smx_fifo_t* fifo )
 {
     pthread_mutex_destroy( &fifo->fifo_mutex );
@@ -231,49 +230,6 @@ void smx_fifo_destroy( smx_fifo_t* fifo )
     }
     if( fifo->backup != NULL ) smx_msg_destroy( fifo->backup, true );
     free( fifo );
-}
-
-/*****************************************************************************/
-int smx_channel_ready_to_read( smx_channel_t* ch )
-{
-    switch( ch->type ) {
-        case SMX_FIFO:
-        case SMX_D_FIFO:
-            return ch->ch_fifo->count;
-        case SMX_D_FIFO_D:
-        case SMX_FIFO_D:
-        case SMX_BLACKBOARD:
-            return 1;
-        default:
-            dzlog_error("undefined channel type '%d'", ch->type );
-    }
-    return 0;
-}
-
-/*****************************************************************************/
-smx_msg_t* smx_channel_read( smx_channel_t* ch )
-{
-    smx_msg_t* msg = NULL;
-    pthread_mutex_lock( &ch->ch_mutex );
-    while( ch->state == SMX_CHANNEL_PENDING )
-        pthread_cond_wait( &ch->ch_cv, &ch->ch_mutex );
-    switch( ch->type ) {
-        case SMX_FIFO:
-        case SMX_D_FIFO:
-            msg = smx_fifo_read( ch, ch->ch_fifo );
-            break;
-        case SMX_FIFO_D:
-        case SMX_D_FIFO_D:
-            msg = smx_fifo_d_read( ch->ch_fifo );
-            break;
-        case SMX_BLACKBOARD:
-            msg = smx_blackboard_read( ch->ch_bb );
-            break;
-        default:
-            dzlog_error("undefined channel type '%d'", ch->type );
-    }
-    pthread_mutex_unlock( &ch->ch_mutex );
-    return msg;
 }
 
 /*****************************************************************************/
@@ -327,39 +283,6 @@ smx_msg_t* smx_fifo_d_read( smx_fifo_t* fifo )
 }
 
 /*****************************************************************************/
-void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
-{
-    switch( ch->type ) {
-        case SMX_FIFO:
-        case SMX_FIFO_D:
-            smx_fifo_write( ch->ch_fifo, msg );
-            break;
-        case SMX_D_FIFO:
-        case SMX_D_FIFO_D:
-            smx_d_fifo_write( ch->ch_fifo, msg );
-            break;
-        case SMX_BLACKBOARD:
-            smx_blackboard_write( ch->ch_bb, msg );
-            break;
-        default:
-            dzlog_error("undefined channel type '%d'", ch->type );
-    }
-    if( ch->collector != NULL ) {
-        pthread_mutex_lock( &ch->collector->col_mutex );
-        ch->collector->count++;
-        ch->collector->state = SMX_CHANNEL_READY;
-        dzlog_debug("write to collector %p (new count: %d)", ch->collector,
-                ch->collector->count );
-        pthread_cond_signal( &ch->collector->col_cv );
-        pthread_mutex_unlock( &ch->collector->col_mutex );
-    }
-    pthread_mutex_lock( &ch->ch_mutex );
-    ch->state = SMX_CHANNEL_READY;
-    pthread_cond_signal( &ch->ch_cv );
-    pthread_mutex_unlock( &ch->ch_mutex );
-}
-
-/*****************************************************************************/
 void smx_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
 {
     pthread_mutex_lock( &fifo->fifo_mutex );
@@ -397,15 +320,17 @@ void smx_d_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
 }
 
 /*****************************************************************************/
-void* smx_data_copy( void* data, size_t size ) {
-    void* data_copy = malloc( size );
-    memcpy( data_copy, data, size );
-    return data_copy;
-}
-
-/*****************************************************************************/
-void smx_data_destroy( void* data ) {
-    free( data );
+smx_msg_t* smx_msg_create( void* data, size_t size,
+        void* ( *copy )( void*, size_t ), void ( *destroy )( void* ) )
+{
+    smx_msg_t* msg = malloc( sizeof( struct smx_msg_s ) );
+    msg->data = data;
+    msg->size = size;
+    if( copy == NULL ) msg->copy = ( *smx_msg_data_copy );
+    else msg->copy = copy;
+    if( destroy == NULL ) msg->destroy = ( *smx_msg_data_destroy );
+    else msg->destroy = destroy;
+    return msg;
 }
 
 /*****************************************************************************/
@@ -420,17 +345,17 @@ smx_msg_t* smx_msg_copy( smx_msg_t* msg )
 }
 
 /*****************************************************************************/
-smx_msg_t* smx_msg_create( void* data, size_t size,
-        void* ( *copy )( void*, size_t ), void ( *destroy )( void* ) )
+void* smx_msg_data_copy( void* data, size_t size )
 {
-    smx_msg_t* msg = malloc( sizeof( struct smx_msg_s ) );
-    msg->data = data;
-    msg->size = size;
-    if( copy == NULL ) msg->copy = ( *smx_data_copy );
-    else msg->copy = copy;
-    if( destroy == NULL ) msg->destroy = ( *smx_data_destroy );
-    else msg->destroy = destroy;
-    return msg;
+    void* data_copy = malloc( size );
+    memcpy( data_copy, data, size );
+    return data_copy;
+}
+
+/*****************************************************************************/
+void smx_msg_data_destroy( void* data )
+{
+    free( data );
 }
 
 /*****************************************************************************/
