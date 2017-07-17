@@ -109,12 +109,12 @@ struct smx_fifo_item_s
 };
 
 /**
- *
+ * @brief timed guard to limit communication rate
  */
 struct smx_guard_s
 {
-    smx_msg_t*      buffer;
-    int             fd;
+    int             fd;     /**> file descriptor pointing to timer */
+    struct timespec iat;    /**> minumum inter-arrival-time */
 };
 
 /**
@@ -387,8 +387,39 @@ void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
  * @param smx_msg_t*    pointer to the data
  */
 void smx_d_fifo_write( smx_fifo_t*, smx_msg_t* );
+
+/**
+ * @brief create timed guard structure and initialise timer
+ *
+ * @param int           miart in seconds
+ * @param int           miart in nano seconds
+ * @return smx_guart_t* pointer to the created guard structure
+ */
 smx_guard_t* smx_guard_create( int, int );
+
+/**
+ * @brief imposes a rate-controld on write operations
+ *
+ * A producer is blocked until the minimum inter-arrival-time between two
+ * consecutive messges has passed
+ *
+ * @param smx_guart_t*  pointer to the guard structure
+ */
 void smx_guard_write( smx_guard_t* );
+
+/**
+ * @brief imposes a rate-control on decoupled write operations
+ *
+ * A message is discarded if it did not reach the specified minimal inter-
+ * arrival time (messages are not buffered and delayed, it's only a very simple
+ * implementation)
+ *
+ * @param smx_guart_t*  pointer to the guard structure
+ * @param smx_guart_t*  pointer to the message structure
+ *
+ * @return int          -1 if message was discarded, 0 otherwise
+ */
+int smx_d_guard_write( smx_guard_t*, smx_msg_t* );
 
 // FUNCTIONS MSGS--------------------------------------------------------------
 /**

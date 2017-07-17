@@ -178,7 +178,8 @@ void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
             break;
         case SMX_D_FIFO:
         case SMX_D_FIFO_D:
-            /* smx_d_guard_write( ch->guard, msg ); */
+            // discard message if miat is not reached
+            if( smx_d_guard_write( ch->guard, msg ) < 0 ) return;
             smx_d_fifo_write( ch->fifo, msg );
             break;
         default:
@@ -332,11 +333,12 @@ smx_guard_t* smx_guard_create( int iats, int iatns )
 {
     struct itimerspec itval;
     smx_guard_t* guard = malloc( sizeof( struct smx_guard_s ) );
-    guard->buffer = NULL;
+    guard->iat.tv_sec = iats;
+    guard->iat.tv_nsec = iatns;
     itval.it_value.tv_sec = 0;
-    itval.it_value.tv_nsec = 1;
-    itval.it_interval.tv_sec = iats;
-    itval.it_interval.tv_nsec = iatns;
+    itval.it_value.tv_nsec = 1; // arm timer to immediately fire (1ns delay)
+    itval.it_interval.tv_sec = 0;
+    itval.it_interval.tv_nsec = 0;
     guard->fd = timerfd_create( CLOCK_MONOTONIC, 0 );
     if( guard->fd == -1 )
         dzlog_error( "timerfd_create: %d", errno );
@@ -349,15 +351,36 @@ smx_guard_t* smx_guard_create( int iats, int iatns )
 void smx_guard_write( smx_guard_t* guard )
 {
     uint64_t expired;
+    struct itimerspec itval;
     if( guard == NULL ) return;
-    /* if( -1 == timerfd_gettime( guard->fd, &itval ) ) */
-    /*     dzlog_error( "timerfd_gettime: %d", errno ); */
-    /* dzlog_error( "timerfd read: %lus, %luns", itval.it_value.tv_sec, */
-    /*         itval.it_value.tv_nsec ); */
-    /* if( ( itval.it_value.tv_sec != 0 ) || ( itval.it_value.tv_nsec != 0 ) ) */
     if( -1 == read( guard->fd, &expired, sizeof( uint64_t ) ) )
         dzlog_error( "timerfd read: %d", errno );
     dzlog_debug( "timerfd read missed: %lu", expired );
+    itval.it_value = guard->iat;
+    itval.it_interval.tv_sec = 0;
+    itval.it_interval.tv_nsec = 0;
+    if( -1 == timerfd_settime( guard->fd, 0, &itval, NULL ) )
+        dzlog_error( "timerfd_settime: %d", errno );
+}
+
+/*****************************************************************************/
+int smx_d_guard_write( smx_guard_t* guard, smx_msg_t* msg )
+{
+    struct itimerspec itval;
+    if( guard == NULL ) return 0;
+    if( -1 == timerfd_gettime( guard->fd, &itval ) )
+        dzlog_error( "timerfd_settime: %d", errno );
+    if( ( itval.it_value.tv_sec != 0 ) || ( itval.it_value.tv_nsec != 0 ) ) {
+        smx_msg_destroy( msg, true );
+        dzlog_debug( "rate_control: discard message" );
+        return -1;
+    }
+    itval.it_value = guard->iat;
+    itval.it_interval.tv_sec = 0;
+    itval.it_interval.tv_nsec = 0;
+    if( -1 == timerfd_settime( guard->fd, 0, &itval, NULL ) )
+        dzlog_error( "timerfd_settime: %d", errno );
+    return 0;
 }
 
 /*****************************************************************************/
