@@ -1,9 +1,14 @@
-#include "smxrts.h"
-#include "pthread.h"
+#include <time.h>
+#include <sys/timerfd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <errno.h>
 #include <zlog.h>
+#include "smxrts.h"
+#include "pthread.h"
 
 /*****************************************************************************/
 void* box_smx_cp( void* handler )
@@ -105,8 +110,9 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type )
 {
     smx_channel_t* ch = malloc( sizeof( struct smx_channel_s ) );
     ch->type = type;
-    ch->ch_fifo = smx_fifo_create( len );
+    ch->fifo = smx_fifo_create( len );
     ch->collector = NULL;
+    ch->guard = NULL;
     pthread_mutex_init( &ch->ch_mutex, NULL );
     pthread_cond_init( &ch->ch_cv, NULL );
     ch->state = SMX_CHANNEL_PENDING;
@@ -118,7 +124,7 @@ void smx_channel_destroy( smx_channel_t* ch )
 {
     pthread_mutex_destroy( &ch->ch_mutex );
     pthread_cond_destroy( &ch->ch_cv );
-    smx_fifo_destroy( ch->ch_fifo );
+    smx_fifo_destroy( ch->fifo );
     free( ch );
 }
 
@@ -128,7 +134,7 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
     switch( ch->type ) {
         case SMX_FIFO:
         case SMX_D_FIFO:
-            return ch->ch_fifo->count;
+            return ch->fifo->count;
         case SMX_D_FIFO_D:
         case SMX_FIFO_D:
             return 1;
@@ -148,11 +154,11 @@ smx_msg_t* smx_channel_read( smx_channel_t* ch )
     switch( ch->type ) {
         case SMX_FIFO:
         case SMX_D_FIFO:
-            msg = smx_fifo_read( ch, ch->ch_fifo );
+            msg = smx_fifo_read( ch, ch->fifo );
             break;
         case SMX_FIFO_D:
         case SMX_D_FIFO_D:
-            msg = smx_fifo_d_read( ch->ch_fifo );
+            msg = smx_fifo_d_read( ch->fifo );
             break;
         default:
             dzlog_error("undefined channel type '%d'", ch->type );
@@ -167,11 +173,13 @@ void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
     switch( ch->type ) {
         case SMX_FIFO:
         case SMX_FIFO_D:
-            smx_fifo_write( ch->ch_fifo, msg );
+            smx_guard_write( ch->guard );
+            smx_fifo_write( ch->fifo, msg );
             break;
         case SMX_D_FIFO:
         case SMX_D_FIFO_D:
-            smx_d_fifo_write( ch->ch_fifo, msg );
+            /* smx_d_guard_write( ch->guard, msg ); */
+            smx_d_fifo_write( ch->fifo, msg );
             break;
         default:
             dzlog_error("undefined channel type '%d'", ch->type );
@@ -317,6 +325,39 @@ void smx_d_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
     pthread_cond_signal( &fifo->fifo_cv );
     pthread_mutex_unlock( &fifo->fifo_mutex );
     if( overwrite ) smx_msg_destroy( msg_tmp, true );
+}
+
+/*****************************************************************************/
+smx_guard_t* smx_guard_create( int iats, int iatns )
+{
+    struct itimerspec itval;
+    smx_guard_t* guard = malloc( sizeof( struct smx_guard_s ) );
+    guard->buffer = NULL;
+    itval.it_value.tv_sec = 0;
+    itval.it_value.tv_nsec = 1;
+    itval.it_interval.tv_sec = iats;
+    itval.it_interval.tv_nsec = iatns;
+    guard->fd = timerfd_create( CLOCK_MONOTONIC, 0 );
+    if( guard->fd == -1 )
+        dzlog_error( "timerfd_create: %d", errno );
+    if( -1 == timerfd_settime( guard->fd, 0, &itval, NULL ) )
+        dzlog_error( "timerfd_settime: %d", errno );
+    return guard;
+}
+
+/*****************************************************************************/
+void smx_guard_write( smx_guard_t* guard )
+{
+    uint64_t expired;
+    if( guard == NULL ) return;
+    /* if( -1 == timerfd_gettime( guard->fd, &itval ) ) */
+    /*     dzlog_error( "timerfd_gettime: %d", errno ); */
+    /* dzlog_error( "timerfd read: %lus, %luns", itval.it_value.tv_sec, */
+    /*         itval.it_value.tv_nsec ); */
+    /* if( ( itval.it_value.tv_sec != 0 ) || ( itval.it_value.tv_nsec != 0 ) ) */
+    if( -1 == read( guard->fd, &expired, sizeof( uint64_t ) ) )
+        dzlog_error( "timerfd read: %d", errno );
+    dzlog_debug( "timerfd read missed: %lu", expired );
 }
 
 /*****************************************************************************/

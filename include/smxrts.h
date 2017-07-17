@@ -5,13 +5,13 @@
 #include <stdlib.h>
 
 // TYPEDEFS -------------------------------------------------------------------
+typedef struct smx_channel_s smx_channel_t;
+typedef struct smx_collector_s smx_collector_t;
 typedef struct smx_fifo_item_s smx_fifo_item_t;
 typedef struct smx_fifo_s smx_fifo_t;
-typedef struct smx_blackboard_s smx_blackboard_t;
-typedef struct smx_channel_s smx_channel_t;
+typedef struct smx_guard_s smx_guard_t;
 typedef struct smx_msg_s smx_msg_t;
 typedef struct box_smx_cp_s box_smx_cp_t;
-typedef struct smx_collector_s smx_collector_t;
 typedef enum smx_channel_type_e smx_channel_type_t;
 typedef enum smx_channel_state_e smx_channel_state_t;
 
@@ -57,7 +57,8 @@ enum smx_thread_state_e
 struct smx_channel_s
 {
     smx_channel_type_t  type;       /**< #smx_channel_type_e */
-    smx_fifo_t*         ch_fifo;    /**< ::smx_fifo_s */
+    smx_fifo_t*         fifo;    /**< ::smx_fifo_s */
+    smx_guard_t*        guard;
     smx_collector_t*    collector;  /**< ::smx_collector_s, collect signals */
     smx_channel_state_t state;      /**< ::smx_channel_state_e */
     pthread_mutex_t     ch_mutex;   /**< mutual exclusion */
@@ -105,6 +106,15 @@ struct smx_fifo_item_s
     smx_msg_t*       msg;        /**< ::smx_msg_s */
     smx_fifo_item_t* next;       /**< pointer to the next item */
     smx_fifo_item_t* prev;       /**< pointer to the previous item */
+};
+
+/**
+ *
+ */
+struct smx_guard_s
+{
+    smx_msg_t*      buffer;
+    int             fd;
 };
 
 /**
@@ -316,6 +326,10 @@ void smx_channel_write( smx_channel_t*, smx_msg_t* );
     ( ( smx_channel_t* )ch )->collector\
         = ( ( box_smx_cp_t* )box )->in.collector;\
 
+/*****************************************************************************/
+#define SMX_CONNECT_GUARD( ch, iats, iatns )\
+    ( ( smx_channel_t* )ch )->guard = smx_guard_create( iats, iatns )
+
 // FUNCTIONS FIFO--------------------------------------------------------------
 /**
  * @brief Create Streamix FIFO channel
@@ -373,6 +387,8 @@ void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
  * @param smx_msg_t*    pointer to the data
  */
 void smx_d_fifo_write( smx_fifo_t*, smx_msg_t* );
+smx_guard_t* smx_guard_create( int, int );
+void smx_guard_write( smx_guard_t* );
 
 // FUNCTIONS MSGS--------------------------------------------------------------
 /**
