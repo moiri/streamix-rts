@@ -1,5 +1,6 @@
 #include <time.h>
 #include <sys/timerfd.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -369,7 +370,7 @@ int smx_d_guard_write( smx_guard_t* guard, smx_msg_t* msg )
     struct itimerspec itval;
     if( guard == NULL ) return 0;
     if( -1 == timerfd_gettime( guard->fd, &itval ) )
-        dzlog_error( "timerfd_settime: %d", errno );
+        dzlog_error( "timerfd_gettime: %d", errno );
     if( ( itval.it_value.tv_sec != 0 ) || ( itval.it_value.tv_nsec != 0 ) ) {
         smx_msg_destroy( msg, true );
         dzlog_debug( "rate_control: discard message" );
@@ -448,4 +449,47 @@ void smx_program_cleanup()
     dzlog_info("end thread main");
     zlog_fini();
     pthread_exit( NULL );
+}
+
+/*****************************************************************************/
+smx_timer_t* smx_tt_create( int sec, int nsec )
+{
+    smx_timer_t* timer = malloc( sizeof( struct smx_timer_s ) );
+    pthread_mutex_init( &timer->mutex, NULL );
+    timer->itval.it_value.tv_sec = sec;
+    timer->itval.it_value.tv_nsec = nsec;
+    timer->itval.it_interval.tv_sec = sec;
+    timer->itval.it_interval.tv_nsec = nsec;
+    timer->fd = timerfd_create( CLOCK_MONOTONIC, 0 );
+    if( timer->fd == -1 )
+        dzlog_error( "timerfd_create: %d", errno );
+    return timer;
+}
+
+/*****************************************************************************/
+void smx_tt_enable( smx_timer_t* timer )
+{
+    if( timer == NULL ) return;
+    if( -1 == timerfd_settime( timer->fd, 0, &timer->itval, NULL ) )
+        dzlog_error( "timerfd_settime: %d", errno );
+}
+
+/*****************************************************************************/
+void smx_tt_wait( smx_timer_t* timer )
+{
+    uint64_t expired;
+    struct pollfd pfd;
+    int poll_res;
+    if( timer == NULL ) return;
+    pfd.fd = timer->fd;
+    pfd.events = POLLIN;
+    pfd.revents = 0;
+    poll_res = poll( &pfd, 1, 0 );
+    if( -1 == poll_res )
+        dzlog_error( "timerfd poll: %d", errno );
+    if( poll_res > 0 ) {
+        dzlog_error( "deadline missed" );
+    }
+    else if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
+        dzlog_error( "timerfd read: %d", errno );
 }

@@ -11,6 +11,7 @@ typedef struct smx_fifo_item_s smx_fifo_item_t;
 typedef struct smx_fifo_s smx_fifo_t;
 typedef struct smx_guard_s smx_guard_t;
 typedef struct smx_msg_s smx_msg_t;
+typedef struct smx_timer_s smx_timer_t;
 typedef struct box_smx_cp_s box_smx_cp_t;
 typedef enum smx_channel_type_e smx_channel_type_t;
 typedef enum smx_channel_state_e smx_channel_state_t;
@@ -132,6 +133,16 @@ struct smx_msg_s
 };
 
 /**
+ *
+ */
+struct smx_timer_s
+{
+    int                 fd;         /**< timer file descriptor */
+    pthread_mutex_t     mutex;      /**< mutual exclusion */
+    struct itimerspec   itval;      /**< iteration specifiaction */
+};
+
+/**
  * @brief The signature of a copy synchronizer
  */
 struct box_smx_cp_s
@@ -213,7 +224,8 @@ void smx_box_cp_init( box_smx_cp_t* );
         = malloc( sizeof( smx_channel_t* ) * indegree );\
     ( ( box_ ## box_name ## _t* )box )->out.count = 0;\
     ( ( box_ ## box_name ## _t* )box )->out.ports\
-        = malloc( sizeof( smx_channel_t* ) * outdegree )
+        = malloc( sizeof( smx_channel_t* ) * outdegree );\
+    ( ( box_ ## box_name ## _t* )box )->timer = NULL
 
 /*****************************************************************************/
 #define SMX_BOX_RUN( arg, box_name )\
@@ -229,8 +241,30 @@ void smx_box_cp_init( box_smx_cp_t* );
 pthread_t smx_box_run( void*( void* ), void* );
 
 /*****************************************************************************/
+#define SMX_BOX_WAIT( h, box_name )\
+    smx_tt_wait( ( ( box_ ## box_name ## _t* )h )->timer )
+
+/**
+ * @brief blocking wait on timer
+ *
+ * @param smx_timer_t*  pointer to a timer structure
+ */
+void smx_tt_wait( smx_timer_t* );
+
+/*****************************************************************************/
 #define SMX_BOX_WAIT_END( box_name )\
     pthread_join( th_ ## box_name, NULL )
+
+/*****************************************************************************/
+#define SMX_BOX_ENABLE( h, box_name )\
+    smx_tt_enable( ( ( box_ ## box_name ## _t* )h )->timer )
+
+/**
+ * @brief enable periodic tt timer
+ *
+ * @param smx_timer_t*  pointer to a timer structure
+ */
+void smx_tt_enable( smx_timer_t* );
 
 // FUNCTIONS CHANNEL-----------------------------------------------------------
 /*****************************************************************************/
@@ -329,6 +363,19 @@ void smx_channel_write( smx_channel_t*, smx_msg_t* );
 /*****************************************************************************/
 #define SMX_CONNECT_GUARD( ch, iats, iatns )\
     ( ( smx_channel_t* )ch )->guard = smx_guard_create( iats, iatns )
+
+/*****************************************************************************/
+#define SMX_CONNECT_TT( box, box_name, sec, nsec )\
+    ( ( box_ ## box_name ## _t* )box )->timer = smx_tt_create( sec, nsec )
+
+/**
+ * @brief create a periodic timer structure
+ *
+ * @param int           seconds
+ * @param int           nano seconds
+ * @return smx_timer_t* pointer to the created timer structure
+ */
+smx_timer_t* smx_tt_create( int, int );
 
 // FUNCTIONS FIFO--------------------------------------------------------------
 /**
@@ -507,5 +554,6 @@ void smx_program_init();
  * Close the log file
  */
 void smx_program_cleanup();
+
 
 #endif // HANDLER_H
