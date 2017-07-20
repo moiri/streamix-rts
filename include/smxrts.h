@@ -148,14 +148,15 @@ struct smx_timer_s
 struct box_smx_cp_s
 {
     struct {
-        smx_channel_t** ports;      /** an array of channel pointers */
-        int count;                  /** the number of input ports */
-        smx_collector_t* collector; /** ::smx_collector_s */
+        smx_channel_t** ports;      /**< an array of channel pointers */
+        int count;                  /**< the number of input ports */
+        smx_collector_t* collector; /**< ::smx_collector_s */
     } in;
     struct {
-        smx_channel_t** ports;      /** an array of channel pointers */
-        int count;                  /** the number of output ports */
+        smx_channel_t** ports;      /**< an array of channel pointers */
+        int count;                  /**< the number of output ports */
     } out;
+    smx_timer_t*    timer;          /**< timer structure for tt*/
 };
 
 // FUNCTIONS BOX --------------------------------------------------------------
