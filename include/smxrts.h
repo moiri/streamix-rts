@@ -47,8 +47,9 @@ enum smx_channel_state_e
  */
 enum smx_thread_state_e
 {
-    SMX_BOX_TERMINATE,      /**< end thread */
-    SMX_BOX_CONTINUE        /**< continue to call the box implementation fct */
+    SMX_BOX_RETURN,
+    SMX_BOX_CONTINUE,       /**< continue to call the box implementation fct */
+    SMX_BOX_TERMINATE       /**< end thread */
 };
 
 // STRUCTS --------------------------------------------------------------------
@@ -58,8 +59,9 @@ enum smx_thread_state_e
 struct smx_channel_s
 {
     smx_channel_type_t  type;       /**< #smx_channel_type_e */
-    smx_fifo_t*         fifo;    /**< ::smx_fifo_s */
-    smx_guard_t*        guard;
+    const char*         name;       /**< name of the channel */
+    smx_fifo_t*         fifo;       /**< ::smx_fifo_s */
+    smx_guard_t*        guard;      /**< ::smx_guard_s */
     smx_collector_t*    collector;  /**< ::smx_collector_s, collect signals */
     smx_channel_state_t state;      /**< ::smx_channel_state_e */
     pthread_mutex_t     ch_mutex;   /**< mutual exclusion */
@@ -161,14 +163,6 @@ struct box_smx_cp_s
 
 // FUNCTIONS BOX --------------------------------------------------------------
 /*****************************************************************************/
-/**
- * @brief the task function for copy synchronizer nodes
- *
- * @param void*     a pointer to the signature ::box_smx_cp_s
- * @return void*    NULL, according to phread specification
- */
-void* box_smx_cp( void* );
-
 /*****************************************************************************/
 #define SMX_BOX_CP_DESTROY( box )\
     smx_box_cp_destroy( ( box_smx_cp_t* )box )
@@ -219,6 +213,11 @@ void smx_box_cp_init( box_smx_cp_t* );
     free( box )
 
 /*****************************************************************************/
+#define SMX_BOX_ENABLE( h, box_name )\
+    smx_box_start( #box_name );\
+    smx_tt_enable( ( ( box_ ## box_name ## _t* )h )->timer )
+
+/*****************************************************************************/
 #define SMX_BOX_INIT( box_name, box, indegree, outdegree )\
     ( ( box_ ## box_name ## _t* )box )->in.count = 0;\
     ( ( box_ ## box_name ## _t* )box )->in.ports\
@@ -242,6 +241,52 @@ void smx_box_cp_init( box_smx_cp_t* );
 pthread_t smx_box_run( void*( void* ), void* );
 
 /*****************************************************************************/
+#define SMX_BOX_UPDATE_STATE( h, box_name, state )\
+    smx_box_update_state( ( ( box_ ## box_name ## _t* )h )->in.ports,\
+            ( ( box_ ## box_name ## _t* )h )->in.count, state )
+
+/**
+ * @brief Update the state of the box
+ *
+ * Update the state of the box to indicate wheter computaion needs to scontinue
+ * or terminate. The state can either be forced by the box implementation (see
+ * \p state) or depends on the state of the triggering producers.
+ * Note that non-triggering producers may still be alive but the thread will
+ * still terminate if all triggering producers are terminated. This is to
+ * prevent a while(1) type of behaviour because no blocking will occur to slow
+ * the thread execution.
+ *
+ * @param smx_channel_t**   a list of output channels
+ * @param int               number of output channels
+ * @param int               state set by the box implementation. If set to
+ *                          SMX_BOX_CONTINUE, the box will not terminate. If
+ *                          set to SMX_BOX_TERMINATE, the box will terminate.
+ *                          If set to SMX_BOX_RETURN (or 0) this function will
+ *                          determine wheter a box terminates or not
+ * @param int               SMX_BOX_CONTINUE if there is at least one
+ *                          triggering producer alive.
+ *                          SMX_BOX_TERINATE if all triggering prodicers are
+ *                          terminated.
+ */
+int smx_box_update_state( smx_channel_t**, int, int );
+
+/*****************************************************************************/
+#define SMX_BOX_TERMINATE( h, box_name )\
+    smx_channels_terminate( ( ( box_ ## box_name ## _t* )h )->out.ports,\
+            ( ( box_ ## box_name ## _t* )h )->out.count );\
+    smx_box_terminate( #box_name )
+
+/**
+ *
+ */
+void smx_box_start( const char* );
+
+/**
+ *
+ */
+void smx_box_terminate( const char* );
+
+/*****************************************************************************/
 #define SMX_BOX_WAIT( h, box_name )\
     smx_tt_wait( ( ( box_ ## box_name ## _t* )h )->timer )
 
@@ -256,10 +301,6 @@ void smx_tt_wait( smx_timer_t* );
 #define SMX_BOX_WAIT_END( box_name )\
     pthread_join( th_ ## box_name, NULL )
 
-/*****************************************************************************/
-#define SMX_BOX_ENABLE( h, box_name )\
-    smx_tt_enable( ( ( box_ ## box_name ## _t* )h )->timer )
-
 /**
  * @brief enable periodic tt timer
  *
@@ -269,9 +310,8 @@ void smx_tt_enable( smx_timer_t* );
 
 // FUNCTIONS CHANNEL-----------------------------------------------------------
 /*****************************************************************************/
-#define SMX_CHANNELS_TERMINATE( h, box_name )\
-    smx_channels_terminate( ( ( box_ ## box_name ## _t* )h )->out.ports,\
-            ( ( box_ ## box_name ## _t* )h )->out.count )
+#define SMX_HAS_PRODUCER_TERMINATED( h, box_name, ch_name )\
+    ( ( box_ ## box_name ## _t* )h )->in.port_ ## ch_name->state == SMX_CHANNEL_END
 
 /**
  * @brief Send termination signal to all output channels
@@ -349,7 +389,8 @@ void smx_channel_write( smx_channel_t*, smx_msg_t* );
 /*****************************************************************************/
 #define SMX_CONNECT( box, ch, box_name, ch_name, mode )\
     ( ( box_ ## box_name ## _t* )box )->mode.port_ ## ch_name\
-        = ( smx_channel_t* )ch
+        = ( smx_channel_t* )ch;\
+    ( ( box_ ## box_name ## _t* )box )->mode.port_ ## ch_name->name = #ch_name
 
 /*****************************************************************************/
 #define SMX_CONNECT_ARR( box, ch, box_name, ch_name, mode )\
@@ -411,18 +452,20 @@ smx_msg_t* smx_fifo_read( smx_channel_t*, smx_fifo_t* );
  * will potentially be duplicated. However, the consumer is blocked on this
  * channel until a first message is available.
  *
+ * @param smx_channel_t*    pointer to channel struct of the FIFO
  * @param smx_fifo_t*       pointer to a FIFO_D channel
  * @return smx_msg_t*       pointer to the data
  */
-smx_msg_t* smx_fifo_d_read( smx_fifo_t* );
+smx_msg_t* smx_fifo_d_read( smx_channel_t*, smx_fifo_t* );
 
 /**
  * @brief write to a Streamix FIFO channel
  *
- * @param smx_fifo_t*   pointer to a FIFO channel
- * @param smx_msg_t*    pointer to the data
+ * @param smx_channel_t*    pointer to channel struct of the FIFO
+ * @param smx_fifo_t*       pointer to a FIFO channel
+ * @param smx_msg_t*        pointer to the data
  */
-void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
+void smx_fifo_write( smx_channel_t*, smx_fifo_t*, smx_msg_t* );
 
 /**
  * @brief write to a Streamix D_FIFO channel
@@ -431,10 +474,11 @@ void smx_fifo_write( smx_fifo_t*, smx_msg_t* );
  * at the output). This means that the tail of the D_FIFO will potentially be
  * overwritten.
  *
- * @param smx_fifo_t*   pointer to a D_FIFO channel
- * @param smx_msg_t*    pointer to the data
+ * @param smx_channel_t*    pointer to channel struct of the FIFO
+ * @param smx_fifo_t*       pointer to a D_FIFO channel
+ * @param smx_msg_t*        pointer to the data
  */
-void smx_d_fifo_write( smx_fifo_t*, smx_msg_t* );
+void smx_d_fifo_write( smx_channel_t*, smx_fifo_t*, smx_msg_t* );
 
 /**
  * @brief create timed guard structure and initialise timer

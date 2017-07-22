@@ -12,15 +12,6 @@
 #include "pthread.h"
 
 /*****************************************************************************/
-void* box_smx_cp( void* handler )
-{
-    while( smx_box_cp_impl( handler ) );
-    smx_channels_terminate( ( ( box_smx_cp_t* )handler )->out.ports,
-            ( ( box_smx_cp_t* )handler )->out.count );
-    return NULL;
-}
-
-/*****************************************************************************/
 void smx_box_cp_destroy( box_smx_cp_t* cp )
 {
     pthread_mutex_destroy( &cp->in.collector->col_mutex );
@@ -87,11 +78,46 @@ void smx_box_cp_init( box_smx_cp_t* cp )
 }
 
 /*****************************************************************************/
+void smx_box_start( const char* name )
+{
+    dzlog_debug( "start box %s", name );
+}
+
+/*****************************************************************************/
+void smx_box_terminate( const char* name )
+{
+    dzlog_debug( "terminate box %s", name );
+}
+
+/*****************************************************************************/
 pthread_t smx_box_run( void* box_impl( void* ), void* arg )
 {
     pthread_t thread;
     pthread_create( &thread, NULL, box_impl, arg );
     return thread;
+}
+
+/*****************************************************************************/
+int smx_box_update_state( smx_channel_t** chs, int len, int state )
+{
+    int i;
+    int done_cnt = 0;
+    int trigger_cnt = 0;
+    // if state is forced by box implementation return forced state
+    if( state != SMX_BOX_RETURN ) return state;
+
+    // otherwise make internal checks
+    for( i=0; i<len; i++ ) {
+        if( ( chs[i]->type == SMX_FIFO ) || ( chs[i]->type == SMX_D_FIFO ) ) {
+            trigger_cnt++;
+            if( chs[i]->state == SMX_CHANNEL_END )
+                done_cnt++;
+        }
+    }
+    // if all the triggering inputs are done, terminate the thread
+    if( done_cnt >= trigger_cnt )
+        return SMX_BOX_TERMINATE;
+    return SMX_BOX_CONTINUE;
 }
 
 /*****************************************************************************/
@@ -117,6 +143,8 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type )
     pthread_mutex_init( &ch->ch_mutex, NULL );
     pthread_cond_init( &ch->ch_cv, NULL );
     ch->state = SMX_CHANNEL_PENDING;
+    if( ( type == SMX_FIFO_D ) || ( type == SMX_D_FIFO_D ) )
+        ch->state = SMX_CHANNEL_READY; // do not block on decouped output
     return ch;
 }
 
@@ -159,7 +187,7 @@ smx_msg_t* smx_channel_read( smx_channel_t* ch )
             break;
         case SMX_FIFO_D:
         case SMX_D_FIFO_D:
-            msg = smx_fifo_d_read( ch->fifo );
+            msg = smx_fifo_d_read( ch, ch->fifo );
             break;
         default:
             dzlog_error("undefined channel type '%d'", ch->type );
@@ -175,13 +203,13 @@ void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
         case SMX_FIFO:
         case SMX_FIFO_D:
             smx_guard_write( ch->guard );
-            smx_fifo_write( ch->fifo, msg );
+            smx_fifo_write( ch, ch->fifo, msg );
             break;
         case SMX_D_FIFO:
         case SMX_D_FIFO_D:
             // discard message if miat is not reached
             if( smx_d_guard_write( ch->guard, msg ) < 0 ) return;
-            smx_d_fifo_write( ch->fifo, msg );
+            smx_d_fifo_write( ch, ch->fifo, msg );
             break;
         default:
             dzlog_error("undefined channel type '%d'", ch->type );
@@ -253,7 +281,8 @@ smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo )
         fifo->head->msg = NULL;
         fifo->head = fifo->head->prev;
         fifo->count--;
-        dzlog_debug("read from fifo %p (new count: %d)", fifo, fifo->count );
+        dzlog_debug("read from fifo %s (new count: %d)", ch->name,
+                fifo->count );
         if( ( fifo->count == 0 ) && ( ch->state != SMX_CHANNEL_END ) ) {
             // last message was read, wait for producer to terminate or produce
             ch->state = SMX_CHANNEL_PENDING;
@@ -265,7 +294,7 @@ smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo )
 }
 
 /*****************************************************************************/
-smx_msg_t* smx_fifo_d_read( smx_fifo_t* fifo )
+smx_msg_t* smx_fifo_d_read( smx_channel_t* ch, smx_fifo_t* fifo )
 {
     smx_msg_t* msg = NULL;
     pthread_mutex_lock( &fifo->fifo_mutex );
@@ -281,19 +310,26 @@ smx_msg_t* smx_fifo_d_read( smx_fifo_t* fifo )
             fifo->backup = smx_msg_copy( msg );
         }
         fifo->count--;
-        dzlog_debug("read from fifo %p (new count: %d)", fifo, fifo->count );
+        dzlog_debug("read from fifo %s (new count: %d)", ch->name,
+                fifo->count );
         pthread_cond_signal( &fifo->fifo_cv );
     }
     else {
-        msg = smx_msg_copy( fifo->backup );
-        dzlog_debug("fifo %p is empty, duplicate backup", fifo );
+        if( fifo->backup != NULL ) {
+            msg = smx_msg_copy( fifo->backup );
+            dzlog_debug("fifo %s is empty, duplicate backup", ch->name );
+        }
+        else {
+            dzlog_debug("nothing to read, fifo %s and its backup is empty",
+                    ch->name );
+        }
     }
     pthread_mutex_unlock( &fifo->fifo_mutex );
     return msg;
 }
 
 /*****************************************************************************/
-void smx_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
+void smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
 {
     pthread_mutex_lock( &fifo->fifo_mutex );
     while( fifo->count == fifo->length )
@@ -301,13 +337,13 @@ void smx_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
     fifo->tail->msg = msg;
     fifo->tail = fifo->tail->prev;
     fifo->count++;
-    dzlog_debug("write to fifo %p (new count: %d)", fifo, fifo->count );
+    dzlog_debug("write to fifo %s (new count: %d)", ch->name, fifo->count );
     pthread_cond_signal( &fifo->fifo_cv );
     pthread_mutex_unlock( &fifo->fifo_mutex );
 }
 
 /*****************************************************************************/
-void smx_d_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
+void smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
 {
     bool overwrite = false;
     smx_msg_t* msg_tmp = NULL;
@@ -317,12 +353,12 @@ void smx_d_fifo_write( smx_fifo_t* fifo, smx_msg_t* msg )
     if( fifo->count < fifo->length ) {
         fifo->tail = fifo->tail->prev;
         fifo->count++;
-        dzlog_debug("write to fifo %p (new count: %d)", fifo, fifo->count );
+        dzlog_debug("write to fifo %s (new count: %d)", ch->name, fifo->count );
     }
     else {
         overwrite = true;
-        dzlog_debug("overwrite tail of fifo %p (new count: %d)",
-                fifo, fifo->count );
+        dzlog_debug("overwrite tail of fifo %s (new count: %d)",
+                ch->name, fifo->count );
     }
     pthread_cond_signal( &fifo->fifo_cv );
     pthread_mutex_unlock( &fifo->fifo_mutex );
@@ -440,13 +476,13 @@ void smx_program_init()
         pthread_exit( NULL );
     }
 
-    dzlog_info("start thread main");
+    dzlog_debug("start thread main");
 }
 
 /*****************************************************************************/
 void smx_program_cleanup()
 {
-    dzlog_info("end thread main");
+    dzlog_debug("end thread main");
     zlog_fini();
     pthread_exit( NULL );
 }
