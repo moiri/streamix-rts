@@ -13,8 +13,11 @@ typedef struct smx_guard_s smx_guard_t;
 typedef struct smx_msg_s smx_msg_t;
 typedef struct smx_timer_s smx_timer_t;
 typedef struct box_smx_cp_s box_smx_cp_t;
+typedef struct box_smx_tf_s box_smx_tf_t;
 typedef enum smx_channel_type_e smx_channel_type_t;
 typedef enum smx_channel_state_e smx_channel_state_t;
+
+#define TF_COM_DELAY 1000000
 
 // ENUMS ----------------------------------------------------------------------
 /**
@@ -140,8 +143,9 @@ struct smx_msg_s
 struct smx_timer_s
 {
     int                 fd;         /**< timer file descriptor */
-    pthread_mutex_t     mutex;      /**< mutual exclusion */
+    int                 fd_comp;    /**< communication timer file descriptor */
     struct itimerspec   itval;      /**< iteration specifiaction */
+    struct itimerspec   compval;    /**< iteration specifiaction */
 };
 
 /**
@@ -159,6 +163,20 @@ struct box_smx_cp_s
         int count;                  /**< the number of output ports */
     } out;
     smx_timer_t*    timer;          /**< timer structure for tt*/
+};
+
+/**
+ * @brief The signature of a temporal firewall
+ */
+struct box_smx_tf_s
+{
+    smx_channel_t** chs_in_tf;      /**< channels connected to inputs of tf */
+    smx_channel_t** chs_in_net;     /**< channels connected to inputs of net */
+    smx_channel_t** chs_out_tf;     /**< channels connected to outputs of tf */
+    smx_channel_t** chs_out_net;    /**< channels connected to outputs of net */
+    int             count_in;       /**< the number of input ports */
+    int             count_out;      /**< the number of output ports */
+    smx_timer_t*    timer;          /**< timer structure for tf*/
 };
 
 // FUNCTIONS BOX --------------------------------------------------------------
@@ -292,6 +310,9 @@ int smx_box_update_state( smx_channel_t**, int, int );
  * @param smx_timer_t*  pointer to a timer structure
  */
 void smx_tt_wait( smx_timer_t* );
+void smx_tf_wait( smx_timer_t* );
+void box_tf_consume( smx_channel_t** chs_tf, smx_channel_t** chs_net, int cnt );
+void box_tf_produce( smx_channel_t** chs_tf, smx_channel_t** chs_net, int cnt );
 
 /*****************************************************************************/
 #define SMX_BOX_WAIT_END( box_name )\
@@ -303,6 +324,7 @@ void smx_tt_wait( smx_timer_t* );
  * @param smx_timer_t*  pointer to a timer structure
  */
 void smx_tt_enable( smx_timer_t* );
+void smx_tf_enable( smx_timer_t* );
 
 // FUNCTIONS CHANNEL-----------------------------------------------------------
 /*****************************************************************************/

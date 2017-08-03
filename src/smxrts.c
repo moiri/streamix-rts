@@ -102,9 +102,52 @@ void* smx_box_start_routine( const char* name, int ( impl )( void* ), void* h,
 }
 
 /*****************************************************************************/
+void* smx_box_start_routine_tf( const char* name, box_smx_tf_t* h )
+{
+    int state = SMX_BOX_CONTINUE;
+    smx_box_start( name );
+    smx_tt_enable( h->timer );
+    smx_tf_enable( h->timer );
+    while( state == SMX_BOX_CONTINUE )
+    {
+        box_tf_consume( h->chs_in_tf, h->chs_in_net, h->count_in );
+        smx_tf_wait( h->timer );
+        box_tf_produce( h->chs_out_tf, h->chs_out_net, h->count_out );
+        smx_tt_wait( h->timer );
+        smx_tf_enable( h->timer );
+        state = smx_box_update_state( h->chs_in_tf, h->count_in, state );
+    }
+    smx_channels_terminate( h->chs_out_tf, h->count_out );
+    smx_box_terminate( name );
+    return NULL;
+}
+
+/*****************************************************************************/
 void smx_box_terminate( const char* name )
 {
     dzlog_debug( "terminate box %s", name );
+}
+
+/*****************************************************************************/
+void box_tf_consume( smx_channel_t** chs_tf, smx_channel_t** chs_net, int cnt )
+{
+    smx_msg_t* msg;
+    int i;
+    for( i=0; i<cnt; i++ ) {
+        msg = smx_channel_read( chs_tf[i] );
+        smx_channel_write( chs_net[i], msg );
+    }
+}
+
+/*****************************************************************************/
+void box_tf_produce( smx_channel_t** chs_tf, smx_channel_t** chs_net, int cnt )
+{
+    smx_msg_t* msg;
+    int i;
+    for( i=0; i<cnt; i++ ) {
+        msg = smx_channel_read( chs_net[i] );
+        smx_channel_write( chs_tf[i], msg );
+    }
 }
 
 /*****************************************************************************/
@@ -525,7 +568,6 @@ void smx_program_cleanup()
 smx_timer_t* smx_tt_create( int sec, int nsec )
 {
     smx_timer_t* timer = malloc( sizeof( struct smx_timer_s ) );
-    pthread_mutex_init( &timer->mutex, NULL );
     timer->itval.it_value.tv_sec = sec;
     timer->itval.it_value.tv_nsec = nsec;
     timer->itval.it_interval.tv_sec = sec;
@@ -537,10 +579,50 @@ smx_timer_t* smx_tt_create( int sec, int nsec )
 }
 
 /*****************************************************************************/
+smx_timer_t* smx_tf_create( int sec, int nsec )
+{
+    int delta_nsec, comp_sec = 0, comp_nsec = 0;
+    smx_timer_t* timer = malloc( sizeof( struct smx_timer_s ) );
+    delta_nsec = nsec - TF_COM_DELAY;
+    if( delta_nsec > 0 ) {
+        comp_sec = sec;
+        comp_nsec = delta_nsec;
+    }
+    else if( sec > 0 ) {
+        comp_sec = sec - 1;
+        comp_nsec = 1000000000 + delta_nsec;
+    }
+    else dzlog_error( "interval is smaller than communication dealy: %d < %d",
+                nsec, TF_COM_DELAY );
+
+    timer->itval.it_value.tv_sec = sec;
+    timer->itval.it_value.tv_nsec = nsec;
+    timer->itval.it_interval.tv_sec = sec;
+    timer->itval.it_interval.tv_nsec = nsec;
+    timer->compval.it_value.tv_sec = comp_sec;
+    timer->compval.it_value.tv_nsec = comp_nsec;
+    timer->compval.it_interval.tv_sec = 0;
+    timer->compval.it_interval.tv_nsec = 0;
+    timer->fd = timerfd_create( CLOCK_MONOTONIC, 0 );
+    timer->fd_comp = timerfd_create( CLOCK_MONOTONIC, 0 );
+    if( timer->fd == -1 )
+        dzlog_error( "timerfd_create: %d", errno );
+    return timer;
+}
+
+/*****************************************************************************/
 void smx_tt_enable( smx_timer_t* timer )
 {
     if( timer == NULL ) return;
     if( -1 == timerfd_settime( timer->fd, 0, &timer->itval, NULL ) )
+        dzlog_error( "timerfd_settime: %d", errno );
+}
+
+/*****************************************************************************/
+void smx_tf_enable( smx_timer_t* timer )
+{
+    if( timer == NULL ) return;
+    if( -1 == timerfd_settime( timer->fd_comp, 0, &timer->compval, NULL ) )
         dzlog_error( "timerfd_settime: %d", errno );
 }
 
@@ -561,5 +643,13 @@ void smx_tt_wait( smx_timer_t* timer )
         dzlog_error( "deadline missed" );
     }
     else if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
+        dzlog_error( "timerfd read: %d", errno );
+}
+
+/*****************************************************************************/
+void smx_tf_wait( smx_timer_t* timer )
+{
+    uint64_t expired;
+    if( -1 == read( timer->fd_comp, &expired, sizeof( uint64_t ) ) )
         dzlog_error( "timerfd read: %d", errno );
 }
