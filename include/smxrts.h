@@ -47,7 +47,7 @@ enum smx_channel_state_e
  */
 enum smx_thread_state_e
 {
-    SMX_BOX_RETURN,
+    SMX_BOX_RETURN = 0,
     SMX_BOX_CONTINUE,       /**< continue to call the box implementation fct */
     SMX_BOX_TERMINATE       /**< end thread */
 };
@@ -175,7 +175,7 @@ struct box_smx_cp_s
 void smx_box_cp_destroy( box_smx_cp_t* );
 
 /*****************************************************************************/
-#define smx_cp( h ) smx_box_cp_impl( h )
+/* #define smx_cp( h ) smx_box_cp_impl( h ) */
 /**
  * @brief the box implementattion of a copy synchronizer
  *
@@ -189,7 +189,7 @@ void smx_box_cp_destroy( box_smx_cp_t* );
  * @param void*     a pointer to the signature ::box_smx_cp_s
  * @return int      ::smx_thread_state_e
  */
-int smx_box_cp_impl( void* );
+int smx_cp( void* );
 
 /*****************************************************************************/
 #define SMX_BOX_CP_INIT( box )\
@@ -211,11 +211,6 @@ void smx_box_cp_init( box_smx_cp_t* );
     free( ( ( box_ ## box_name ## _t* )box )->in.ports );\
     free( ( ( box_ ## box_name ## _t* )box )->out.ports );\
     free( box )
-
-/*****************************************************************************/
-#define SMX_BOX_ENABLE( h, box_name )\
-    smx_box_start( #box_name );\
-    smx_tt_enable( ( ( box_ ## box_name ## _t* )h )->timer )
 
 /*****************************************************************************/
 #define SMX_BOX_INIT( box_name, box, indegree, outdegree )\
@@ -240,10 +235,31 @@ void smx_box_cp_init( box_smx_cp_t* );
  */
 pthread_t smx_box_run( void*( void* ), void* );
 
+/**
+ *
+ */
+void smx_box_start( const char* );
+
 /*****************************************************************************/
-#define SMX_BOX_UPDATE_STATE( h, box_name, state )\
-    smx_box_update_state( ( ( box_ ## box_name ## _t* )h )->in.ports,\
-            ( ( box_ ## box_name ## _t* )h )->in.count, state )
+#define SMX_BOX_START_ROUTINE( h, box_name )\
+    smx_box_start_routine( #box_name, box_name, h,\
+            ( ( box_ ## box_name ## _t* )h )->timer,\
+            ( ( box_ ## box_name ## _t* )h )->in.ports,\
+            ( ( box_ ## box_name ## _t* )h )->in.count,\
+            ( ( box_ ## box_name ## _t* )h )->out.ports,\
+            ( ( box_ ## box_name ## _t* )h )->out.count )
+
+/**
+ *
+ */
+void* smx_box_start_routine( const char* name, int ( impl )( void* ), void* h,
+        smx_timer_t* timer, smx_channel_t** chs_in, int cnt_in,
+        smx_channel_t** chs_out, int cnt_out );
+
+/**
+ *
+ */
+void smx_box_terminate( const char* );
 
 /**
  * @brief Update the state of the box
@@ -269,26 +285,6 @@ pthread_t smx_box_run( void*( void* ), void* );
  *                          terminated.
  */
 int smx_box_update_state( smx_channel_t**, int, int );
-
-/*****************************************************************************/
-#define SMX_BOX_TERMINATE( h, box_name )\
-    smx_channels_terminate( ( ( box_ ## box_name ## _t* )h )->out.ports,\
-            ( ( box_ ## box_name ## _t* )h )->out.count );\
-    smx_box_terminate( #box_name )
-
-/**
- *
- */
-void smx_box_start( const char* );
-
-/**
- *
- */
-void smx_box_terminate( const char* );
-
-/*****************************************************************************/
-#define SMX_BOX_WAIT( h, box_name )\
-    smx_tt_wait( ( ( box_ ## box_name ## _t* )h )->timer )
 
 /**
  * @brief blocking wait on timer
@@ -490,6 +486,13 @@ void smx_d_fifo_write( smx_channel_t*, smx_fifo_t*, smx_msg_t* );
 smx_guard_t* smx_guard_create( int, int );
 
 /**
+ * @brief destroy the guard structure
+ *
+ * @param guard     pointer to the guard structure
+ */
+void smx_guard_destroy( smx_guard_t* guard );
+
+/**
  * @brief imposes a rate-controld on write operations
  *
  * A producer is blocked until the minimum inter-arrival-time between two
@@ -514,6 +517,8 @@ void smx_guard_write( smx_guard_t* );
 int smx_d_guard_write( smx_guard_t*, smx_msg_t* );
 
 // FUNCTIONS MSGS--------------------------------------------------------------
+#define SMX_MSG_CREATE( data, dsize, fcopy, ffree )\
+    smx_msg_create( data, dsize, fcopy, ffree )
 /**
  * @brief Create a message structure
  *

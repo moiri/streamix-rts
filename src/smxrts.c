@@ -20,11 +20,10 @@ void smx_box_cp_destroy( box_smx_cp_t* cp )
 }
 
 /*****************************************************************************/
-int smx_box_cp_impl( void* handler )
+int smx_cp( void* handler )
 {
     int i, count = ( ( box_smx_cp_t* )handler )->in.count;
-    int end = 1;
-    smx_channel_t** chs;
+    smx_channel_t** chs = ( ( box_smx_cp_t* )handler )->in.ports;
     smx_channel_t* ch = NULL;
     smx_msg_t* msg;
     smx_msg_t* msg_copy;
@@ -34,27 +33,27 @@ int smx_box_cp_impl( void* handler )
     while( collector->state == SMX_CHANNEL_PENDING )
         pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
     if( collector->count > 0 ) {
+        // there are messages available
         collector->count--;
         dzlog_debug("read from collector %p (new count: %d)", collector,
                 collector->count );
 
-        chs = ( ( box_smx_cp_t* )handler )->in.ports;
         for( i=0; i<count; i++ ) {
-            if( chs[i]->state != SMX_CHANNEL_END ) end = 0;
             if( smx_channel_ready_to_read( chs[i] ) ) {
                 ch = chs[i];
                 break;
             }
-
         }
+        if( ch == NULL )
+            dzlog_error("something went wrong: no msg rady in collector %p (count: %d)",
+                    collector, collector->count );
+        pthread_mutex_unlock( &collector->col_mutex );
     }
-    pthread_mutex_unlock( &collector->col_mutex );
-    if( ch == NULL ) {
+    else {
+        // no messages available
         collector->state = SMX_CHANNEL_PENDING;
-        if( end )
-            return SMX_BOX_TERMINATE;
-        else
-            return SMX_BOX_CONTINUE;
+        pthread_mutex_unlock( &collector->col_mutex );
+        return smx_box_update_state( chs, count, SMX_BOX_RETURN );
     }
     msg = smx_channel_read( ch );
     count = ( ( box_smx_cp_t* )handler )->out.count;
@@ -84,6 +83,25 @@ void smx_box_start( const char* name )
 }
 
 /*****************************************************************************/
+void* smx_box_start_routine( const char* name, int ( impl )( void* ), void* h,
+        smx_timer_t* timer, smx_channel_t** chs_in, int cnt_in,
+        smx_channel_t** chs_out, int cnt_out )
+{
+    int state = SMX_BOX_CONTINUE;
+    smx_box_start( name );
+    smx_tt_enable( timer );
+    while( state == SMX_BOX_CONTINUE )
+    {
+        state = impl( h );
+        smx_tt_wait( timer );
+        state = smx_box_update_state( chs_in, cnt_in, state );
+    }
+    smx_channels_terminate( chs_out, cnt_out );
+    smx_box_terminate( name );
+    return NULL;
+}
+
+/*****************************************************************************/
 void smx_box_terminate( const char* name )
 {
     dzlog_debug( "terminate box %s", name );
@@ -110,7 +128,8 @@ int smx_box_update_state( smx_channel_t** chs, int len, int state )
     for( i=0; i<len; i++ ) {
         if( ( chs[i]->type == SMX_FIFO ) || ( chs[i]->type == SMX_D_FIFO ) ) {
             trigger_cnt++;
-            if( chs[i]->state == SMX_CHANNEL_END )
+            if( ( chs[i]->state == SMX_CHANNEL_END )
+                    && ( chs[i]->fifo->count == 0 ) )
                 done_cnt++;
         }
     }
@@ -129,6 +148,12 @@ void smx_channels_terminate( smx_channel_t** chs, int len )
         chs[i]->state = SMX_CHANNEL_END;
         pthread_cond_signal( &chs[i]->ch_cv );
         pthread_mutex_unlock( &chs[i]->ch_mutex );
+        if( chs[i]->collector != NULL ) {
+            pthread_mutex_lock( &chs[i]->collector->col_mutex );
+            chs[i]->collector->state = SMX_CHANNEL_END;
+            pthread_cond_signal( &chs[i]->collector->col_cv );
+            pthread_mutex_unlock( &chs[i]->collector->col_mutex );
+        }
     }
 }
 
@@ -153,6 +178,7 @@ void smx_channel_destroy( smx_channel_t* ch )
 {
     pthread_mutex_destroy( &ch->ch_mutex );
     pthread_cond_destroy( &ch->ch_cv );
+    smx_guard_destroy( ch->guard );
     smx_fifo_destroy( ch->fifo );
     free( ch );
 }
@@ -382,6 +408,14 @@ smx_guard_t* smx_guard_create( int iats, int iatns )
     if( -1 == timerfd_settime( guard->fd, 0, &itval, NULL ) )
         dzlog_error( "timerfd_settime: %d", errno );
     return guard;
+}
+
+/*****************************************************************************/
+void smx_guard_destroy( smx_guard_t* guard )
+{
+    if( guard == NULL ) return;
+    close( guard->fd );
+    free( guard );
 }
 
 /*****************************************************************************/
