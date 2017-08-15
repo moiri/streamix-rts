@@ -38,7 +38,7 @@ $(STATLIB): $(OBJECTS)
 $(OBJECTS): $(SOURCES) $(INCLUDES)
 	$(CC) $(CFLAGS) $(SOURCES) $(INCLUDES_DIR) $(LINK_FILE) -o $@
 
-.PHONY: clean install
+.PHONY: clean install doc
 
 install:
 	mkdir -p /usr/local/include /usr/local/lib
@@ -49,3 +49,7 @@ install:
 clean:
 	rm -f $(LOC_SRC_DIR)/$(PROJECT).o
 	rm -f $(LOC_LIB_DIR)/lib$(PROJECT).a
+
+doc:
+	doxygen .doxygen
+
