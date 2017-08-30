@@ -165,8 +165,9 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
 }
 
 /*****************************************************************************/
-void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
+int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
 {
+    int res = 0;
     switch( ch->type ) {
         case SMX_FIFO:
         case SMX_FIFO_D:
@@ -176,8 +177,8 @@ void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
         case SMX_D_FIFO:
         case SMX_D_FIFO_D:
             // discard message if miat is not reached
-            if( smx_d_guard_write( ch->guard, msg ) < 0 ) return;
-            smx_d_fifo_write( ch, ch->fifo, msg );
+            if( smx_d_guard_write( ch->guard, msg ) < 0 ) return res;
+            res = smx_d_fifo_write( ch, ch->fifo, msg );
             break;
         default:
             dzlog_error("undefined channel type '%d'", ch->type );
@@ -195,6 +196,7 @@ void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
     ch->state = SMX_CHANNEL_READY;
     pthread_cond_signal( &ch->ch_cv );
     pthread_mutex_unlock( &ch->ch_mutex );
+    return res;
 }
 
 /*****************************************************************************/
@@ -376,7 +378,7 @@ void smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
 }
 
 /*****************************************************************************/
-void smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
+int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
 {
     bool overwrite = false;
     smx_msg_t* msg_tmp = NULL;
@@ -396,6 +398,7 @@ void smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
     pthread_cond_signal( &fifo->fifo_cv );
     pthread_mutex_unlock( &fifo->fifo_mutex );
     if( overwrite ) smx_msg_destroy( msg_tmp, true );
+    return overwrite;
 }
 
 /*****************************************************************************/
@@ -543,30 +546,12 @@ void smx_tt_connect( smx_timer_t* timer, smx_channel_t* ch_in,
 /*****************************************************************************/
 smx_timer_t* smx_tt_create( int sec, int nsec )
 {
-    int delta_nsec, comp_sec = 0, comp_nsec = 0;
     smx_timer_t* timer = malloc( sizeof( struct smx_timer_s ) );
-    delta_nsec = nsec - TF_COM_DELAY;
-    if( delta_nsec > 0 ) {
-        comp_sec = sec;
-        comp_nsec = delta_nsec;
-    }
-    else if( sec > 0 ) {
-        comp_sec = sec - 1;
-        comp_nsec = 1000000000 + delta_nsec;
-    }
-    else dzlog_error( "interval is smaller than communication dealy: %d < %d",
-                nsec, TF_COM_DELAY );
-
     timer->itval.it_value.tv_sec = sec;
     timer->itval.it_value.tv_nsec = nsec;
     timer->itval.it_interval.tv_sec = sec;
     timer->itval.it_interval.tv_nsec = nsec;
-    timer->compval.it_value.tv_sec = comp_sec;
-    timer->compval.it_value.tv_nsec = comp_nsec;
-    timer->compval.it_interval.tv_sec = 0;
-    timer->compval.it_interval.tv_nsec = 0;
     timer->fd = timerfd_create( CLOCK_MONOTONIC, 0 );
-    timer->fd_comp = timerfd_create( CLOCK_MONOTONIC, 0 );
     if( timer->fd == -1 )
         dzlog_error( "timerfd_create: %d", errno );
     timer->count = 0;
@@ -585,7 +570,6 @@ void smx_tt_destroy( smx_timer_t* tt )
         free( tf_tmp );
     }
     close( tt->fd );
-    close( tt->fd_comp );
     free( tt );
 }
 
@@ -598,14 +582,6 @@ void smx_tt_enable( smx_timer_t* timer )
 }
 
 /*****************************************************************************/
-void smx_tt_enable_rcv( smx_timer_t* timer )
-{
-    if( timer == NULL ) return;
-    if( -1 == timerfd_settime( timer->fd_comp, 0, &timer->compval, NULL ) )
-        dzlog_error( "timerfd_settime: %d", errno );
-}
-
-/*****************************************************************************/
 void* smx_tt_start_routine( void* h )
 {
     smx_timer_t* tt = h;
@@ -614,7 +590,7 @@ void* smx_tt_start_routine( void* h )
     smx_channel_t* ch_out[tt->count];
     smx_msg_t* msg[tt->count];
     int state = SMX_BOX_CONTINUE;
-    int i, tf_cnt = 0, end_cnt;
+    int i, tf_cnt = 0, end_cnt, res;
     while( tf != NULL ) {
         ch_in[tf_cnt] = tf->in;
         ch_out[tf_cnt] = tf->out;
@@ -623,24 +599,27 @@ void* smx_tt_start_routine( void* h )
     }
     smx_box_start( "tf" );
     smx_tt_enable( tt );
-    smx_tt_enable_rcv( tt );
     while( state == SMX_BOX_CONTINUE )
     {
         end_cnt = 0;
         dzlog_debug( "tt_read" );
         for( i = 0; i < tt->count; i++ ) {
-            msg[i] = smx_channel_read( ch_in[i] );
+            msg[i] = smx_fifo_read( ch_in[i], ch_in[i]->fifo );
             if( ch_in[i]->state == SMX_CHANNEL_END ) end_cnt++;
         }
-        dzlog_debug( "tt_start_routine: tt_wait_send" );
-        smx_tt_wait_send( tt );
         dzlog_debug( "tt_write" );
         for( i = 0; i < tt->count; i++ )
-            if( msg[i] != NULL )
-                smx_channel_write( ch_out[i], msg[i] );
+            if( msg[i] != NULL ) {
+                res = smx_channel_write( ch_out[i], msg[i] );
+                if( res )
+                    dzlog_error( "consumer on channel '%s' missed its deadline",
+                            ch_in[i]->name );
+            }
+            else
+                dzlog_error( "producer on channel '%s' missed its deadline",
+                        ch_in[i]->name );
         dzlog_debug( "tt_start_routine: tt_wait" );
         smx_tt_wait( tt );
-        smx_tt_enable_rcv( tt );
         if( end_cnt == tt->count ) state = SMX_BOX_TERMINATE;
     }
     smx_channels_terminate( ch_out, tt->count );
@@ -665,13 +644,5 @@ void smx_tt_wait( smx_timer_t* timer )
         dzlog_error( "deadline missed" );
     }
     else if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
-        dzlog_error( "timerfd read: %d", errno );
-}
-
-/*****************************************************************************/
-void smx_tt_wait_send( smx_timer_t* timer )
-{
-    uint64_t expired;
-    if( -1 == read( timer->fd_comp, &expired, sizeof( uint64_t ) ) )
         dzlog_error( "timerfd read: %d", errno );
 }

@@ -24,8 +24,6 @@ typedef struct smx_timer_s smx_timer_t;               /**< ::smx_timer_s */
 typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
 typedef enum smx_channel_state_e smx_channel_state_t; /**< #smx_channel_state_e */
 
-#define TF_COM_DELAY 1000000
-
 // ENUMS ----------------------------------------------------------------------
 /**
  * @brief Streamix channel (buffer) types
@@ -151,9 +149,7 @@ struct smx_msg_s
 struct smx_timer_s
 {
     int                 fd;         /**< timer file descriptor */
-    int                 fd_comp;    /**< communication timer file descriptor */
     struct itimerspec   itval;      /**< iteration specifiaction */
-    struct itimerspec   compval;    /**< iteration specifiaction */
     box_smx_tf_t*       ports;      /**< list of temporal firewalls */
     int                 count;      /**< number of port pairs */
 };
@@ -405,8 +401,9 @@ int smx_channel_ready_to_read( smx_channel_t* ch );
  *
  * @param ch    pointer to the channel
  * @param msg   pointer to the a message structure
+ * @return      1 if message was overwritten, 0 otherwise
  */
-void smx_channel_write( smx_channel_t* ch, smx_msg_t* msg );
+int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg );
 
 /**
  * @brief Send termination signal to all output channels
@@ -488,8 +485,9 @@ void smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
  * @param ch    pointer to channel struct of the FIFO
  * @param fifo  pointer to a D_FIFO channel
  * @param msg   pointer to the data
+ * @return      1 if message was overwritten, 0 otherwise
  */
-void smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
+int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
 
 /**
  * @brief create timed guard structure and initialise timer
@@ -639,13 +637,6 @@ void smx_tt_destroy( smx_timer_t* tt );
 void smx_tt_enable( smx_timer_t* timer );
 
 /**
- * @brief enable one-shot timer to allow communication window
- *
- * @param timer pointer to a timer structure
- */
-void smx_tt_enable_rcv( smx_timer_t* timer );
-
-/**
  * @brief start routine for a timer thread
  *
  * @param h pointer to a timer structure
@@ -662,13 +653,6 @@ void* smx_tt_start_routine( void* h );
  * @param timer pointer to a timer structure
  */
 void smx_tt_wait( smx_timer_t* timer );
-
-/**
- * @brief blocks to await send window
- *
- * @param timer pointer to a timer structure
- */
-void smx_tt_wait_send( smx_timer_t* timer );
 
 
 #endif // HANDLER_H
