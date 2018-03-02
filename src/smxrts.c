@@ -19,85 +19,6 @@
 #include "pthread.h"
 
 /*****************************************************************************/
-void smx_box_cp_destroy( box_smx_cp_t* cp )
-{
-    pthread_mutex_destroy( &cp->in.collector->col_mutex );
-    pthread_cond_destroy( &cp->in.collector->col_cv );
-    free( cp->in.collector );
-}
-
-/*****************************************************************************/
-void smx_box_cp_init( box_smx_cp_t* cp )
-{
-    cp->in.collector = malloc( sizeof( struct smx_collector_s ) );
-    pthread_mutex_init( &cp->in.collector->col_mutex, NULL );
-    pthread_cond_init( &cp->in.collector->col_cv, NULL );
-    cp->in.collector->count = 0;
-    cp->in.collector->state = SMX_CHANNEL_PENDING;
-}
-
-/*****************************************************************************/
-pthread_t smx_box_run( void* box_impl( void* arg ), void* arg )
-{
-    pthread_t thread;
-    pthread_create( &thread, NULL, box_impl, arg );
-    return thread;
-}
-
-/*****************************************************************************/
-void smx_box_start( const char* name )
-{
-    dzlog_debug( "start box %s", name );
-}
-
-/*****************************************************************************/
-void* smx_box_start_routine( const char* name, int impl( void* ), void* h,
-        smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
-        int cnt_out )
-{
-    int state = SMX_BOX_CONTINUE;
-    smx_box_start( name );
-    while( state == SMX_BOX_CONTINUE )
-    {
-        state = impl( h );
-        state = smx_box_update_state( chs_in, cnt_in, state );
-    }
-    smx_channels_terminate( chs_out, cnt_out );
-    smx_box_terminate( name );
-    return NULL;
-}
-
-/*****************************************************************************/
-void smx_box_terminate( const char* name )
-{
-    dzlog_debug( "terminate box %s", name );
-}
-
-/*****************************************************************************/
-int smx_box_update_state( smx_channel_t** chs, int len, int state )
-{
-    int i;
-    int done_cnt = 0;
-    int trigger_cnt = 0;
-    // if state is forced by box implementation return forced state
-    if( state != SMX_BOX_RETURN ) return state;
-
-    // otherwise make internal checks
-    for( i=0; i<len; i++ ) {
-        if( ( chs[i]->type == SMX_FIFO ) || ( chs[i]->type == SMX_D_FIFO ) ) {
-            trigger_cnt++;
-            if( ( chs[i]->state == SMX_CHANNEL_END )
-                    && ( chs[i]->fifo->count == 0 ) )
-                done_cnt++;
-        }
-    }
-    // if all the triggering inputs are done, terminate the thread
-    if( done_cnt >= trigger_cnt )
-        return SMX_BOX_TERMINATE;
-    return SMX_BOX_CONTINUE;
-}
-
-/*****************************************************************************/
 smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
         const char* name )
 {
@@ -197,71 +118,6 @@ int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
     pthread_cond_signal( &ch->ch_cv );
     pthread_mutex_unlock( &ch->ch_mutex );
     return res;
-}
-
-/*****************************************************************************/
-void smx_channels_terminate( smx_channel_t** chs, int len )
-{
-    int i;
-    for( i=0; i<len; i++ ) {
-        pthread_mutex_lock( &chs[i]->ch_mutex );
-        chs[i]->state = SMX_CHANNEL_END;
-        pthread_cond_signal( &chs[i]->ch_cv );
-        pthread_mutex_unlock( &chs[i]->ch_mutex );
-        if( chs[i]->collector != NULL ) {
-            pthread_mutex_lock( &chs[i]->collector->col_mutex );
-            chs[i]->collector->state = SMX_CHANNEL_END;
-            pthread_cond_signal( &chs[i]->collector->col_cv );
-            pthread_mutex_unlock( &chs[i]->collector->col_mutex );
-        }
-    }
-}
-
-/*****************************************************************************/
-int smx_cp( void* handler )
-{
-    int i, count = ( ( box_smx_cp_t* )handler )->in.count;
-    smx_channel_t** chs = ( ( box_smx_cp_t* )handler )->in.ports;
-    smx_channel_t* ch = NULL;
-    smx_msg_t* msg;
-    smx_msg_t* msg_copy;
-    smx_collector_t* collector = ( ( box_smx_cp_t* )handler )->in.collector;
-
-    pthread_mutex_lock( &collector->col_mutex );
-    while( collector->state == SMX_CHANNEL_PENDING )
-        pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
-    if( collector->count > 0 ) {
-        // there are messages available
-        collector->count--;
-        dzlog_debug("read from collector %p (new count: %d)", collector,
-                collector->count );
-
-        for( i=0; i<count; i++ ) {
-            if( smx_channel_ready_to_read( chs[i] ) ) {
-                ch = chs[i];
-                break;
-            }
-        }
-        if( ch == NULL )
-            dzlog_error("something went wrong: no msg rady in collector %p (count: %d)",
-                    collector, collector->count );
-        pthread_mutex_unlock( &collector->col_mutex );
-    }
-    else {
-        // no messages available
-        collector->state = SMX_CHANNEL_PENDING;
-        pthread_mutex_unlock( &collector->col_mutex );
-        return smx_box_update_state( chs, count, SMX_BOX_RETURN );
-    }
-    msg = smx_channel_read( ch );
-    count = ( ( box_smx_cp_t* )handler )->out.count;
-    chs = ( ( box_smx_cp_t* )handler )->out.ports;
-    for( i=0; i<count; i++ ) {
-        msg_copy = smx_msg_copy( msg );
-        smx_channel_write( chs[i], msg_copy );
-    }
-    smx_msg_destroy( msg, true );
-    return SMX_BOX_CONTINUE;
 }
 
 /*****************************************************************************/
@@ -511,6 +367,86 @@ void smx_msg_destroy( smx_msg_t* msg, int deep )
 }
 
 /*****************************************************************************/
+void smx_net_log_start( const char* name )
+{
+    dzlog_debug( "start net %s", name );
+}
+
+/*****************************************************************************/
+void smx_net_log_terminate( const char* name )
+{
+    dzlog_debug( "terminate box %s", name );
+}
+
+/*****************************************************************************/
+void smx_net_rn_destroy( box_smx_cp_t* cp )
+{
+    pthread_mutex_destroy( &cp->in.collector->col_mutex );
+    pthread_cond_destroy( &cp->in.collector->col_cv );
+    free( cp->in.collector );
+}
+
+/*****************************************************************************/
+void smx_net_rn_init( box_smx_cp_t* cp )
+{
+    cp->in.collector = malloc( sizeof( struct smx_collector_s ) );
+    pthread_mutex_init( &cp->in.collector->col_mutex, NULL );
+    pthread_cond_init( &cp->in.collector->col_cv, NULL );
+    cp->in.collector->count = 0;
+    cp->in.collector->state = SMX_CHANNEL_PENDING;
+}
+
+/*****************************************************************************/
+pthread_t smx_net_run( void* box_impl( void* arg ), void* arg )
+{
+    pthread_t thread;
+    pthread_create( &thread, NULL, box_impl, arg );
+    return thread;
+}
+
+/*****************************************************************************/
+int smx_net_update_state( smx_channel_t** chs, int len, int state )
+{
+    int i;
+    int done_cnt = 0;
+    int trigger_cnt = 0;
+    // if state is forced by box implementation return forced state
+    if( state != SMX_NET_RETURN ) return state;
+
+    // otherwise make internal checks
+    for( i=0; i<len; i++ ) {
+        if( ( chs[i]->type == SMX_FIFO ) || ( chs[i]->type == SMX_D_FIFO ) ) {
+            trigger_cnt++;
+            if( ( chs[i]->state == SMX_CHANNEL_END )
+                    && ( chs[i]->fifo->count == 0 ) )
+                done_cnt++;
+        }
+    }
+    // if all the triggering inputs are done, terminate the thread
+    if( done_cnt >= trigger_cnt )
+        return SMX_NET_END;
+    return SMX_NET_CONTINUE;
+}
+
+/*****************************************************************************/
+void smx_net_terminate( smx_channel_t** chs, int len )
+{
+    int i;
+    for( i=0; i<len; i++ ) {
+        pthread_mutex_lock( &chs[i]->ch_mutex );
+        chs[i]->state = SMX_CHANNEL_END;
+        pthread_cond_signal( &chs[i]->ch_cv );
+        pthread_mutex_unlock( &chs[i]->ch_mutex );
+        if( chs[i]->collector != NULL ) {
+            pthread_mutex_lock( &chs[i]->collector->col_mutex );
+            chs[i]->collector->state = SMX_CHANNEL_END;
+            pthread_cond_signal( &chs[i]->collector->col_cv );
+            pthread_mutex_unlock( &chs[i]->collector->col_mutex );
+        }
+    }
+}
+
+/*****************************************************************************/
 void smx_program_cleanup()
 {
     dzlog_debug("end thread main");
@@ -532,7 +468,54 @@ void smx_program_init()
 }
 
 /*****************************************************************************/
-void smx_tt_connect( smx_timer_t* timer, smx_channel_t* ch_in,
+int smx_cp( void* handler )
+{
+    int i, count = ( ( box_smx_cp_t* )handler )->in.count;
+    smx_channel_t** chs = ( ( box_smx_cp_t* )handler )->in.ports;
+    smx_channel_t* ch = NULL;
+    smx_msg_t* msg;
+    smx_msg_t* msg_copy;
+    smx_collector_t* collector = ( ( box_smx_cp_t* )handler )->in.collector;
+
+    pthread_mutex_lock( &collector->col_mutex );
+    while( collector->state == SMX_CHANNEL_PENDING )
+        pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
+    if( collector->count > 0 ) {
+        // there are messages available
+        collector->count--;
+        dzlog_debug("read from collector %p (new count: %d)", collector,
+                collector->count );
+
+        for( i=0; i<count; i++ ) {
+            if( smx_channel_ready_to_read( chs[i] ) ) {
+                ch = chs[i];
+                break;
+            }
+        }
+        if( ch == NULL )
+            dzlog_error("something went wrong: no msg rady in collector %p (count: %d)",
+                    collector, collector->count );
+        pthread_mutex_unlock( &collector->col_mutex );
+    }
+    else {
+        // no messages available
+        collector->state = SMX_CHANNEL_PENDING;
+        pthread_mutex_unlock( &collector->col_mutex );
+        return smx_net_update_state( chs, count, SMX_NET_RETURN );
+    }
+    msg = smx_channel_read( ch );
+    count = ( ( box_smx_cp_t* )handler )->out.count;
+    chs = ( ( box_smx_cp_t* )handler )->out.ports;
+    for( i=0; i<count; i++ ) {
+        msg_copy = smx_msg_copy( msg );
+        smx_channel_write( chs[i], msg_copy );
+    }
+    smx_msg_destroy( msg, true );
+    return SMX_NET_CONTINUE;
+}
+
+/*****************************************************************************/
+void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
         smx_channel_t* ch_out )
 {
     box_smx_tf_t* tf = malloc( sizeof( struct box_smx_tf_s ) );
@@ -544,7 +527,7 @@ void smx_tt_connect( smx_timer_t* timer, smx_channel_t* ch_in,
 }
 
 /*****************************************************************************/
-smx_timer_t* smx_tt_create( int sec, int nsec )
+smx_timer_t* smx_tf_create( int sec, int nsec )
 {
     smx_timer_t* timer = malloc( sizeof( struct smx_timer_s ) );
     timer->itval.it_value.tv_sec = sec;
@@ -560,7 +543,7 @@ smx_timer_t* smx_tt_create( int sec, int nsec )
 }
 
 /*****************************************************************************/
-void smx_tt_destroy( smx_timer_t* tt )
+void smx_tf_destroy( smx_timer_t* tt )
 {
     box_smx_tf_t* tf = tt->ports;
     box_smx_tf_t* tf_tmp;
@@ -574,7 +557,7 @@ void smx_tt_destroy( smx_timer_t* tt )
 }
 
 /*****************************************************************************/
-void smx_tt_enable( smx_timer_t* timer )
+void smx_tf_enable( smx_timer_t* timer )
 {
     if( timer == NULL ) return;
     if( -1 == timerfd_settime( timer->fd, 0, &timer->itval, NULL ) )
@@ -582,53 +565,20 @@ void smx_tt_enable( smx_timer_t* timer )
 }
 
 /*****************************************************************************/
-void* smx_tt_start_routine( void* h )
+int smx_tf_read_inputs( smx_msg_t** msg, smx_timer_t* tt,
+        smx_channel_t** ch_in )
 {
-    smx_timer_t* tt = h;
-    box_smx_tf_t* tf = tt->ports;
-    smx_channel_t* ch_in[tt->count];
-    smx_channel_t* ch_out[tt->count];
-    smx_msg_t* msg[tt->count];
-    int state = SMX_BOX_CONTINUE;
-    int i, tf_cnt = 0, end_cnt, res;
-    while( tf != NULL ) {
-        ch_in[tf_cnt] = tf->in;
-        ch_out[tf_cnt] = tf->out;
-        tf_cnt++;
-        tf = tf->next;
+    int i, end_cnt = 0;
+    dzlog_debug( "tt_read" );
+    for( i = 0; i < tt->count; i++ ) {
+        msg[i] = smx_fifo_read( ch_in[i], ch_in[i]->fifo );
+        if( ch_in[i]->state == SMX_CHANNEL_END ) end_cnt++;
     }
-    smx_box_start( "tf" );
-    smx_tt_enable( tt );
-    while( state == SMX_BOX_CONTINUE )
-    {
-        end_cnt = 0;
-        dzlog_debug( "tt_read" );
-        for( i = 0; i < tt->count; i++ ) {
-            msg[i] = smx_fifo_read( ch_in[i], ch_in[i]->fifo );
-            if( ch_in[i]->state == SMX_CHANNEL_END ) end_cnt++;
-        }
-        dzlog_debug( "tt_write" );
-        for( i = 0; i < tt->count; i++ )
-            if( msg[i] != NULL ) {
-                res = smx_channel_write( ch_out[i], msg[i] );
-                if( res )
-                    dzlog_error( "consumer on channel '%s' missed its deadline",
-                            ch_in[i]->name );
-            }
-            else
-                dzlog_error( "producer on channel '%s' missed its deadline",
-                        ch_in[i]->name );
-        dzlog_debug( "tt_start_routine: tt_wait" );
-        smx_tt_wait( tt );
-        if( end_cnt == tt->count ) state = SMX_BOX_TERMINATE;
-    }
-    smx_channels_terminate( ch_out, tt->count );
-    smx_box_terminate( "tf" );
-    return NULL;
+    return end_cnt;
 }
 
 /*****************************************************************************/
-void smx_tt_wait( smx_timer_t* timer )
+void smx_tf_wait( smx_timer_t* timer )
 {
     uint64_t expired;
     struct pollfd pfd;
@@ -645,4 +595,71 @@ void smx_tt_wait( smx_timer_t* timer )
     }
     else if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
         dzlog_error( "timerfd read: %d", errno );
+}
+
+/*****************************************************************************/
+void smx_tf_write_outputs( smx_msg_t** msg, smx_timer_t* tt,
+        smx_channel_t** ch_in, smx_channel_t** ch_out )
+{
+    int i, res;
+    dzlog_debug( "tt_write" );
+    for( i = 0; i < tt->count; i++ )
+        if( msg[i] != NULL ) {
+            res = smx_channel_write( ch_out[i], msg[i] );
+            if( res )
+                dzlog_error( "consumer on channel '%s' missed its deadline",
+                        ch_in[i]->name );
+        }
+        else
+            dzlog_error( "producer on channel '%s' missed its deadline",
+                    ch_in[i]->name );
+
+}
+
+/*****************************************************************************/
+void* start_routine_net( const char* name, int impl( void* ), void* h,
+        smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
+        int cnt_out )
+{
+    int state = SMX_NET_CONTINUE;
+    smx_net_log_start( name );
+    while( state == SMX_NET_CONTINUE )
+    {
+        state = impl( h );
+        state = smx_net_update_state( chs_in, cnt_in, state );
+    }
+    smx_net_terminate( chs_out, cnt_out );
+    smx_net_log_terminate( name );
+    return NULL;
+}
+
+/*****************************************************************************/
+void* start_routine_tf( void* h )
+{
+    smx_timer_t* tt = h;
+    box_smx_tf_t* tf = tt->ports;
+    smx_channel_t* ch_in[tt->count];
+    smx_channel_t* ch_out[tt->count];
+    smx_msg_t* msg[tt->count];
+    int state = SMX_NET_CONTINUE;
+    int tf_cnt = 0, end_cnt;
+    while( tf != NULL ) {
+        ch_in[tf_cnt] = tf->in;
+        ch_out[tf_cnt] = tf->out;
+        tf_cnt++;
+        tf = tf->next;
+    }
+    smx_net_log_start( "tf" );
+    smx_tf_enable( tt );
+    while( state == SMX_NET_CONTINUE )
+    {
+        end_cnt = smx_tf_read_inputs( msg, tt, ch_in );
+        smx_tf_write_outputs( msg, tt, ch_in, ch_out );
+        dzlog_debug( "tt_start_routine: tt_wait" );
+        smx_tf_wait( tt );
+        if( end_cnt == tt->count ) state = SMX_NET_END;
+    }
+    smx_net_terminate( ch_out, tt->count );
+    smx_net_log_terminate( "tf" );
+    return NULL;
 }
