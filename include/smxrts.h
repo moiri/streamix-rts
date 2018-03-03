@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 // TYPEDEFS -------------------------------------------------------------------
-typedef struct box_smx_cp_s box_smx_cp_t;             /**< ::box_smx_cp_s */
+typedef struct box_smx_rn_s box_smx_rn_t;             /**< ::box_smx_rn_s */
 typedef struct box_smx_tf_s box_smx_tf_t;             /**< ::box_smx_tf_s */
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
 typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
@@ -157,7 +157,7 @@ struct smx_timer_s
 /**
  * @brief The signature of a copy synchronizer
  */
-struct box_smx_cp_s
+struct box_smx_rn_s
 {
     struct {
         smx_channel_t** ports;      /**< an array of channel pointers */
@@ -209,7 +209,7 @@ struct box_smx_tf_s
 
 #define SMX_CONNECT_RN( box, ch )\
     ( ( smx_channel_t* )ch )->collector\
-        = ( ( box_smx_cp_t* )box )->in.collector;\
+        = ( ( box_smx_rn_t* )box )->in.collector;\
 
 #define SMX_CONNECT_TF( timer, ch_in, ch_out )\
     smx_tf_connect( timer, ch_in, ch_out )
@@ -244,10 +244,10 @@ struct box_smx_tf_s
     pthread_t th_ ## arg = smx_net_run( box_ ## box_name, arg )
 
 #define SMX_NET_RN_DESTROY( box )\
-    smx_net_rn_destroy( ( box_smx_cp_t* )box )
+    smx_net_rn_destroy( ( box_smx_rn_t* )box )
 
 #define SMX_NET_RN_INIT( box )\
-    smx_net_rn_init( ( box_smx_cp_t* )box )
+    smx_net_rn_init( ( box_smx_rn_t* )box )
 
 #define SMX_NET_WAIT_END( box_name )\
     pthread_join( th_ ## box_name, NULL )
@@ -509,14 +509,14 @@ void smx_net_log_terminate( const char* name );
  *
  * @param cp    pointer to the cp sync structure
  */
-void smx_net_rn_destroy( box_smx_cp_t* cp );
+void smx_net_rn_destroy( box_smx_rn_t* cp );
 
 /**
  * @brief Initialize copy synchronizer structure
  *
  * @param cp    pointer to the copy sync structure
  */
-void smx_net_rn_init( box_smx_cp_t* cp );
+void smx_net_rn_init( box_smx_rn_t* cp );
 
 /**
  * @brief create pthred of box
@@ -573,7 +573,7 @@ void smx_program_cleanup();
 void smx_program_init();
 
 /**
- * @brief the box implementattion of a copy synchronizer
+ * @brief the box implementattion of a routing node (former known as copy sync)
  *
  * A copy synchronizer reads from any port where data is available and copies
  * it to every output. The read order is first come first serve with peaking
@@ -585,7 +585,7 @@ void smx_program_init();
  * @param handler   a pointer to the signature
  * @return          returns the state of the box
  */
-int smx_cp( void* handler );
+int smx_rn( void* handler );
 
 /**
  * @brief grow the list of temporal firewalls and connect channels

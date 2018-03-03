@@ -379,7 +379,7 @@ void smx_net_log_terminate( const char* name )
 }
 
 /*****************************************************************************/
-void smx_net_rn_destroy( box_smx_cp_t* cp )
+void smx_net_rn_destroy( box_smx_rn_t* cp )
 {
     pthread_mutex_destroy( &cp->in.collector->col_mutex );
     pthread_cond_destroy( &cp->in.collector->col_cv );
@@ -387,7 +387,7 @@ void smx_net_rn_destroy( box_smx_cp_t* cp )
 }
 
 /*****************************************************************************/
-void smx_net_rn_init( box_smx_cp_t* cp )
+void smx_net_rn_init( box_smx_rn_t* cp )
 {
     cp->in.collector = malloc( sizeof( struct smx_collector_s ) );
     pthread_mutex_init( &cp->in.collector->col_mutex, NULL );
@@ -468,14 +468,14 @@ void smx_program_init()
 }
 
 /*****************************************************************************/
-int smx_cp( void* handler )
+int smx_rn( void* handler )
 {
-    int i, count = ( ( box_smx_cp_t* )handler )->in.count;
-    smx_channel_t** chs = ( ( box_smx_cp_t* )handler )->in.ports;
+    int i, count = ( ( box_smx_rn_t* )handler )->in.count;
+    smx_channel_t** chs = ( ( box_smx_rn_t* )handler )->in.ports;
     smx_channel_t* ch = NULL;
     smx_msg_t* msg;
     smx_msg_t* msg_copy;
-    smx_collector_t* collector = ( ( box_smx_cp_t* )handler )->in.collector;
+    smx_collector_t* collector = ( ( box_smx_rn_t* )handler )->in.collector;
 
     pthread_mutex_lock( &collector->col_mutex );
     while( collector->state == SMX_CHANNEL_PENDING )
@@ -504,8 +504,8 @@ int smx_cp( void* handler )
         return smx_net_update_state( chs, count, SMX_NET_RETURN );
     }
     msg = smx_channel_read( ch );
-    count = ( ( box_smx_cp_t* )handler )->out.count;
-    chs = ( ( box_smx_cp_t* )handler )->out.ports;
+    count = ( ( box_smx_rn_t* )handler )->out.count;
+    chs = ( ( box_smx_rn_t* )handler )->out.ports;
     for( i=0; i<count; i++ ) {
         msg_copy = smx_msg_copy( msg );
         smx_channel_write( chs[i], msg_copy );
