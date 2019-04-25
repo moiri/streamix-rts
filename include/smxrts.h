@@ -271,11 +271,16 @@ struct box_smx_tf_s
     pthread_join( th_ ## timer, NULL )
 
 #define START_ROUTINE_NET( h, box_name )\
-    start_routine_net( #box_name, box_name, h,\
+    start_routine_net( #box_name, box_name, box_name ## _init, box_name ## _cleanup, h,\
             ( ( box_ ## box_name ## _t* )h )->in.ports,\
             ( ( box_ ## box_name ## _t* )h )->in.count,\
             ( ( box_ ## box_name ## _t* )h )->out.ports,\
             ( ( box_ ## box_name ## _t* )h )->out.count )
+
+#define SMX_NET_EXTERN( box_name )\
+    extern int box_name( void* );\
+    extern void box_name ## _init( void* );\
+    extern void box_name ## _cleanup()
 
 // FUNCTIONS ------------------------------------------------------------------
 /**
@@ -659,16 +664,19 @@ void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
 /**
  * @brief the start routine of a thread associated to a box
  *
- * @param name          name of the box
- * @param impl( arg )   pointer to the box implementation function
- * @param h             pointer to the box signature
- * @param chs_in        list of input channels
- * @param cnt_in        count of input ports
- * @param chs_out       list of output channels
- * @param cnt_out       counter of output port
- * @return              returns NULL
+ * @param name              name of the box
+ * @param impl( arg )       pointer to the box implementation function
+ * @param init( arg )       pointer to the box intitialisation function
+ * @param cleanup( arg )    pointer to the box cleanup function
+ * @param h                 pointer to the box signature
+ * @param chs_in            list of input channels
+ * @param cnt_in            count of input ports
+ * @param chs_out           list of output channels
+ * @param cnt_out           counter of output port
+ * @return                  returns NULL
  */
-void* start_routine_net( const char* name, int impl( void* ), void* h,
+void* start_routine_net( const char* name, int impl( void* ),
+        void init( void* ), void cleanup( void ), void* h,
         smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
         int cnt_out );
 

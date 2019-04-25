@@ -617,11 +617,14 @@ void smx_tf_write_outputs( smx_msg_t** msg, smx_timer_t* tt,
 }
 
 /*****************************************************************************/
-void* start_routine_net( const char* name, int impl( void* ), void* h,
+void* start_routine_net( const char* name, int impl( void* ),
+        void init( void* ), void cleanup( void ), void* h,
         smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
         int cnt_out )
 {
     int state = SMX_NET_CONTINUE;
+    dzlog_debug( "init net %s", name );
+    init( h );
     smx_net_log_start( name );
     while( state == SMX_NET_CONTINUE )
     {
@@ -629,6 +632,8 @@ void* start_routine_net( const char* name, int impl( void* ), void* h,
         state = smx_net_update_state( chs_in, cnt_in, state );
     }
     smx_net_terminate( chs_out, cnt_out );
+    dzlog_debug( "cleanup net %s", name );
+    cleanup();
     smx_net_log_terminate( name );
     return NULL;
 }
