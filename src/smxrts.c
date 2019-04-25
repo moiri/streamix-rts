@@ -571,7 +571,7 @@ int smx_tf_read_inputs( smx_msg_t** msg, smx_timer_t* tt,
     int i, end_cnt = 0;
     dzlog_debug( "tt_read" );
     for( i = 0; i < tt->count; i++ ) {
-        msg[i] = smx_fifo_read( ch_in[i], ch_in[i]->fifo );
+        msg[i] = smx_channel_read( ch_in[i] );
         if( ch_in[i]->state == SMX_CHANNEL_END ) end_cnt++;
     }
     return end_cnt;
