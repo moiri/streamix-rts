@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <zlog.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 #include "smxrts.h"
 #include "pthread.h"
 
@@ -332,8 +334,8 @@ smx_msg_t* smx_msg_copy( smx_msg_t* msg )
 }
 
 /*****************************************************************************/
-smx_msg_t* smx_msg_create( void* data, size_t size,
-        void* copy( void*, size_t ), void destroy( void* ) )
+smx_msg_t* smx_msg_create( void* data, size_t size, void* copy( void*, size_t ),
+        void destroy( void* ), void* unpack( void* ) )
 {
     smx_msg_t* msg = malloc( sizeof( struct smx_msg_s ) );
     msg->data = data;
@@ -342,6 +344,8 @@ smx_msg_t* smx_msg_create( void* data, size_t size,
     else msg->copy = copy;
     if( destroy == NULL ) msg->destroy = smx_msg_data_destroy;
     else msg->destroy = destroy;
+    if( unpack == NULL ) msg->unpack = smx_msg_data_unpack;
+    else msg->unpack = unpack;
     return msg;
 }
 
@@ -360,10 +364,22 @@ void smx_msg_data_destroy( void* data )
 }
 
 /*****************************************************************************/
+void* smx_msg_data_unpack( void* data )
+{
+    return data;
+}
+
+/*****************************************************************************/
 void smx_msg_destroy( smx_msg_t* msg, int deep )
 {
     if( deep ) msg->destroy( msg->data );
     free( msg );
+}
+
+/*****************************************************************************/
+void* smx_msg_unpack( smx_msg_t* msg )
+{
+    return msg->unpack( msg->data );
 }
 
 /*****************************************************************************/
@@ -457,19 +473,71 @@ void smx_program_cleanup()
 /*****************************************************************************/
 void smx_program_init()
 {
-    int rc = dzlog_init("test_default.conf", "my_cat");
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    xmlChar* conf = NULL;
+    xmlChar* cat = NULL;
 
-    if( rc ) {
-        printf("init failed\n");
+    /*parse the file and get the DOM */
+    doc = xmlParseFile(XML_PATH);
+
+    if (doc == NULL)
+    {
+        printf("error: could not parse the app config file '%s'\n", XML_PATH);
         pthread_exit( NULL );
     }
+
+    cur = xmlDocGetRootElement(doc);
+    if(cur == NULL || xmlStrcmp(cur->name, (const xmlChar*)XML_APP))
+    {
+        printf("error: app config root node name is '%s' instead of '%s'\n",
+                cur->name, XML_APP);
+        pthread_exit( NULL );
+    }
+
+    cur = cur->xmlChildrenNode;
+    while(cur != NULL)
+    {
+        if(!xmlStrcmp(cur->name, (const xmlChar*)XML_LOG))
+        {
+            conf = xmlGetProp(cur, (const xmlChar*)XML_LOG_CONF);
+            cat = xmlGetProp(cur, (const xmlChar*)XML_LOG_CAT);
+        }
+        cur = cur->next;
+    }
+
+    if(conf == NULL)
+    {
+        printf("error: no log configuration found in app config\n");
+        pthread_exit( NULL );
+    }
+
+    if(cat == NULL)
+    {
+        printf("error: no log cathegory found in app config\n");
+        pthread_exit( NULL );
+    }
+
+    int rc = dzlog_init((const char*)conf, (const char*)cat);
+
+    if( rc ) {
+        printf("error: zlog init failed with conf: '%s' and cat: '%s'\n",
+                conf, cat);
+        pthread_exit( NULL );
+    }
+
+    xmlFree(conf);
+    xmlFree(cat);
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
 
     dzlog_debug("start thread main");
 }
 
 /*****************************************************************************/
-int smx_rn( void* handler )
+int smx_rn( void* handler, void* state )
 {
+    (void)(state);
     int i, count = ( ( box_smx_rn_t* )handler )->in.count;
     smx_channel_t** chs = ( ( box_smx_rn_t* )handler )->in.ports;
     smx_channel_t* ch = NULL;
@@ -512,6 +580,19 @@ int smx_rn( void* handler )
     }
     smx_msg_destroy( msg, true );
     return SMX_NET_CONTINUE;
+}
+
+/*****************************************************************************/
+void* smx_rn_init( void* handler )
+{
+    (void)(handler);
+    return NULL;
+}
+
+/*****************************************************************************/
+void smx_rn_cleanup( void* state )
+{
+    (void)(state);
 }
 
 /*****************************************************************************/
@@ -617,23 +698,23 @@ void smx_tf_write_outputs( smx_msg_t** msg, smx_timer_t* tt,
 }
 
 /*****************************************************************************/
-void* start_routine_net( const char* name, int impl( void* ),
-        void init( void* ), void cleanup( void ), void* h,
+void* start_routine_net( const char* name, int impl( void*, void* ),
+        void* init( void* ), void cleanup( void* ), void* h,
         smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
         int cnt_out )
 {
     int state = SMX_NET_CONTINUE;
     dzlog_debug( "init net %s", name );
-    init( h );
+    void* net_state = init( h );
     smx_net_log_start( name );
     while( state == SMX_NET_CONTINUE )
     {
-        state = impl( h );
+        state = impl( h, net_state );
         state = smx_net_update_state( chs_in, cnt_in, state );
     }
     smx_net_terminate( chs_out, cnt_out );
     dzlog_debug( "cleanup net %s", name );
-    cleanup();
+    cleanup( net_state );
     smx_net_log_terminate( name );
     return NULL;
 }

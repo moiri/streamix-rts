@@ -5,11 +5,17 @@
  * @author  Simon Maurer
  */
 
+#include "pthread.h"
+#include <stdlib.h>
+
 #ifndef HANDLER_H
 #define HANDLER_H
 
-#include "pthread.h"
-#include <stdlib.h>
+#define XML_PATH        "app.xml"
+#define XML_APP         "app"
+#define XML_LOG         "log"
+#define XML_LOG_CONF    "conf"
+#define XML_LOG_CAT     "cat"
 
 // TYPEDEFS -------------------------------------------------------------------
 typedef struct box_smx_rn_s box_smx_rn_t;             /**< ::box_smx_rn_s */
@@ -139,6 +145,7 @@ struct smx_msg_s
     int   size;                     /**< size of the data */
     void* (*copy)( void*, size_t ); /**< pointer to a fct making a deep copy */
     void  (*destroy)( void* );      /**< pointer to a fct that frees data */
+    void* (*unpack)( void* );       /**< pointer to a fct that unpacks data */
 };
 
 /**
@@ -217,11 +224,14 @@ struct box_smx_tf_s
 #define SMX_HAS_PRODUCER_TERMINATED( h, box_name, ch_name )\
     ( ( box_ ## box_name ## _t* )h )->in.port_ ## ch_name->state == SMX_CHANNEL_END
 
-#define SMX_MSG_CREATE( data, dsize, fcopy, ffree )\
-    smx_msg_create( data, dsize, fcopy, ffree )
+#define SMX_MSG_CREATE( data, dsize, fcopy, ffree, funpack )\
+    smx_msg_create( data, dsize, fcopy, ffree, funpack )
 
 #define SMX_MSG_DESTROY( msg )\
     smx_msg_destroy( msg, 1 )
+
+#define SMX_MSG_UNPACK( msg )\
+    smx_msg_unpack( msg )
 
 #define SMX_NET_CREATE( box )\
     malloc( sizeof( struct box_##box##_s ) )
@@ -278,9 +288,9 @@ struct box_smx_tf_s
             ( ( box_ ## box_name ## _t* )h )->out.count )
 
 #define SMX_NET_EXTERN( box_name )\
-    extern int box_name( void* );\
-    extern void box_name ## _init( void* );\
-    extern void box_name ## _cleanup()
+    extern int box_name( void*, void* );\
+    extern void* box_name ## _init( void* );\
+    extern void box_name ## _cleanup( void* )
 
 // FUNCTIONS ------------------------------------------------------------------
 /**
@@ -462,10 +472,15 @@ smx_msg_t* smx_msg_copy( smx_msg_t* msg );
  *                          data in the message structure. The function takes a
  *                          void pointer as an argument that points to the data
  *                          structure to free.
+ * @param unpack( data )    a pointer to a function that unpacks the message
+ *                          data. The function takes a void pointer as an
+ *                          argument that points to the message payload and
+ *                          returns a void pointer that points to the unpacked
+ *                          message payload.
  * @return                  a pointer to the created message structure
  */
-smx_msg_t* smx_msg_create( void* data, size_t size,
-        void* copy( void*, size_t ), void destroy( void* ) );
+smx_msg_t* smx_msg_create( void* data, size_t size, void* copy( void*, size_t ),
+        void destroy( void* ), void* unpack( void* ) );
 
 /**
  * @brief Default copy function to perform a shallow copy of the message data
@@ -484,6 +499,14 @@ void* smx_msg_data_copy( void* data, size_t size );
 void smx_msg_data_destroy( void* data );
 
 /**
+ * @brief Default unpack function for the message payload
+ *
+ * @param data  a void pointer to the message payload.
+ * @return      a void pointer to the unpacked message payload.
+ */
+void* smx_msg_data_unpack( void* data );
+
+/**
  * @brief Destroy a message structure
  *
  * Allows to destroy a message structure. If defined (see smx_msg_create()), the
@@ -494,6 +517,14 @@ void smx_msg_data_destroy( void* data );
  *              if msg->destroy() is NULL this flag is ignored
  */
 void smx_msg_destroy( smx_msg_t* msg, int deep );
+
+/**
+ * @brief Unpack the message payload
+ *
+ * @param msg   a pointer to the message structure to be destroyed
+ * @return      a void pointer to the payload
+ */
+void* smx_msg_unpack( smx_msg_t* msg );
 
 /**
  * @brief is executed once, at the beginning of a thread start up
@@ -590,7 +621,9 @@ void smx_program_init();
  * @param handler   a pointer to the signature
  * @return          returns the state of the box
  */
-int smx_rn( void* handler );
+int smx_rn( void* handler, void* state );
+void* smx_rn_init( void* handler );
+void smx_rn_cleanup( void* state );
 
 /**
  * @brief grow the list of temporal firewalls and connect channels
@@ -675,8 +708,8 @@ void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
  * @param cnt_out           counter of output port
  * @return                  returns NULL
  */
-void* start_routine_net( const char* name, int impl( void* ),
-        void init( void* ), void cleanup( void ), void* h,
+void* start_routine_net( const char* name, int impl( void*, void* ),
+        void* init( void* ), void cleanup( void* ), void* h,
         smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
         int cnt_out );
 

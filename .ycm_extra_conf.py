@@ -62,6 +62,7 @@ flags = [
 '-isystem', '/usr/include',
 '-I', '.',
 '-I', './include',
+'-I', '/usr/include/libxml2',
 ]
 
 
