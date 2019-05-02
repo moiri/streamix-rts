@@ -7,6 +7,7 @@
 
 #include "pthread.h"
 #include <stdlib.h>
+#include <zlog.h>
 
 #ifndef HANDLER_H
 #define HANDLER_H
@@ -175,7 +176,7 @@ struct box_smx_rn_s
         smx_channel_t** ports;      /**< an array of channel pointers */
         int count;                  /**< the number of output ports */
     } out;                          /**< output channels */
-    smx_timer_t*    timer;          /**< timer structure for tt*/
+    smx_timer_t*        timer;      /**< timer structure for tt */
 };
 
 /**
@@ -183,9 +184,9 @@ struct box_smx_rn_s
  */
 struct box_smx_tf_s
 {
-    smx_channel_t*  in;     /**< input channel */
-    smx_channel_t*  out;    /**< output channel */
-    box_smx_tf_t*   next;   /**< pointer to the next element */
+    smx_channel_t*      in;         /**< input channel */
+    smx_channel_t*      out;        /**< output channel */
+    box_smx_tf_t*       next;       /**< pointer to the next element */
 };
 
 
@@ -265,7 +266,7 @@ struct box_smx_tf_s
 #define SMX_PROGRAM_CLEANUP()\
     smx_program_cleanup()
 
-#define SMX_PROGRAM_INIT()\
+#define SMX_PROGRAM_INIT( net_count )\
     smx_program_init()
 
 #define SMX_TF_CREATE( sec, nsec )\
@@ -289,7 +290,7 @@ struct box_smx_tf_s
 
 #define SMX_NET_EXTERN( box_name )\
     extern int box_name( void*, void* );\
-    extern void* box_name ## _init( void* );\
+    extern int box_name ## _init( void*, void** );\
     extern void box_name ## _cleanup( void* )
 
 // FUNCTIONS ------------------------------------------------------------------
@@ -622,7 +623,7 @@ void smx_program_init();
  * @return          returns the state of the box
  */
 int smx_rn( void* handler, void* state );
-void* smx_rn_init( void* handler );
+int smx_rn_init( void* handler, void** state );
 void smx_rn_cleanup( void* state );
 
 /**
@@ -709,7 +710,7 @@ void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
  * @return                  returns NULL
  */
 void* start_routine_net( const char* name, int impl( void*, void* ),
-        void* init( void* ), void cleanup( void* ), void* h,
+        int init( void*, void** ), void cleanup( void* ), void* h,
         smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
         int cnt_out );
 

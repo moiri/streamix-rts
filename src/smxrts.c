@@ -14,7 +14,6 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <errno.h>
-#include <zlog.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include "smxrts.h"
@@ -41,6 +40,7 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
 /*****************************************************************************/
 void smx_channel_destroy( smx_channel_t* ch )
 {
+    dzlog_debug("destroy channel '%s' (msg count: %d)", ch->name, ch->fifo->count);
     pthread_mutex_destroy( &ch->ch_mutex );
     pthread_cond_destroy( &ch->ch_cv );
     smx_guard_destroy( ch->guard );
@@ -231,6 +231,8 @@ void smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
     fifo->tail = fifo->tail->prev;
     fifo->count++;
     dzlog_debug("write to fifo %s (new count: %d)", ch->name, fifo->count );
+    if(fifo->count == fifo->length && fifo->length > 1)
+        dzlog_warn("fifo '%s' is full", ch->name);
     pthread_cond_signal( &fifo->fifo_cv );
     pthread_mutex_unlock( &fifo->fifo_mutex );
 }
@@ -465,9 +467,10 @@ void smx_net_terminate( smx_channel_t** chs, int len )
 /*****************************************************************************/
 void smx_program_cleanup()
 {
+    xmlCleanupParser();
     dzlog_debug("end thread main");
     zlog_fini();
-    pthread_exit( NULL );
+    exit( 0 );
 }
 
 /*****************************************************************************/
@@ -478,13 +481,16 @@ void smx_program_init()
     xmlChar* conf = NULL;
     xmlChar* cat = NULL;
 
+    /* required for thread safety */
+    xmlInitParser();
+
     /*parse the file and get the DOM */
     doc = xmlParseFile(XML_PATH);
 
     if (doc == NULL)
     {
         printf("error: could not parse the app config file '%s'\n", XML_PATH);
-        pthread_exit( NULL );
+        exit( 0 );
     }
 
     cur = xmlDocGetRootElement(doc);
@@ -492,7 +498,7 @@ void smx_program_init()
     {
         printf("error: app config root node name is '%s' instead of '%s'\n",
                 cur->name, XML_APP);
-        pthread_exit( NULL );
+        exit( 0 );
     }
 
     cur = cur->xmlChildrenNode;
@@ -509,13 +515,13 @@ void smx_program_init()
     if(conf == NULL)
     {
         printf("error: no log configuration found in app config\n");
-        pthread_exit( NULL );
+        exit( 0 );
     }
 
     if(cat == NULL)
     {
         printf("error: no log cathegory found in app config\n");
-        pthread_exit( NULL );
+        exit( 0 );
     }
 
     int rc = dzlog_init((const char*)conf, (const char*)cat);
@@ -523,7 +529,7 @@ void smx_program_init()
     if( rc ) {
         printf("error: zlog init failed with conf: '%s' and cat: '%s'\n",
                 conf, cat);
-        pthread_exit( NULL );
+        exit( 0 );
     }
 
     xmlFree(conf);
@@ -583,10 +589,11 @@ int smx_rn( void* handler, void* state )
 }
 
 /*****************************************************************************/
-void* smx_rn_init( void* handler )
+int smx_rn_init( void* handler, void** state )
 {
     (void)(handler);
-    return NULL;
+    (void)(state);
+    return 0;
 }
 
 /*****************************************************************************/
@@ -699,21 +706,26 @@ void smx_tf_write_outputs( smx_msg_t** msg, smx_timer_t* tt,
 
 /*****************************************************************************/
 void* start_routine_net( const char* name, int impl( void*, void* ),
-        void* init( void* ), void cleanup( void* ), void* h,
+        int init( void*, void** ), void cleanup( void* ), void* h,
         smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
         int cnt_out )
 {
     int state = SMX_NET_CONTINUE;
-    dzlog_debug( "init net %s", name );
-    void* net_state = init( h );
-    smx_net_log_start( name );
-    while( state == SMX_NET_CONTINUE )
+    dzlog_info( "init net %s", name );
+    void* net_state = NULL;
+    if(init( h, &net_state ) == 0)
     {
-        state = impl( h, net_state );
-        state = smx_net_update_state( chs_in, cnt_in, state );
+        smx_net_log_start( name );
+        while( state == SMX_NET_CONTINUE )
+        {
+            state = impl( h, net_state );
+            state = smx_net_update_state( chs_in, cnt_in, state );
+        }
+        smx_net_terminate( chs_out, cnt_out );
     }
-    smx_net_terminate( chs_out, cnt_out );
-    dzlog_debug( "cleanup net %s", name );
+    else
+        dzlog_error( "initialisation of net %s failed", name );
+    dzlog_info( "cleanup net %s", name );
     cleanup( net_state );
     smx_net_log_terminate( name );
     return NULL;

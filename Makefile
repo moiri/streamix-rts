@@ -27,11 +27,11 @@ DEBUG_FLAGS = -g -O0
 
 CC = gcc
 
-all: $(STATLIB) $(DYNLIB)
-
 # compile with dot stuff and debug flags
 debug: CFLAGS += $(DEBUG_FLAGS)
-debug: $(STATLIB)
+debug: all
+
+all: $(STATLIB) $(DYNLIB)
 
 $(STATLIB): $(OBJECTS)
 	mkdir -p lib
