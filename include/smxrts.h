@@ -78,9 +78,12 @@ struct smx_channel_s
     smx_fifo_t*         fifo;       /**< ::smx_fifo_s */
     smx_guard_t*        guard;      /**< ::smx_guard_s */
     smx_collector_t*    collector;  /**< ::smx_collector_s, collect signals */
-    smx_channel_state_t state;      /**< state of the channel */
-    pthread_mutex_t     ch_mutex;   /**< mutual exclusion */
-    pthread_cond_t      ch_cv;      /**< conditional variable to trigger box */
+    smx_channel_state_t state_w;    /**< write state of the channel */
+    smx_channel_state_t state_r;    /**< read state of the channel */
+    pthread_mutex_t     ch_mutex_w; /**< mutual exclusion */
+    pthread_cond_t      ch_cv_w;    /**< conditional variable to trigger producer */
+    pthread_mutex_t     ch_mutex_r; /**< mutual exclusion */
+    pthread_cond_t      ch_cv_r;    /**< conditional variable to trigger consumer */
 };
 
 /**
@@ -112,7 +115,6 @@ struct smx_fifo_s
     int     count;               /**< counts occupied space */
     int     length;              /**< size of the FIFO */
     pthread_mutex_t fifo_mutex;  /**< mutual exclusion */
-    pthread_cond_t  fifo_cv;     /**< conditional variable to trigger box */
 };
 
 /**
@@ -575,25 +577,34 @@ pthread_t smx_net_run( void* box_impl( void* arg ), void* arg );
  * prevent a while(1) type of behaviour because no blocking will occur to slow
  * the thread execution.
  *
- * @param chs   a list of output channels
- * @param len   number of output channels
- * @param state state set by the box implementation. If set to SMX_NET_CONTINUE,
- *              the box will not terminate. If set to SMX_NET_END, the box
- *              will terminate. If set to SMX_NET_RETURN (or 0) this function
- *              will determine wheter a box terminates or not
- * @return      SMX_NET_CONTINUE if there is at least one triggering producer
- *              alive.
- *              SMX_BOX_TERINATE if all triggering prodicers are terminated.
+ * @param chs_in    a list of input channels
+ * @param len_in    number of input channels
+ * @param chs_out   a list of output channels
+ * @param len_out   number of output channels
+ * @param state     state set by the box implementation. If set to
+ *                  SMX_NET_CONTINUE, the box will not terminate. If set to
+ *                  SMX_NET_END, the box will terminate. If set to
+ *                  SMX_NET_RETURN (or 0) this function will determine wheter
+ *                  a box terminates or not
+ * @param name      the name of the net
+ * @return          SMX_NET_CONTINUE if there is at least one triggeringr
+ *                  producer alive. SMX_BOX_TERINATE if all triggering
+ *                  prodicers are terminated.
  */
-int smx_net_update_state( smx_channel_t** chs, int len, int state );
+int smx_net_update_state( smx_channel_t** chs_in, int len_in,
+        smx_channel_t** chs_out, int len_out, int state, const char* name );
 
 /**
- * @brief Send termination signal to all output channels
+ * @brief Set all channel states to end and send termination signal to all
+ * output channels.
  *
- * @param chs       a list of output channels
- * @param length    number of output channels
+ * @param chs_in    a list of input channels
+ * @param len_in    number of input channels
+ * @param chs_out   a list of output channels
+ * @param len_out   number of output channels
  */
-void smx_net_terminate( smx_channel_t** chs, int length );
+void smx_net_terminate( smx_channel_t** chs_in, int len_in,
+        smx_channel_t** chs_out, int len_out );
 
 /**
  * @brief Perfrom some cleanup tasks
