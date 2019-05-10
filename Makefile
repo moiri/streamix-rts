@@ -16,6 +16,7 @@ INCLUDES = $(LOC_INC_DIR)/*
 
 INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I/usr/include/libxml2 \
+			   -I./uthash/src \
 			   -I.
 
 LINK_FILE = -lpthread \

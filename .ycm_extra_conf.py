@@ -60,9 +60,10 @@ flags = [
 '-isystem', '/usr/local/include',
 '-isystem', '/usr/target/include',
 '-isystem', '/usr/include',
+'-isystem', '/usr/include/libxml2',
 '-I', '.',
 '-I', './include',
-'-I', '/usr/include/libxml2',
+'-I', './uthash/src',
 ]
 
 

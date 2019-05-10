@@ -5,9 +5,10 @@
  * @author  Simon Maurer
  */
 
-#include "pthread.h"
+#include <pthread.h>
 #include <stdlib.h>
 #include <zlog.h>
+#include "uthash.h"
 
 #ifndef HANDLER_H
 #define HANDLER_H
@@ -68,6 +69,16 @@ enum smx_thread_state_e
 };
 
 // STRUCTS --------------------------------------------------------------------
+/**
+ * A hash table entry for storing zlog categories.
+ */
+struct smx_cat_s
+{
+    pthread_t id;           /**< the key of the hash table: the thread id */
+    zlog_category_t* ptr;   /**< a pointer to a zlog category */
+    UT_hash_handle hh;      /**< the uthash handle */
+};
+
 /**
  * @brief A generic Streamix channel
  */
@@ -193,11 +204,11 @@ struct box_smx_tf_s
 
 
 // MACROS ---------------------------------------------------------------------
-#define SMX_CHANNEL_CREATE( len, type, name )\
-    smx_channel_create( len, type, #name )
+#define SMX_CHANNEL_CREATE( id, len, type, name )\
+    smx_channel_t* ch_ ## id = smx_channel_create( len, type, #name )
 
-#define SMX_CHANNEL_DESTROY( ch )\
-    smx_channel_destroy( ch )
+#define SMX_CHANNEL_DESTROY( id )\
+    smx_channel_destroy( ch_ ## id )
 
 #define SMX_CHANNEL_READ( h, box_name, ch_name )\
     smx_channel_read( ( ( box_ ## box_name ## _t* )h )->in.port_ ## ch_name )
@@ -206,26 +217,31 @@ struct box_smx_tf_s
     smx_channel_write( ( ( box_ ## box_name ## _t* )h )->out.port_ ## ch_name,\
             data )
 
-#define SMX_CONNECT( box, ch, box_name, ch_name, mode )\
-    ( ( box_ ## box_name ## _t* )box )->mode.port_ ## ch_name\
-        = ( smx_channel_t* )ch
+#define SMX_CONNECT( box_id, ch_id, box_name, ch_name, mode )\
+    ( ( box_ ## box_name ## _t* )box_ ## box_id )->mode.port_ ## ch_name\
+        = ( smx_channel_t* )ch_ ## ch_id
 
-#define SMX_CONNECT_ARR( box, ch, box_name, ch_name, mode )\
-    ( ( box_ ## box_name ## _t* )box )->mode.ports[\
-        ( ( box_ ## box_name ## _t* )box )->mode.count++] = ( smx_channel_t* )ch
+#define SMX_CONNECT_ARR( box_id, ch_id, box_name, ch_name, mode )\
+    ( ( box_ ## box_name ## _t* )box_ ## box_id )->mode.ports[\
+            ( ( box_ ## box_name ## _t* )box_ ## box_id )->mode.count++\
+        ] = ( smx_channel_t* )ch_ ## ch_id
 
-#define SMX_CONNECT_GUARD( ch, iats, iatns )\
-    ( ( smx_channel_t* )ch )->guard = smx_guard_create( iats, iatns )
+#define SMX_CONNECT_GUARD( id, iats, iatns )\
+    ( ( smx_channel_t* )ch_ ## id )->guard = smx_guard_create( iats, iatns,\
+            ( ( smx_channel_t* )ch_ ## id )->name )
 
-#define SMX_CONNECT_RN( box, ch )\
-    ( ( smx_channel_t* )ch )->collector\
-        = ( ( box_smx_rn_t* )box )->in.collector;\
+#define SMX_CONNECT_RN( box_id, ch_id )\
+    ( ( smx_channel_t* )ch_ ## ch_id )->collector\
+        = ( ( box_smx_rn_t* )box_ ## box_id )->in.collector;\
 
-#define SMX_CONNECT_TF( timer, ch_in, ch_out )\
-    smx_tf_connect( timer, ch_in, ch_out )
+#define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id )\
+    smx_tf_connect( timer_ ## timer_id, ch_ ## ch_in_id , ch_ ## ch_out_id )
 
 #define SMX_HAS_PRODUCER_TERMINATED( h, box_name, ch_name )\
     ( ( box_ ## box_name ## _t* )h )->in.port_ ## ch_name->state == SMX_CHANNEL_END
+
+#define SMX_LOG( level, format, ... )\
+    zlog_ ## level( smx_get_category(), format, ##__VA_ARGS__ )
 
 #define SMX_MSG_CREATE( data, dsize, fcopy, ffree, funpack )\
     smx_msg_create( data, dsize, fcopy, ffree, funpack )
@@ -236,66 +252,105 @@ struct box_smx_tf_s
 #define SMX_MSG_UNPACK( msg )\
     smx_msg_unpack( msg )
 
-#define SMX_NET_CREATE( box )\
-    malloc( sizeof( struct box_##box##_s ) )
+#define SMX_NET_CREATE( id, name )\
+    smx_thread_count_inc();\
+    box_ ## name ## _t* box_ ## id = malloc( sizeof( struct box_ ## name ## _s ) )
 
-#define SMX_NET_DESTROY( box_name, box )\
-    free( ( ( box_ ## box_name ## _t* )box )->in.ports );\
-    free( ( ( box_ ## box_name ## _t* )box )->out.ports );\
-    free( box )
+#define SMX_NET_DESTROY( id, name )\
+    free( ( ( box_ ## name ## _t* )box_ ## id )->in.ports );\
+    free( ( ( box_ ## name ## _t* )box_ ## id )->out.ports );\
+    free( box_ ## id )
 
-#define SMX_NET_INIT( box_name, box, indegree, outdegree )\
-    ( ( box_ ## box_name ## _t* )box )->in.count = 0;\
-    ( ( box_ ## box_name ## _t* )box )->in.ports\
+#define SMX_NET_INIT( id, name, indegree, outdegree )\
+    ( ( box_ ## name ## _t* )box_ ## id )->in.count = 0;\
+    ( ( box_ ## name ## _t* )box_ ## id )->in.ports\
         = malloc( sizeof( smx_channel_t* ) * indegree );\
-    ( ( box_ ## box_name ## _t* )box )->out.count = 0;\
-    ( ( box_ ## box_name ## _t* )box )->out.ports\
+    ( ( box_ ## name ## _t* )box_ ## id )->out.count = 0;\
+    ( ( box_ ## name ## _t* )box_ ## id )->out.ports\
         = malloc( sizeof( smx_channel_t* ) * outdegree );\
-    ( ( box_ ## box_name ## _t* )box )->timer = NULL
+    ( ( box_ ## name ## _t* )box_ ## id )->timer = NULL
 
-#define SMX_NET_RUN( arg, box_name )\
-    pthread_t th_ ## arg = smx_net_run( box_ ## box_name, arg )
+#define SMX_NET_RUN( id, name )\
+    pthread_t th_box_ ## id = smx_net_run( STRINGIFY( net_ ## name ),\
+            box_ ## name, box_ ## id )
 
-#define SMX_NET_RN_DESTROY( box )\
-    smx_net_rn_destroy( ( box_smx_rn_t* )box )
+#define SMX_NET_RN_DESTROY( id )\
+    smx_net_rn_destroy( ( box_smx_rn_t* )box_ ## id )
 
-#define SMX_NET_RN_INIT( box )\
-    smx_net_rn_init( ( box_smx_rn_t* )box )
+#define SMX_NET_RN_INIT( id )\
+    smx_net_rn_init( ( box_smx_rn_t* )box_ ## id )
 
-#define SMX_NET_WAIT_END( box_name )\
-    pthread_join( th_ ## box_name, NULL )
+#define SMX_NET_WAIT_END( id )\
+    pthread_join( th_box_ ## id, NULL )
+
+#define SMX_PROGRAM_INIT_RUN()\
+    smx_thread_barrier_init()
 
 #define SMX_PROGRAM_CLEANUP()\
     smx_program_cleanup()
 
-#define SMX_PROGRAM_INIT( net_count )\
+#define SMX_PROGRAM_INIT()\
     smx_program_init()
 
-#define SMX_TF_CREATE( sec, nsec )\
-    smx_tf_create( sec, nsec )
+#define SMX_TF_CREATE( id, sec, nsec )\
+    smx_thread_count_inc();\
+    smx_timer_t* timer_ ## id = smx_tf_create( sec, nsec )
 
-#define SMX_TF_DESTROY( tt )\
-    smx_tf_destroy( tt )
+#define SMX_TF_DESTROY( id )\
+    smx_tf_destroy( timer_ ## id )
 
-#define SMX_TF_RUN( timer )\
-    pthread_t th_ ## timer = smx_net_run( start_routine_tf, timer )
+#define SMX_TF_RUN( id )\
+    pthread_t th_timer_ ## id = smx_net_run( STRINGIFY( net_tf ),\
+            start_routine_tf, timer_ ## id )
 
-#define SMX_TF_WAIT_END( timer )\
-    pthread_join( th_ ## timer, NULL )
+#define SMX_TF_WAIT_END( id )\
+    pthread_join( th_timer_ ## id, NULL )
 
-#define START_ROUTINE_NET( h, box_name )\
-    start_routine_net( #box_name, box_name, box_name ## _init, box_name ## _cleanup, h,\
-            ( ( box_ ## box_name ## _t* )h )->in.ports,\
-            ( ( box_ ## box_name ## _t* )h )->in.count,\
-            ( ( box_ ## box_name ## _t* )h )->out.ports,\
-            ( ( box_ ## box_name ## _t* )h )->out.count )
+#define START_ROUTINE_NET( h, name )\
+    start_routine_net( name, name ## _init, name ## _cleanup, h,\
+            ( ( box_ ## name ## _t* )h )->in.ports,\
+            ( ( box_ ## name ## _t* )h )->in.count,\
+            ( ( box_ ## name ## _t* )h )->out.ports,\
+            ( ( box_ ## name ## _t* )h )->out.count )
 
-#define SMX_NET_EXTERN( box_name )\
-    extern int box_name( void*, void* );\
-    extern int box_name ## _init( void*, void** );\
-    extern void box_name ## _cleanup( void* )
+#define SMX_NET_EXTERN( name )\
+    extern int name( void*, void* );\
+    extern int name ## _init( void*, void** );\
+    extern void name ## _cleanup( void* )
+
+#define STRINGIFY(x) #x
 
 // FUNCTIONS ------------------------------------------------------------------
+/**
+ * Change the state of a channel collector. The state is only changed if the
+ * current state is differnt than the new state and than the end state.
+ *
+ * @param ch    pointer to the channel
+ * @param state the new state
+ */
+void smx_channel_change_collector_state( smx_channel_t* ch,
+        smx_channel_state_t state );
+
+/**
+ * Change the read state of a channel. The state is only changed if the
+ * current state is differnt than the new state and than the end state.
+ *
+ * @param ch    pointer to the channel
+ * @param state the new state
+ */
+void smx_channel_change_read_state( smx_channel_t* ch,
+        smx_channel_state_t state );
+
+/**
+ * Change the write state of a channel. The state is only changed if the
+ * current state is differnt than the new state and than the end state.
+ *
+ * @param ch    pointer to the channel
+ * @param state the new state
+ */
+void smx_channel_change_write_state( smx_channel_t* ch,
+        smx_channel_state_t state );
+
 /**
  * @brief Create Streamix channel
  *
@@ -409,13 +464,22 @@ void smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
 int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
 
 /**
+ * Fetch the zlog category from the global hash table depending on the thread
+ * from which this function is called.
+ *
+ * @return  pointer to the thread-specific category
+ */
+zlog_category_t* smx_get_category();
+
+/**
  * @brief create timed guard structure and initialise timer
  *
  * @param iats  minimal inter-arrival time in seconds
  * @param iatns minimal inter-arrival time in nano seconds
+ * @param name  name of the channel
  * @return      pointer to the created guard structure
  */
-smx_guard_t* smx_guard_create( int iats, int iatns );
+smx_guard_t* smx_guard_create( int iats, int iatns, const char* name );
 
 /**
  * @brief destroy the guard structure
@@ -530,20 +594,6 @@ void smx_msg_destroy( smx_msg_t* msg, int deep );
 void* smx_msg_unpack( smx_msg_t* msg );
 
 /**
- * @brief is executed once, at the beginning of a thread start up
- *
- * @param name  name of the box
- */
-void smx_net_log_start( const char* name );
-
-/**
- * @brief is executed once befor the thread of the box terminates
- *
- * @param name  name of the box
- */
-void smx_net_log_terminate( const char* name );
-
-/**
  * @brief Destroy copy sync structure
  *
  * @param cp    pointer to the cp sync structure
@@ -560,11 +610,12 @@ void smx_net_rn_init( box_smx_rn_t* cp );
 /**
  * @brief create pthred of box
  *
+ * @oaram name              the name of the box
  * @param box_impl( arg )   function pointer to the box implementation
  * @param arg               pointer to the box handler
  * @return                  a pthread id
  */
-pthread_t smx_net_run( void* box_impl( void* arg ), void* arg );
+pthread_t smx_net_run( const char* name, void* box_impl( void* arg ), void* arg );
 
 /**
  * @brief Update the state of the box
@@ -586,13 +637,12 @@ pthread_t smx_net_run( void* box_impl( void* arg ), void* arg );
  *                  SMX_NET_END, the box will terminate. If set to
  *                  SMX_NET_RETURN (or 0) this function will determine wheter
  *                  a box terminates or not
- * @param name      the name of the net
  * @return          SMX_NET_CONTINUE if there is at least one triggeringr
  *                  producer alive. SMX_BOX_TERINATE if all triggering
  *                  prodicers are terminated.
  */
 int smx_net_update_state( smx_channel_t** chs_in, int len_in,
-        smx_channel_t** chs_out, int len_out, int state, const char* name );
+        smx_channel_t** chs_out, int len_out, int state );
 
 /**
  * @brief Set all channel states to end and send termination signal to all
@@ -605,6 +655,11 @@ int smx_net_update_state( smx_channel_t** chs_in, int len_in,
  */
 void smx_net_terminate( smx_channel_t** chs_in, int len_in,
         smx_channel_t** chs_out, int len_out );
+
+/**
+ * Function to be called if system is out of memory.
+ */
+void smx_out_of_memory();
 
 /**
  * @brief Perfrom some cleanup tasks
@@ -694,6 +749,16 @@ int smx_tf_read_inputs( smx_msg_t**, smx_timer_t*, smx_channel_t** );
 void smx_tf_wait( smx_timer_t* timer );
 
 /**
+ * Initialize the global thread barrier.
+ */
+void smx_thread_barrier_init();
+
+/**
+ * Increase the global thread count.
+ */
+void smx_thread_count_inc();
+
+/**
  * @brief write to all output channels of a temporal firewall
  *
  * @param msg       a pointer to the message array. The array has a length that
@@ -709,7 +774,6 @@ void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
 /**
  * @brief the start routine of a thread associated to a box
  *
- * @param name              name of the box
  * @param impl( arg )       pointer to the box implementation function
  * @param init( arg )       pointer to the box intitialisation function
  * @param cleanup( arg )    pointer to the box cleanup function
@@ -720,10 +784,9 @@ void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
  * @param cnt_out           counter of output port
  * @return                  returns NULL
  */
-void* start_routine_net( const char* name, int impl( void*, void* ),
-        int init( void*, void** ), void cleanup( void* ), void* h,
-        smx_channel_t** chs_in, int cnt_in, smx_channel_t** chs_out,
-        int cnt_out );
+void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
+        void cleanup( void* ), void* h, smx_channel_t** chs_in, int cnt_in,
+        smx_channel_t** chs_out, int cnt_out );
 
 /**
  * @brief start routine for a timer thread
