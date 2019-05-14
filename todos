@@ -1,0 +1,130 @@
+# Work-estimation of a New Motri Based on Streamix
+
+This document aims at estimating the work effort required to use [Streamix](https://github.com/moiri/streamix) (for more details refer to the [dissertation](https://uhra.herts.ac.uk/handle/2299/21094)) as a base system for the ISPW Sleep Lab.
+
+In a first step, the specific implementation of the different components is ignored.
+Most of the connected components are either sensors or actuators that have to be connected to a logging system and a controller system, respectively.
+
+In order to use Streamix to achieve this, the [run-time system (RTS) of Streamix](https://github.com/moiri/streamix-rts) must be adapted accordingly in order to use it in a productive environment.
+In a first step this work consist of the tasks described in the following sections.
+The total amount of estimated required work is **47 days**.
+Excluding EDF (6), Exception handling (8), and network interface (6) the estimation sums up to **27 days**.
+
+## Web-based GUI
+Any non-time-critical event that must be observed by an experimenter during the experiment must be represented on a web-based GUI.
+This GUI must provide the following features:
+- **Session Manager** allows the experimenter to advance an experiment through hierarchical experiment stages (Protocol, MZP, Block, Trial)
+- **Experiemnt Dashboard** allows the experimenter to observe experiment information (e.g. video, audio, graphs, gauges)
+- **System Dashboard** allows the experimenter to observe the system health (hardware load, Streamix statistics)
+
+**12 days of required effort**:
+
+- Conceptualising the system and choosing the technology: 2 days
+- Implementing the backend
+   - Core structure: 2 days
+   - DB for the session manager: 1 day
+   - Streamix Logging interface: 1 day
+   - Component event interface: 1 day
+- Implementing the frontend
+   - Session manager: 2 days
+   - Experiment Dashboard: 3 days
+   - System Dashboard: 2 days
+
+
+## System Statistics
+The goal is to create a tool that allows to analyse the health of the system at runtime.
+To achieve this the RTS logging has to be improved and the analysis system has to be built.
+
+### RTS Logging
+In order to check the health of a running system, a good system logger is necessary.
+Currently, the RTS uses [zlog](https://hardysimpson.github.io/zlog/) to log status messages of the system.
+The logging must be improved with respect to the following two points:
+1. using finer grained distinction of log levels than just `error` and debug`
+2. use category, rule, and format of `zlog` to create different log files depending on the requirements (logging channel information is different than logging net information)
+
+**4 days of required effort**:
+
+- Stydying the capacities of `zlog` and defining a tight logging concept: 1 day
+- Implementing the concept as a small library to be used in the RTS
+   - creating wrapper functions: 1 day
+   - defining the log config files: 1 day
+   - adapt all log messages: 1 day
+
+This effort has mostly been done.
+The following is missing:
+ - take nets (instances) vs boxes into account
+ - create log cat for tfs (in SMX_CONNECT_TF)
+
+## RTS Exception Handling
+Currently, the RTS does not handle errors in a clean way.
+Errors are logged but the system is not terminating grazefully.
+
+- All fatal errors need to lead to a grazeful shutdown.
+- All errors need to either be handleled with a fallback solution of lead to a grazeful shutdown.
+- All warnings need the be handled with a fallback solution.
+
+### Statistics Tool
+The extended logging will allow to deduce system statistics from the RTS by parsing the log-files and making them available for the **System Dashboard**.
+The following statistic must be made available:
+- Execution rate of nets (current and graph over time)
+- FIFO memory usage (current and graph over time)
+- Deadline-miss-count in TF (total and graph over time)
+- Message-dismiss-count in out-decoupler (total and graph over time)
+- Message-duplicate-count in in-decoupler (total and graph over time)
+- System-hardware statistics (current and graph over time)
+
+**3 days of required effort**
+
+- Parsing the log files: 1 day
+- Preparing the streamix log data for the GUI: 1 day
+- Preparing the system log data for the GUI: 1 day
+
+## Init and Cleanup of Components
+Currently, the Streamix RTS does not provide a common interface to initialise and cleanup components which means that such operations have to be done in the work-thread which complicates the component-implementation unnecessarily.
+To remedy this, the RTS needs to provide a common cleanup and init interface.
+This can be done by either a passing further callback functions to the function `start_routine_net` or by storing them in the net interface handler.
+
+**1 day of required work**
+
+## RTS Scheduler
+Currently, the Streamix RTS uses the default linux scheduler.
+In order to prioritize more critical threads over less critical threads it has to be analyzed how and whether priorities can be used to achieve this.
+Further, in order to add support for hard-real-time systems the EDF scheduler of linux might be used.
+The required features are:
+- The streamix RTS automatically sets thread priorities such that TT nets are prioritised over ET nets
+- Add support for hard-real-time systems with an EDF scheduler
+
+**2(8) days of required effort**
+
+- Investigating how priorities with the default linux scheduler work (e.g. prority inversion): 1 day
+- Implementing different priorities in the RTS: 1 day
+- (Potentially using EDF for streamix: 6 days)
+
+## Streamix Network Interface
+Currently, Streamix only runs on a single machine.
+In order to allow to distribute the RTS onto multiple machines channels must be replaced with a transparent network interface.
+This can be achived by using a library such as [ZeroMQ](http://zeromq.org/).
+The required features are the following:
+- A Streamix network can be distributed over several machines
+- A Streamix programmer only specifies locality information on nets but does not have to bother how the network communication will be implemented.
+
+**6 days of required effort**
+
+- adapt the Streamix Language with locality information: 1 day
+- adapt the Streamix compiler toolchain: 1 day
+- extend the RTS with ZeroMQ (or equivalent): 4 days
+
+## Sleeplab
+In order to investigate whether Streamix is a good option as Motri v2 the sleeplab must be modelled with Streamix.
+This should not be done with actual hardware but with fake producers and consumers that resemble the real hardware.
+The required features are the following:
+- allow to perform an experiemnt with the topology of the sleeplab where fake producers and consumers are used instead of real HW
+- allow to connect the sleeplab to the web-based GUI
+- provide a time-critical GUI that allows to observe research-relevant events
+
+**5 days of required effort**
+
+- Create configurable fake consumers and producers: 1 day
+- Create configurable event-controller and event-mux components: 2 days
+- Create configurable timer component: 1 day
+- Create configurable log component: 1 day
