@@ -53,7 +53,6 @@ The logging must be improved with respect to the following two points:
 This effort has mostly been done.
 The following is missing:
  - take nets (instances) vs boxes into account
- - create log cat for tfs (in SMX_CONNECT_TF)
 
 ## RTS Exception Handling
 Currently, the RTS does not handle errors in a clean way.

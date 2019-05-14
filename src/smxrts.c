@@ -537,7 +537,7 @@ void* smx_msg_unpack( smx_msg_t* msg )
 }
 
 /*****************************************************************************/
-void smx_net_rn_destroy( box_smx_rn_t* cp )
+void smx_net_rn_destroy( net_smx_rn_t* cp )
 {
     pthread_mutex_destroy( &cp->in.collector->col_mutex );
     pthread_cond_destroy( &cp->in.collector->col_cv );
@@ -545,7 +545,7 @@ void smx_net_rn_destroy( box_smx_rn_t* cp )
 }
 
 /*****************************************************************************/
-void smx_net_rn_init( box_smx_rn_t* cp )
+void smx_net_rn_init( net_smx_rn_t* cp )
 {
     cp->in.collector = malloc( sizeof( struct smx_collector_s ) );
     if( cp->in.collector == NULL ) smx_out_of_memory();
@@ -778,14 +778,14 @@ int smx_rn( void* handler, void* state )
     bool has_msg = false;
     bool abort = false;
     int cur_count, i;
-    int count_in = ( ( box_smx_rn_t* )handler )->in.count;
-    int count_out = ( ( box_smx_rn_t* )handler )->out.count;
-    smx_channel_t** chs_in = ( ( box_smx_rn_t* )handler )->in.ports;
-    smx_channel_t** chs_out = ( ( box_smx_rn_t* )handler )->out.ports;
+    int count_in = ( ( net_smx_rn_t* )handler )->in.count;
+    int count_out = ( ( net_smx_rn_t* )handler )->out.count;
+    smx_channel_t** chs_in = ( ( net_smx_rn_t* )handler )->in.ports;
+    smx_channel_t** chs_out = ( ( net_smx_rn_t* )handler )->out.ports;
     smx_channel_t* ch = NULL;
     smx_msg_t* msg;
     smx_msg_t* msg_copy;
-    smx_collector_t* collector = ( ( box_smx_rn_t* )handler )->in.collector;
+    smx_collector_t* collector = ( ( net_smx_rn_t* )handler )->in.collector;
 
     pthread_mutex_lock( &collector->col_mutex );
     while( collector->state == SMX_CHANNEL_PENDING )
@@ -857,7 +857,7 @@ void smx_rn_cleanup( void* state )
 void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
         smx_channel_t* ch_out )
 {
-    box_smx_tf_t* tf = malloc( sizeof( struct box_smx_tf_s ) );
+    net_smx_tf_t* tf = malloc( sizeof( struct net_smx_tf_s ) );
     if( tf == NULL ) smx_out_of_memory();
     tf->in = ch_in;
     tf->out = ch_out;
@@ -887,8 +887,8 @@ smx_timer_t* smx_tf_create( int sec, int nsec )
 /*****************************************************************************/
 void smx_tf_destroy( smx_timer_t* tt )
 {
-    box_smx_tf_t* tf = tt->ports;
-    box_smx_tf_t* tf_tmp;
+    net_smx_tf_t* tf = tt->ports;
+    net_smx_tf_t* tf_tmp;
     while( tf != NULL ) {
         tf_tmp = tf;
         tf = tf->next;
@@ -1003,7 +1003,7 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
 void* start_routine_tf( void* h )
 {
     smx_timer_t* tt = h;
-    box_smx_tf_t* tf = tt->ports;
+    net_smx_tf_t* tf = tt->ports;
     smx_channel_t* ch_in[tt->count];
     smx_channel_t* ch_out[tt->count];
     smx_msg_t* msg[tt->count];
