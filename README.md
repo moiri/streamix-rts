@@ -8,7 +8,27 @@ Runtime system for the coordination language Streamix
 
 Requires
  - [`zlog`](https://github.com/HardySimpson/zlog)
+    is added as a git submodule and can be used to compile from source.
+ - [`libxml2`](http://www.xmlsoft.org/)
+
+    ```
+    sudo apt update
+    sudo apt install libxml2-dev
+    ```
+
+ - [`uthash`](https://github.com/troydhanson/uthash)
+
+    ```
+    sudo apt update
+    sudo apt install uthash-dev
+    ```
+
  - [`pthread`](https://computing.llnl.gov/tutorials/pthreads/)
+
+    ```
+    sudo apt update
+    sudo apt install libpthread-stubs0-dev
+    ```
 
 ## Examples
 In the folder `examples` choose an example and run
