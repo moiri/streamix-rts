@@ -29,6 +29,8 @@ typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
 typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
 typedef struct smx_msg_s smx_msg_t;                   /**< ::smx_msg_s */
 typedef struct smx_timer_s smx_timer_t;               /**< ::smx_timer_s */
+typedef struct smx_cat_th_s smx_cat_th_t;             /**< ::smx_cat_th_s */
+typedef struct smx_cat_ch_s smx_cat_ch_t;             /**< ::smx_cat_ch_s */
 typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
 typedef enum smx_channel_state_e smx_channel_state_t; /**< #smx_channel_state_e */
 
@@ -72,9 +74,19 @@ enum smx_thread_state_e
 /**
  * A hash table entry for storing zlog categories.
  */
-struct smx_cat_s
+struct smx_cat_th_s
 {
     pthread_t id;           /**< the key of the hash table: the thread id */
+    zlog_category_t* ptr;   /**< a pointer to a zlog category */
+    UT_hash_handle hh;      /**< the uthash handle */
+};
+
+/**
+ * A hash table entry for storing zlog categories.
+ */
+struct smx_cat_ch_s
+{
+    uintptr_t id;           /**< the key of the hash table: the channel ptr */
     zlog_category_t* ptr;   /**< a pointer to a zlog category */
     UT_hash_handle hh;      /**< the uthash handle */
 };
@@ -222,13 +234,15 @@ struct box_smx_tf_s
         = ( smx_channel_t* )ch_ ## ch_id
 
 #define SMX_CONNECT_ARR( box_id, ch_id, box_name, ch_name, mode )\
+    smx_cat_add_channel_ ## mode( ( uintptr_t )ch_ ## ch_id,\
+            STRINGIFY(ch_ ## n:box_name ## _ ## c:ch_name) );\
     ( ( box_ ## box_name ## _t* )box_ ## box_id )->mode.ports[\
             ( ( box_ ## box_name ## _t* )box_ ## box_id )->mode.count++\
         ] = ( smx_channel_t* )ch_ ## ch_id
 
 #define SMX_CONNECT_GUARD( id, iats, iatns )\
     ( ( smx_channel_t* )ch_ ## id )->guard = smx_guard_create( iats, iatns,\
-            ( ( smx_channel_t* )ch_ ## id )->name )
+            ( smx_channel_t* )ch_ ## id )
 
 #define SMX_CONNECT_RN( box_id, ch_id )\
     ( ( smx_channel_t* )ch_ ## ch_id )->collector\
@@ -241,7 +255,10 @@ struct box_smx_tf_s
     ( ( box_ ## box_name ## _t* )h )->in.port_ ## ch_name->state == SMX_CHANNEL_END
 
 #define SMX_LOG( level, format, ... )\
-    zlog_ ## level( smx_get_category(), format, ##__VA_ARGS__ )
+    zlog_ ## level( smx_get_category_th(), format, ##__VA_ARGS__ )
+
+#define SMX_LOG_CH( mode, level, ch, format, ...)\
+    zlog_ ## level( smx_get_category_ch_ ## mode( ch ), format, ##__VA_ARGS__ )
 
 #define SMX_MSG_CREATE( data, dsize, fcopy, ffree, funpack )\
     smx_msg_create( data, dsize, fcopy, ffree, funpack )
@@ -321,6 +338,30 @@ struct box_smx_tf_s
 #define STRINGIFY(x) #x
 
 // FUNCTIONS ------------------------------------------------------------------
+/**
+ * Add a zlog category for a channel source end
+ *
+ * @param ch    the channel id
+ * @param name  the name of the zlog category
+ */
+void smx_cat_add_channel_in( uintptr_t ch, const char* name );
+
+/**
+ * Add a zlog category for a channel sink end
+ *
+ * @param ch    the channel id
+ * @param name  the name of the zlog category
+ */
+void smx_cat_add_channel_out( uintptr_t ch, const char* name );
+
+/**
+ * Create a zlog category for a channel end
+ *
+ * @param ch    the channel id
+ * @param name  the name of the zlog category
+ */
+smx_cat_ch_t* smx_cat_ch_create( uintptr_t ch, const char* name );
+
 /**
  * Change the state of a channel collector. The state is only changed if the
  * current state is differnt than the new state and than the end state.
@@ -469,17 +510,42 @@ int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
  *
  * @return  pointer to the thread-specific category
  */
-zlog_category_t* smx_get_category();
+zlog_category_t* smx_get_category_th();
+
+/**
+ * Get the zlog category of a source end of a channel given a channel id.
+ *
+ * @param id    the id of the channel to search for a zlog cat
+ * @return      pointer to the channel-specific category
+ */
+zlog_category_t* smx_get_category_ch_in( uintptr_t id );
+
+/**
+ * Get the zlog category of a sink end of channel  a given a channel id.
+ *
+ * @param id    the id of the channel to search for a zlog cat
+ * @return      pointer to the channel-specific category
+ */
+zlog_category_t* smx_get_category_ch_out( uintptr_t id );
+
+/**
+ * Check whether the zlog channel category exists.
+ *
+ * @param cat   pointer to the category hash structure
+ * @return      either a pointer to the channel-specific category or a pointer
+ *              to the main channel if the specific channel cat cannot be found.
+ */
+zlog_category_t* smx_get_category_ch_check( smx_cat_ch_t* cat );
 
 /**
  * @brief create timed guard structure and initialise timer
  *
  * @param iats  minimal inter-arrival time in seconds
  * @param iatns minimal inter-arrival time in nano seconds
- * @param name  name of the channel
+ * @param ch    pointer to the channel
  * @return      pointer to the created guard structure
  */
-smx_guard_t* smx_guard_create( int iats, int iatns, const char* name );
+smx_guard_t* smx_guard_create( int iats, int iatns, smx_channel_t* ch );
 
 /**
  * @brief destroy the guard structure
@@ -494,9 +560,9 @@ void smx_guard_destroy( smx_guard_t* guard );
  * A producer is blocked until the minimum inter-arrival-time between two
  * consecutive messges has passed
  *
- * @param guard pointer to the guard structure
+ * @param ch pointer to the channel structure
  */
-void smx_guard_write( smx_guard_t* guard );
+void smx_guard_write( smx_channel_t* ch );
 
 /**
  * @brief imposes a rate-control on decoupled write operations
@@ -505,12 +571,12 @@ void smx_guard_write( smx_guard_t* guard );
  * arrival time (messages are not buffered and delayed, it's only a very simple
  * implementation)
  *
- * @param guard pointer to the guard structure
+ * @param ch    pointer to the channel structure
  * @param msg   pointer to the message structure
  *
  * @return      -1 if message was discarded, 0 otherwise
  */
-int smx_d_guard_write( smx_guard_t* guard, smx_msg_t* msg );
+int smx_d_guard_write( smx_channel_t* ch, smx_msg_t* msg );
 
 /**
  * @brief make a deep copy of a message
