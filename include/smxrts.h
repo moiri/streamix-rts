@@ -248,7 +248,11 @@ struct box_smx_tf_s
     ( ( smx_channel_t* )ch_ ## ch_id )->collector\
         = ( ( box_smx_rn_t* )box_ ## box_id )->in.collector;\
 
-#define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id )\
+#define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id, ch_name )\
+    smx_cat_add_channel_in( ( uintptr_t )ch_ ## ch_id,\
+            STRINGIFY(ch_ ## n:smx_tf ## _ ## c:ch_name) );\
+    smx_cat_add_channel_out( ( uintptr_t )ch_ ## ch_id,\
+            STRINGIFY(ch_ ## n:smx_tf ## _ ## c:ch_name) );\
     smx_tf_connect( timer_ ## timer_id, ch_ ## ch_in_id , ch_ ## ch_out_id )
 
 #define SMX_HAS_PRODUCER_TERMINATED( h, box_name, ch_name )\
