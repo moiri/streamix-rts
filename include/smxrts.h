@@ -275,8 +275,8 @@ struct net_smx_tf_s
 #define SMX_HAS_PRODUCER_TERMINATED( h, net_name, ch_name )\
     ( ( net_ ## net_name ## _t* )SMX_SIG( h ) )->in.port_ ## ch_name->state == SMX_CHANNEL_END
 
-#define SMX_LOG( level, format, ... )\
-    zlog_ ## level( smx_get_category_th(), format, ##__VA_ARGS__ )
+#define SMX_LOG( h, level, format, ... )\
+    zlog_ ## level( ( ( smx_net_t* )h )->cat, format, ##__VA_ARGS__ )
 
 #define SMX_LOG_CH( mode, level, ch, format, ...)\
     zlog_ ## level( smx_get_category_ch_ ## mode( ch ), format, ##__VA_ARGS__ )
@@ -291,8 +291,7 @@ struct net_smx_tf_s
     smx_msg_unpack( msg )
 
 #define SMX_NET_CREATE( id, name )\
-    smx_thread_count_inc();\
-    smx_net_t* net_ ## id = smx_net_create( id, #name,\
+    smx_net_t* net_ ## id = smx_net_create( id, #name, STRINGIFY( net_ ## name ),\
             malloc( sizeof( struct net_ ## name ## _s ) ) )
 
 #define SMX_NET_DESTROY( id, name )\
@@ -323,8 +322,7 @@ struct net_smx_tf_s
 #define SMX_NET_WAIT_END( id )\
     pthread_join( th_net_ ## id, NULL )
 
-#define SMX_PROGRAM_INIT_RUN()\
-    smx_thread_barrier_init()
+#define SMX_PROGRAM_INIT_RUN() ;
 
 #define SMX_PROGRAM_CLEANUP()\
     smx_program_cleanup()
@@ -333,7 +331,6 @@ struct net_smx_tf_s
     smx_program_init()
 
 #define SMX_TF_CREATE( id, sec, nsec )\
-    smx_thread_count_inc();\
     smx_timer_t* timer_ ## id = smx_tf_create( sec, nsec )
 
 #define SMX_TF_DESTROY( id )\
@@ -702,9 +699,11 @@ void* smx_msg_unpack( smx_msg_t* msg );
  *
  * @param id        a unique net identifier
  * @param name      the name of the net
+ * @param cat_name  the name of the zlog category
  * @param sig       a pointer to the net signature
  */
-smx_net_t* smx_net_create( unsigned int id, const char* name, void* sig );
+smx_net_t* smx_net_create( unsigned int id, const char* name,
+        const char* cat_name, void* sig );
 
 /**
  * @brief Destroy copy sync structure
@@ -741,6 +740,7 @@ pthread_t smx_net_run( const char* name, void* box_impl( void* arg ), void* arg 
  * prevent a while(1) type of behaviour because no blocking will occur to slow
  * the thread execution.
  *
+ * @param h         pointer to the net handler
  * @param chs_in    a list of input channels
  * @param len_in    number of input channels
  * @param chs_out   a list of output channels
@@ -754,19 +754,20 @@ pthread_t smx_net_run( const char* name, void* box_impl( void* arg ), void* arg 
  *                  producer alive. SMX_BOX_TERINATE if all triggering
  *                  prodicers are terminated.
  */
-int smx_net_update_state( smx_channel_t** chs_in, int len_in,
+int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
         smx_channel_t** chs_out, int len_out, int state );
 
 /**
  * @brief Set all channel states to end and send termination signal to all
  * output channels.
  *
+ * @param h         pointer to the net handler
  * @param chs_in    a list of input channels
  * @param len_in    number of input channels
  * @param chs_out   a list of output channels
  * @param len_out   number of output channels
  */
-void smx_net_terminate( smx_channel_t** chs_in, int len_in,
+void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
         smx_channel_t** chs_out, int len_out );
 
 /**
@@ -801,8 +802,8 @@ void smx_program_init();
  * @param handler   a pointer to the signature
  * @return          returns the state of the box
  */
-int smx_rn( void* handler, void* state );
-int smx_rn_init( void* handler, void** state );
+int smx_rn( void* h, void* state );
+int smx_rn_init( void* h, void** state );
 void smx_rn_cleanup( void* state );
 
 /**
@@ -862,16 +863,6 @@ int smx_tf_read_inputs( smx_msg_t**, smx_timer_t*, smx_channel_t** );
 void smx_tf_wait( smx_timer_t* timer );
 
 /**
- * Initialize the global thread barrier.
- */
-void smx_thread_barrier_init();
-
-/**
- * Increase the global thread count.
- */
-void smx_thread_count_inc();
-
-/**
  * @brief write to all output channels of a temporal firewall
  *
  * @param msg       a pointer to the message array. The array has a length that
@@ -887,10 +878,10 @@ void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
 /**
  * @brief the start routine of a thread associated to a box
  *
- * @param impl( arg )       pointer to the box implementation function
- * @param init( arg )       pointer to the box intitialisation function
- * @param cleanup( arg )    pointer to the box cleanup function
- * @param h                 pointer to the box signature
+ * @param impl( arg )       pointer to the net implementation function
+ * @param init( arg )       pointer to the net intitialisation function
+ * @param cleanup( arg )    pointer to the net cleanup function
+ * @param h                 pointer to the net handler
  * @param chs_in            list of input channels
  * @param cnt_in            count of input ports
  * @param chs_out           list of output channels

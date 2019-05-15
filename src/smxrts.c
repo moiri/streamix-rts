@@ -19,8 +19,6 @@
 #include "smxrts.h"
 #include "pthread.h"
 
-int thread_count = 0;
-pthread_barrier_t barrier;
 smx_cat_th_t* cats_th = NULL;
 smx_cat_ch_t* cats_ch_in = NULL;
 smx_cat_ch_t* cats_ch_out = NULL;
@@ -563,15 +561,16 @@ void* smx_msg_unpack( smx_msg_t* msg )
 }
 
 /*****************************************************************************/
-smx_net_t* smx_net_create( unsigned int id, const char* name, void* sig )
+smx_net_t* smx_net_create( unsigned int id, const char* name,
+        const char* cat_name, void* sig )
 {
     smx_net_t* net = malloc( sizeof( struct smx_net_s ) );
     if( net == NULL ) smx_out_of_memory();
-    zlog_debug( cat_main, "create net '%s(%d)'", name, id );
     net->id = id;
-    net->cat = zlog_get_category( name );
+    net->cat = zlog_get_category( cat_name );
     net->sig = sig;
     net->timer = NULL;
+    zlog_debug( net->cat, "create net '%s(%d)'", name, id );
     return net;
 }
 
@@ -652,7 +651,7 @@ zlog_category_t* smx_get_category_ch_check( smx_cat_ch_t* cat )
 }
 
 /*****************************************************************************/
-int smx_net_update_state( smx_channel_t** chs_in, int len_in,
+int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
         smx_channel_t** chs_out, int len_out, int state )
 {
     int i;
@@ -681,24 +680,24 @@ int smx_net_update_state( smx_channel_t** chs_in, int len_in,
     // if all the triggering inputs are done, terminate the thread
     if( (len_in > 0) && (done_cnt_in >= trigger_cnt) )
     {
-        SMX_LOG( debug, "all triggering producers have terminated" );
+        SMX_LOG( h, debug, "all triggering producers have terminated" );
         return SMX_NET_END;
     }
 
     if( (len_out) > 0 && (done_cnt_out >= push_cnt) )
     {
-        SMX_LOG( debug, "all consumers have terminated" );
+        SMX_LOG( h, debug, "all consumers have terminated" );
         return SMX_NET_END;
     }
     return SMX_NET_CONTINUE;
 }
 
 /*****************************************************************************/
-void smx_net_terminate( smx_channel_t** chs_in, int len_in,
+void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
         smx_channel_t** chs_out, int len_out )
 {
     int i;
-    SMX_LOG( notice, "send termination notice to neighbours" );
+    SMX_LOG( h, notice, "send termination notice to neighbours" );
     for( i=0; i < len_in; i++ ) {
         SMX_LOG_CH( out, notice, (uintptr_t)chs_in[i], "mark as stale" );
         pthread_mutex_lock( &chs_in[i]->ch_mutex_w );
@@ -734,7 +733,6 @@ void smx_program_cleanup()
     xmlCleanupParser();
     zlog_notice( cat_main, "end main thread" );
     zlog_fini();
-    pthread_barrier_destroy( &barrier );
     HASH_ITER( hh, cats_th, cur_th, tmp_th ) {
         HASH_DEL( cats_th, cur_th );
         free( cur_th );
@@ -811,25 +809,25 @@ void smx_program_init()
 }
 
 /*****************************************************************************/
-int smx_rn( void* handler, void* state )
+int smx_rn( void* h, void* state )
 {
     (void)(state);
     bool has_msg = false;
     bool abort = false;
     int cur_count, i;
-    int count_in = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->in.count;
-    int count_out = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->out.count;
-    smx_channel_t** chs_in = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->in.ports;
-    smx_channel_t** chs_out = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->out.ports;
+    int count_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.count;
+    int count_out = ( ( net_smx_rn_t* )SMX_SIG( h ) )->out.count;
+    smx_channel_t** chs_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.ports;
+    smx_channel_t** chs_out = ( ( net_smx_rn_t* )SMX_SIG( h ) )->out.ports;
     smx_channel_t* ch = NULL;
     smx_msg_t* msg;
     smx_msg_t* msg_copy;
-    smx_collector_t* collector = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->in.collector;
+    smx_collector_t* collector = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.collector;
 
     pthread_mutex_lock( &collector->col_mutex );
     while( collector->state == SMX_CHANNEL_PENDING )
     {
-        SMX_LOG( debug, "waiting for message on collector" );
+        SMX_LOG( h, debug, "waiting for message on collector" );
         pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
     }
     if( collector->state == SMX_CHANNEL_END )
@@ -843,7 +841,7 @@ int smx_rn( void* handler, void* state )
     }
     else if( collector->state != SMX_CHANNEL_END )
     {
-        SMX_LOG( debug, "collector state change %d -> %d", collector->state,
+        SMX_LOG( h, debug, "collector state change %d -> %d", collector->state,
                 SMX_CHANNEL_PENDING );
         collector->state = SMX_CHANNEL_PENDING;
     }
@@ -861,9 +859,9 @@ int smx_rn( void* handler, void* state )
             }
         }
         if( ch == NULL )
-            SMX_LOG( error, "something went wrong: no msg ready in collector %s (count: %d)",
+            SMX_LOG( h, error, "something went wrong: no msg ready in collector %s (count: %d)",
                     ch->name, collector->count );
-        SMX_LOG( info, "read from collector %s (new count: %d)", ch->name,
+        SMX_LOG( h, info, "read from collector %s (new count: %d)", ch->name,
                 cur_count );
         msg = smx_channel_read( ch );
         if(msg != NULL)
@@ -879,9 +877,9 @@ int smx_rn( void* handler, void* state )
 }
 
 /*****************************************************************************/
-int smx_rn_init( void* handler, void** state )
+int smx_rn_init( void* h, void** state )
 {
-    (void)(handler);
+    (void)(h);
     (void)(state);
     return 0;
 }
@@ -908,7 +906,6 @@ void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
 /*****************************************************************************/
 smx_timer_t* smx_tf_create( int sec, int nsec )
 {
-    thread_count++;
     smx_timer_t* timer = malloc( sizeof( struct smx_timer_s ) );
     if( timer == NULL ) smx_out_of_memory();
     timer->itval.it_value.tv_sec = sec;
@@ -998,43 +995,30 @@ void smx_tf_write_outputs( smx_msg_t** msg, smx_timer_t* tt,
 }
 
 /*****************************************************************************/
-void smx_thread_barrier_init()
-{
-    pthread_barrier_init( &barrier, NULL, thread_count );
-}
-
-/*****************************************************************************/
-void smx_thread_count_inc()
-{
-    thread_count++;
-}
-
-/*****************************************************************************/
 void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
         void cleanup( void* ), void* h, smx_channel_t** chs_in, int cnt_in,
         smx_channel_t** chs_out, int cnt_out )
 {
-    pthread_barrier_wait(&barrier);
     int state = SMX_NET_CONTINUE;
-    SMX_LOG( notice, "init net" );
+    SMX_LOG( h, notice, "init net" );
     void* net_state = NULL;
     if(init( h, &net_state ) == 0)
     {
-        SMX_LOG( notice, "start net" );
+        SMX_LOG( h, notice, "start net" );
         while( state == SMX_NET_CONTINUE )
         {
-            SMX_LOG( info, "start net loop" );
+            SMX_LOG( h, info, "start net loop" );
             state = impl( h, net_state );
-            state = smx_net_update_state( chs_in, cnt_in, chs_out, cnt_out,
+            state = smx_net_update_state( h, chs_in, cnt_in, chs_out, cnt_out,
                     state );
         }
     }
     else
-        SMX_LOG( error, "initialisation of net failed" );
-    smx_net_terminate( chs_in, cnt_in, chs_out, cnt_out );
-    SMX_LOG( notice, "cleanup net" );
+        SMX_LOG( h, error, "initialisation of net failed" );
+    smx_net_terminate( h, chs_in, cnt_in, chs_out, cnt_out );
+    SMX_LOG( h, notice, "cleanup net" );
     cleanup( net_state );
-    SMX_LOG( notice, "terminate net" );
+    SMX_LOG( h, notice, "terminate net" );
     return NULL;
 }
 
@@ -1046,7 +1030,6 @@ void* start_routine_tf( void* h )
     smx_channel_t* ch_in[tt->count];
     smx_channel_t* ch_out[tt->count];
     smx_msg_t* msg[tt->count];
-    pthread_barrier_wait(&barrier);
     zlog_notice( cat_net_tf, "init net" );
     int state = SMX_NET_CONTINUE;
     int tf_cnt = 0, end_cnt;
@@ -1067,7 +1050,7 @@ void* start_routine_tf( void* h )
         smx_tf_wait( tt );
         if( end_cnt == tt->count ) state = SMX_NET_END;
     }
-    smx_net_terminate( ch_in, tt->count, ch_out, tt->count );
+    smx_net_terminate( h, ch_in, tt->count, ch_out, tt->count );
     zlog_notice( cat_net_tf, "terminate net" );
     return NULL;
 }
