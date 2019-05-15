@@ -142,7 +142,7 @@ smx_msg_t* smx_channel_read( smx_channel_t* ch )
     if( abort )
     {
         SMX_LOG_CH( ch->source, notice, "read aborted" );
-        return msg;
+        return NULL;
     }
     switch( ch->type ) {
         case SMX_FIFO:
@@ -619,7 +619,6 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
     int done_cnt_in = 0;
     int done_cnt_out = 0;
     int trigger_cnt = 0;
-    int push_cnt = 0;
     // if state is forced by box implementation return forced state
     if( state != SMX_NET_RETURN ) return state;
 
@@ -634,7 +633,6 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
     }
     // check if consumer is available
     for( i=0; i<len_out; i++ ) {
-        push_cnt++;
         if( chs_out[i]->sink->state == SMX_CHANNEL_END )
             done_cnt_out++;
     }
@@ -645,7 +643,7 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
         return SMX_NET_END;
     }
 
-    if( (len_out) > 0 && (done_cnt_out >= push_cnt) )
+    if( (len_out) > 0 && (done_cnt_out >= len_out) )
     {
         SMX_LOG( h, debug, "all consumers have terminated" );
         return SMX_NET_END;
@@ -671,10 +669,10 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
         smx_channel_change_read_state( chs_out[i], SMX_CHANNEL_END );
         pthread_mutex_unlock( &chs_out[i]->source->ch_mutex );
         if( chs_out[i]->collector != NULL ) {
-            SMX_LOG_CH( chs_out[i]->source, notice, "mark collector as stale" );
             pthread_mutex_lock( &chs_out[i]->collector->col_mutex );
             smx_channel_change_collector_state( chs_out[i], SMX_CHANNEL_END );
             pthread_mutex_unlock( &chs_out[i]->collector->col_mutex );
+            SMX_LOG_CH( chs_out[i]->source, notice, "mark collector as stale" );
         }
     }
 }
@@ -750,7 +748,7 @@ int smx_rn( void* h, void* state )
 {
     (void)(state);
     bool has_msg = false;
-    bool abort = false;
+    int end_count = 0;
     int cur_count, i;
     int count_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.count;
     int count_out = ( ( net_smx_rn_t* )SMX_SIG( h ) )->out.count;
@@ -767,16 +765,12 @@ int smx_rn( void* h, void* state )
         SMX_LOG( h, debug, "waiting for message on collector" );
         pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
     }
-    if( collector->state == SMX_CHANNEL_END )
-    {
-        abort = true;
-    }
-    else if( collector->count > 0 )
+    if( collector->count > 0 )
     {
         collector->count--;
         has_msg = true;
     }
-    else if( collector->state != SMX_CHANNEL_END )
+    else
     {
         SMX_LOG( h, debug, "collector state change %d -> %d", collector->state,
                 SMX_CHANNEL_PENDING );
@@ -785,20 +779,28 @@ int smx_rn( void* h, void* state )
     cur_count = collector->count;
     pthread_mutex_unlock( &collector->col_mutex );
 
-    if( abort )
-        return SMX_NET_END;
-    else if( has_msg )
+    if( has_msg )
     {
         for( i=0; i<count_in; i++ ) {
-            if( smx_channel_ready_to_read( chs_in[i] ) ) {
+            if( chs_in[i]->source->state == SMX_CHANNEL_END )
+                end_count++;
+            else if( smx_channel_ready_to_read( chs_in[i] ) ) {
                 ch = chs_in[i];
                 break;
             }
         }
-        if( ch == NULL )
-            SMX_LOG( h, error, "something went wrong: no msg ready in collector %s (count: %d)",
-                    ch->name, collector->count );
-        SMX_LOG( h, info, "read from collector %s (new count: %d)", ch->name,
+        if( end_count == count_in )
+        {
+            SMX_LOG( h, debug, "all producers have terminated" );
+            return SMX_NET_END;
+        }
+        else if( ch == NULL )
+        {
+            SMX_LOG( h, error, "something went wrong: no msg ready in collector (count: %d)",
+                    collector->count );
+            return SMX_NET_RETURN;
+        }
+        SMX_LOG( h, info, "read from collector (new count: %d)",
                 cur_count );
         msg = smx_channel_read( ch );
         if(msg != NULL)
