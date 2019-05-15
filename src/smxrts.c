@@ -50,7 +50,7 @@ smx_cat_ch_t* smx_cat_ch_create( uintptr_t ch, const char* name )
     if( cat == NULL ) smx_out_of_memory();
     cat->ptr = zlog_get_category( name );
     cat->id = ch;
-    zlog_debug( cat_main, "add zlog category for channel end '%s'", name );
+    zlog_debug( cat_ch, "add zlog category for channel end '%s'", name );
     return cat;
 }
 
@@ -96,11 +96,11 @@ void smx_channel_change_write_state( smx_channel_t* ch,
 
 /*****************************************************************************/
 smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
-        const char* name )
+        int id, const char* name )
 {
     smx_channel_t* ch = malloc( sizeof( struct smx_channel_s ) );
     if( ch == NULL ) smx_out_of_memory();
-    zlog_debug( cat_ch, "create channel '%s' of length %d", name, len );
+    zlog_debug( cat_ch, "create channel '%s(%d)' of length %d", name, id, len );
     ch->type = type;
     ch->fifo = smx_fifo_create( len );
     ch->collector = NULL;
@@ -234,6 +234,32 @@ int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
     smx_channel_change_read_state( ch, SMX_CHANNEL_READY );
     pthread_mutex_unlock( &ch->ch_mutex_r );
     return res;
+}
+
+/*****************************************************************************/
+void smx_connect( smx_channel_t** dest, smx_channel_t* src, int dest_id,
+        int src_id, const char* dest_name, const char* src_name,
+        const char* mode )
+{
+    const char* in = "->";
+    const char* out = "<-";
+    const char* dir = 0 == strcmp( mode, "in" ) ? in : out;
+    zlog_debug( cat_ch, "connect '%s(%d)%s%s(%d)'", src_name,
+            src_id, dir, dest_name, dest_id );
+    *dest = src;
+}
+
+/*****************************************************************************/
+void smx_connect_arr( smx_channel_t** dest, int idx, smx_channel_t* src,
+        int dest_id, int src_id, const char* dest_name, const char* src_name,
+        const char* mode )
+{
+    const char* in = "->";
+    const char* out = "<-";
+    const char* dir = 0 == strcmp( mode, "in" ) ? in : out;
+    zlog_debug( cat_ch, "connect '%s(%d)%s%s(%d)' on index %d",
+            src_name, src_id, dir, dest_name, dest_id, idx );
+    dest[idx] = src;
 }
 
 /*****************************************************************************/
@@ -534,6 +560,19 @@ void smx_msg_destroy( smx_msg_t* msg, int deep )
 void* smx_msg_unpack( smx_msg_t* msg )
 {
     return msg->unpack( msg->data );
+}
+
+/*****************************************************************************/
+smx_net_t* smx_net_create( unsigned int id, const char* name, void* sig )
+{
+    smx_net_t* net = malloc( sizeof( struct smx_net_s ) );
+    if( net == NULL ) smx_out_of_memory();
+    zlog_debug( cat_main, "create net '%s(%d)' %p", name, id, sig );
+    net->id = id;
+    net->cat = zlog_get_category( name );
+    net->sig = sig;
+    net->timer = NULL;
+    return net;
 }
 
 /*****************************************************************************/

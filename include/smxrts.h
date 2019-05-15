@@ -22,15 +22,16 @@
 // TYPEDEFS -------------------------------------------------------------------
 typedef struct net_smx_rn_s net_smx_rn_t;             /**< ::net_smx_rn_s */
 typedef struct net_smx_tf_s net_smx_tf_t;             /**< ::net_smx_tf_s */
+typedef struct smx_cat_th_s smx_cat_th_t;             /**< ::smx_cat_th_s */
+typedef struct smx_cat_ch_s smx_cat_ch_t;             /**< ::smx_cat_ch_s */
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
 typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
 typedef struct smx_fifo_s smx_fifo_t;                 /**< ::smx_fifo_s */
 typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
 typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
 typedef struct smx_msg_s smx_msg_t;                   /**< ::smx_msg_s */
+typedef struct smx_net_s smx_net_t;                   /**< ::smx_net_s */
 typedef struct smx_timer_s smx_timer_t;               /**< ::smx_timer_s */
-typedef struct smx_cat_th_s smx_cat_th_t;             /**< ::smx_cat_th_s */
-typedef struct smx_cat_ch_s smx_cat_ch_t;             /**< ::smx_cat_ch_s */
 typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
 typedef enum smx_channel_state_e smx_channel_state_t; /**< #smx_channel_state_e */
 
@@ -175,6 +176,17 @@ struct smx_msg_s
 };
 
 /**
+ * Common fields of a streamix net.
+ */
+struct smx_net_s
+{
+    unsigned int        id;         /**< a unique net id */
+    zlog_category_t*    cat;        /**< the log category */
+    void*               sig;        /**< the net port signature */
+    smx_timer_t*        timer;      /**< timer structure for tt */
+};
+
+/**
  * @brief A Streamix timer structure
  *
  * A timer collects alle temporal firewalls of the same rate
@@ -217,28 +229,33 @@ struct net_smx_tf_s
 
 // MACROS ---------------------------------------------------------------------
 #define SMX_CHANNEL_CREATE( id, len, type, name )\
-    smx_channel_t* ch_ ## id = smx_channel_create( len, type, #name )
+    smx_channel_t* ch_ ## id = smx_channel_create( len, type, id, #name )
 
 #define SMX_CHANNEL_DESTROY( id )\
     smx_channel_destroy( ch_ ## id )
 
+#define SMX_SIG( h ) ( ( smx_net_t* )h )->sig
+
 #define SMX_CHANNEL_READ( h, net_name, ch_name )\
-    smx_channel_read( ( ( net_ ## net_name ## _t* )h )->in.port_ ## ch_name )
+    smx_channel_read( ( ( net_ ## net_name ## _t* )\
+                SMX_SIG( h ) )->in.port_ ## ch_name )
 
 #define SMX_CHANNEL_WRITE( h, net_name, ch_name, data )\
-    smx_channel_write( ( ( net_ ## net_name ## _t* )h )->out.port_ ## ch_name,\
-            data )
+    smx_channel_write( ( ( net_ ## net_name ## _t* )\
+                SMX_SIG( h ) )->out.port_ ## ch_name, data )
 
 #define SMX_CONNECT( net_id, ch_id, net_name, ch_name, mode )\
-    ( ( net_ ## net_name ## _t* )net_ ## net_id )->mode.port_ ## ch_name\
-        = ( smx_channel_t* )ch_ ## ch_id
+    smx_connect( &( ( net_ ## net_name ## _t* )SMX_SIG( net_ ## net_id ) )\
+            ->mode.port_ ## ch_name, ( smx_channel_t* )ch_ ## ch_id,\
+            net_id, ch_id, #net_name, #ch_name, #mode )
 
 #define SMX_CONNECT_ARR( net_id, ch_id, net_name, ch_name, mode )\
     smx_cat_add_channel_ ## mode( ( uintptr_t )ch_ ## ch_id,\
             STRINGIFY(ch_ ## n:net_name ## _ ## c:ch_name) );\
-    ( ( net_ ## net_name ## _t* )net_ ## net_id )->mode.ports[\
-            ( ( net_ ## net_name ## _t* )net_ ## net_id )->mode.count++\
-        ] = ( smx_channel_t* )ch_ ## ch_id
+    smx_connect_arr( ( ( net_ ## net_name ## _t* )SMX_SIG( net_ ## net_id ) )->mode.ports,\
+            ( ( net_ ## net_name ## _t* )SMX_SIG( net_ ## net_id ) )->mode.count,\
+            ( smx_channel_t* )ch_ ## ch_id, net_id, ch_id, #net_name, #ch_name, #mode );\
+    ( ( net_ ## net_name ## _t* )SMX_SIG( net_ ## net_id ) )->mode.count++
 
 #define SMX_CONNECT_GUARD( id, iats, iatns )\
     ( ( smx_channel_t* )ch_ ## id )->guard = smx_guard_create( iats, iatns,\
@@ -246,7 +263,7 @@ struct net_smx_tf_s
 
 #define SMX_CONNECT_RN( net_id, ch_id )\
     ( ( smx_channel_t* )ch_ ## ch_id )->collector\
-        = ( ( net_smx_rn_t* )net_ ## net_id )->in.collector;\
+        = ( ( net_smx_rn_t* )SMX_SIG( net_ ## net_id ) )->in.collector
 
 #define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id, ch_name )\
     smx_cat_add_channel_in( ( uintptr_t )ch_ ## ch_id,\
@@ -256,7 +273,7 @@ struct net_smx_tf_s
     smx_tf_connect( timer_ ## timer_id, ch_ ## ch_in_id , ch_ ## ch_out_id )
 
 #define SMX_HAS_PRODUCER_TERMINATED( h, net_name, ch_name )\
-    ( ( net_ ## net_name ## _t* )h )->in.port_ ## ch_name->state == SMX_CHANNEL_END
+    ( ( net_ ## net_name ## _t* )SMX_SIG( h ) )->in.port_ ## ch_name->state == SMX_CHANNEL_END
 
 #define SMX_LOG( level, format, ... )\
     zlog_ ## level( smx_get_category_th(), format, ##__VA_ARGS__ )
@@ -275,31 +292,33 @@ struct net_smx_tf_s
 
 #define SMX_NET_CREATE( id, name )\
     smx_thread_count_inc();\
-    net_ ## name ## _t* net_ ## id = malloc( sizeof( struct net_ ## name ## _s ) )
+    smx_net_t* net_ ## id = smx_net_create( id, #name,\
+            malloc( sizeof( struct net_ ## name ## _s ) ) )
 
 #define SMX_NET_DESTROY( id, name )\
-    free( ( ( net_ ## name ## _t* )net_ ## id )->in.ports );\
-    free( ( ( net_ ## name ## _t* )net_ ## id )->out.ports );\
+    free( ( ( net_ ## name ## _t* )SMX_SIG( net_ ## id ) )->in.ports );\
+    free( ( ( net_ ## name ## _t* )SMX_SIG( net_ ## id ) )->out.ports );\
+    free( SMX_SIG( net_ ## id ) );\
     free( net_ ## id )
 
 #define SMX_NET_INIT( id, name, indegree, outdegree )\
-    ( ( net_ ## name ## _t* )net_ ## id )->in.count = 0;\
-    ( ( net_ ## name ## _t* )net_ ## id )->in.ports\
+    ( ( net_ ## name ## _t* )SMX_SIG( net_ ## id ) )->in.count = 0;\
+    ( ( net_ ## name ## _t* )SMX_SIG( net_ ## id ) )->in.ports\
         = malloc( sizeof( smx_channel_t* ) * indegree );\
-    ( ( net_ ## name ## _t* )net_ ## id )->out.count = 0;\
-    ( ( net_ ## name ## _t* )net_ ## id )->out.ports\
+    ( ( net_ ## name ## _t* )SMX_SIG( net_ ## id ) )->out.count = 0;\
+    ( ( net_ ## name ## _t* )SMX_SIG( net_ ## id ) )->out.ports\
         = malloc( sizeof( smx_channel_t* ) * outdegree );\
-    ( ( net_ ## name ## _t* )net_ ## id )->timer = NULL
+    ( ( net_ ## name ## _t* )SMX_SIG( net_ ## id ) )->timer = NULL
 
 #define SMX_NET_RUN( id, net_name, box_name )\
     pthread_t th_net_ ## id = smx_net_run( STRINGIFY( net_ ## net_name ),\
             box_ ## box_name, net_ ## id )
 
 #define SMX_NET_RN_DESTROY( id )\
-    smx_net_rn_destroy( ( net_smx_rn_t* )net_ ## id )
+    smx_net_rn_destroy( ( net_smx_rn_t* )( SMX_SIG( net_ ## id ) ) )
 
 #define SMX_NET_RN_INIT( id )\
-    smx_net_rn_init( ( net_smx_rn_t* )net_ ## id )
+    smx_net_rn_init( ( net_smx_rn_t* )SMX_SIG( net_ ## id ) )
 
 #define SMX_NET_WAIT_END( id )\
     pthread_join( th_net_ ## id, NULL )
@@ -329,10 +348,10 @@ struct net_smx_tf_s
 
 #define START_ROUTINE_NET( h, net_name, box_name )\
     start_routine_net( box_name, box_name ## _init, box_name ## _cleanup, h,\
-            ( ( net_ ## net_name ## _t* )h )->in.ports,\
-            ( ( net_ ## net_name ## _t* )h )->in.count,\
-            ( ( net_ ## net_name ## _t* )h )->out.ports,\
-            ( ( net_ ## net_name ## _t* )h )->out.count )
+            ( ( net_ ## net_name ## _t* )SMX_SIG( h ) )->in.ports,\
+            ( ( net_ ## net_name ## _t* )SMX_SIG( h ) )->in.count,\
+            ( ( net_ ## net_name ## _t* )SMX_SIG( h ) )->out.ports,\
+            ( ( net_ ## net_name ## _t* )SMX_SIG( h ) )->out.count )
 
 #define SMX_NET_EXTERN( name )\
     extern int name( void*, void* );\
@@ -401,11 +420,12 @@ void smx_channel_change_write_state( smx_channel_t* ch,
  *
  * @param len   length of a FIFO
  * @param type  type of the buffer
+ * @param id    unique identifier of the channel
  * @param name  name of the channel
  * @return      pointer to the created channel
  */
 smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
-        const char* name );
+        int id, const char* name );
 
 /**
  * @brief Destroy Streamix channel structure
@@ -446,6 +466,20 @@ int smx_channel_ready_to_read( smx_channel_t* ch );
  * @return      1 if message was overwritten, 0 otherwise
  */
 int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg );
+
+/**
+ *
+ */
+void smx_connect( smx_channel_t** dest, smx_channel_t* src, int dest_id,
+        int src_id, const char* dest_name, const char* src_name,
+        const char* mode );
+
+/**
+ *
+ */
+void smx_connect_arr( smx_channel_t** dest, int idx, smx_channel_t* src,
+        int dest_id, int src_id, const char* dest_name, const char* src_name,
+        const char* mode );
 
 /**
  * @brief Create Streamix FIFO channel
@@ -662,6 +696,15 @@ void smx_msg_destroy( smx_msg_t* msg, int deep );
  * @return      a void pointer to the payload
  */
 void* smx_msg_unpack( smx_msg_t* msg );
+
+/**
+ * Create a new net instance.
+ *
+ * @param id        a unique net identifier
+ * @param name      the name of the net
+ * @param sig       a pointer to the net signature
+ */
+smx_net_t* smx_net_create( unsigned int id, const char* name, void* sig );
 
 /**
  * @brief Destroy copy sync structure
