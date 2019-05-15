@@ -5,15 +5,17 @@
 
 ### Changes
  - Cleanup cond vars (move the cond var from fifo to channel level)
+ - Use a common net structure to store information every net has
+ - Create channel ends to better distinguish between read and write operations
 
 ### New Features
  - Add a `unpack` function to the message callbacks
  - Allow to configure the RTS with an XML file
+ - Pass net-specific configuration to the net instance
  - Each custom net must now define an init and cleanup function
  - Propagate termination signals in both directions
- - Use zlog categories to distinguish beteween different concept
+ - Use zlog categories to distinguish between different concept
  - Include multiple log levels
- - Use uthash to store zlog categories for nets
 
 # `diss_final`
 

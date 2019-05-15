@@ -10,7 +10,6 @@
 #include <zlog.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-#include "uthash.h"
 
 #ifndef HANDLER_H
 #define HANDLER_H
@@ -77,8 +76,8 @@ struct smx_channel_s
     smx_fifo_t*         fifo;       /**< ::smx_fifo_s */
     smx_guard_t*        guard;      /**< ::smx_guard_s */
     smx_collector_t*    collector;  /**< ::smx_collector_s, collect signals */
-    smx_channel_end_t*  sink;
-    smx_channel_end_t*  source;
+    smx_channel_end_t*  sink;       /**< ::smx_channel_end_s */
+    smx_channel_end_t*  source;     /**< ::smx_channel_end_s */
 };
 
 /**
@@ -661,7 +660,10 @@ void smx_msg_destroy( smx_msg_t* msg, int deep );
 void* smx_msg_unpack( smx_msg_t* msg );
 
 /**
- * Create a new net instance.
+ * Create a new net instance. This includes
+ *  - creating a zlog category
+ *  - assigning the net-specifix XML configuartion
+ *  - assigning the net signature
  *
  * @param id        a unique net identifier
  * @param cat_name  the name of the zlog category
