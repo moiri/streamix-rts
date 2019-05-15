@@ -22,9 +22,8 @@
 // TYPEDEFS -------------------------------------------------------------------
 typedef struct net_smx_rn_s net_smx_rn_t;             /**< ::net_smx_rn_s */
 typedef struct net_smx_tf_s net_smx_tf_t;             /**< ::net_smx_tf_s */
-typedef struct smx_cat_th_s smx_cat_th_t;             /**< ::smx_cat_th_s */
-typedef struct smx_cat_ch_s smx_cat_ch_t;             /**< ::smx_cat_ch_s */
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
+typedef struct smx_channel_end_s smx_channel_end_t;   /**< ::smx_channel_end_s */
 typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
 typedef struct smx_fifo_s smx_fifo_t;                 /**< ::smx_fifo_s */
 typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
@@ -73,26 +72,6 @@ enum smx_thread_state_e
 
 // STRUCTS --------------------------------------------------------------------
 /**
- * A hash table entry for storing zlog categories.
- */
-struct smx_cat_th_s
-{
-    pthread_t id;           /**< the key of the hash table: the thread id */
-    zlog_category_t* ptr;   /**< a pointer to a zlog category */
-    UT_hash_handle hh;      /**< the uthash handle */
-};
-
-/**
- * A hash table entry for storing zlog categories.
- */
-struct smx_cat_ch_s
-{
-    uintptr_t id;           /**< the key of the hash table: the channel ptr */
-    zlog_category_t* ptr;   /**< a pointer to a zlog category */
-    UT_hash_handle hh;      /**< the uthash handle */
-};
-
-/**
  * @brief A generic Streamix channel
  */
 struct smx_channel_s
@@ -102,12 +81,19 @@ struct smx_channel_s
     smx_fifo_t*         fifo;       /**< ::smx_fifo_s */
     smx_guard_t*        guard;      /**< ::smx_guard_s */
     smx_collector_t*    collector;  /**< ::smx_collector_s, collect signals */
-    smx_channel_state_t state_w;    /**< write state of the channel */
-    smx_channel_state_t state_r;    /**< read state of the channel */
-    pthread_mutex_t     ch_mutex_w; /**< mutual exclusion */
-    pthread_cond_t      ch_cv_w;    /**< conditional variable to trigger producer */
-    pthread_mutex_t     ch_mutex_r; /**< mutual exclusion */
-    pthread_cond_t      ch_cv_r;    /**< conditional variable to trigger consumer */
+    smx_channel_end_t*  sink;
+    smx_channel_end_t*  source;
+};
+
+/**
+ * The end of a channel
+ */
+struct smx_channel_end_s
+{
+    zlog_category_t*    cat;      /**< zlog category of a channel end */
+    smx_channel_state_t state;    /**< state of the channel end */
+    pthread_mutex_t     ch_mutex; /**< mutual exclusion */
+    pthread_cond_t      ch_cv;    /**< conditional variable to trigger producer */
 };
 
 /**
@@ -226,7 +212,6 @@ struct net_smx_tf_s
     net_smx_tf_t*       next;       /**< pointer to the next element */
 };
 
-
 // MACROS ---------------------------------------------------------------------
 #define SMX_CHANNEL_CREATE( id, len, type, name )\
     smx_channel_t* ch_ ## id = smx_channel_create( len, type, id, #name )
@@ -250,7 +235,7 @@ struct net_smx_tf_s
             net_id, ch_id, #net_name, #ch_name, #mode )
 
 #define SMX_CONNECT_ARR( net_id, ch_id, net_name, ch_name, mode )\
-    smx_cat_add_channel_ ## mode( ( uintptr_t )ch_ ## ch_id,\
+    smx_cat_add_channel_ ## mode( ( smx_channel_t* )ch_ ## ch_id,\
             STRINGIFY(ch_ ## n:net_name ## _ ## c:ch_name) );\
     smx_connect_arr( ( ( net_ ## net_name ## _t* )SMX_SIG( net_ ## net_id ) )->mode.ports,\
             ( ( net_ ## net_name ## _t* )SMX_SIG( net_ ## net_id ) )->mode.count,\
@@ -266,9 +251,9 @@ struct net_smx_tf_s
         = ( ( net_smx_rn_t* )SMX_SIG( net_ ## net_id ) )->in.collector
 
 #define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id, ch_name )\
-    smx_cat_add_channel_in( ( uintptr_t )ch_ ## ch_id,\
+    smx_cat_add_channel_in( ( smx_channel_t* )ch_ ## ch_id,\
             STRINGIFY(ch_ ## n:smx_tf ## _ ## c:ch_name) );\
-    smx_cat_add_channel_out( ( uintptr_t )ch_ ## ch_id,\
+    smx_cat_add_channel_out( ( smx_channel_t* )ch_ ## ch_id,\
             STRINGIFY(ch_ ## n:smx_tf ## _ ## c:ch_name) );\
     smx_tf_connect( timer_ ## timer_id, ch_ ## ch_in_id , ch_ ## ch_out_id )
 
@@ -278,8 +263,8 @@ struct net_smx_tf_s
 #define SMX_LOG( h, level, format, ... )\
     zlog_ ## level( ( ( smx_net_t* )h )->cat, format, ##__VA_ARGS__ )
 
-#define SMX_LOG_CH( mode, level, ch, format, ...)\
-    zlog_ ## level( smx_get_category_ch_ ## mode( ch ), format, ##__VA_ARGS__ )
+#define SMX_LOG_CH( ch, level, format, ...)\
+    zlog_ ## level( ( ( smx_channel_end_t* )ch )->cat, format, ##__VA_ARGS__ )
 
 #define SMX_MSG_CREATE( data, dsize, fcopy, ffree, funpack )\
     smx_msg_create( data, dsize, fcopy, ffree, funpack )
@@ -291,7 +276,7 @@ struct net_smx_tf_s
     smx_msg_unpack( msg )
 
 #define SMX_NET_CREATE( id, name )\
-    smx_net_t* net_ ## id = smx_net_create( id, #name, STRINGIFY( net_ ## name ),\
+    smx_net_t* net_ ## id = smx_net_create( id, STRINGIFY( net_ ## name ),\
             malloc( sizeof( struct net_ ## name ## _s ) ) )
 
 #define SMX_NET_DESTROY( id, name )\
@@ -310,8 +295,7 @@ struct net_smx_tf_s
     ( ( net_ ## name ## _t* )SMX_SIG( net_ ## id ) )->timer = NULL
 
 #define SMX_NET_RUN( id, net_name, box_name )\
-    pthread_t th_net_ ## id = smx_net_run( STRINGIFY( net_ ## net_name ),\
-            box_ ## box_name, net_ ## id )
+    pthread_t th_net_ ## id = smx_net_run( box_ ## box_name, net_ ## id )
 
 #define SMX_NET_RN_DESTROY( id )\
     smx_net_rn_destroy( ( net_smx_rn_t* )( SMX_SIG( net_ ## id ) ) )
@@ -364,7 +348,7 @@ struct net_smx_tf_s
  * @param ch    the channel id
  * @param name  the name of the zlog category
  */
-void smx_cat_add_channel_in( uintptr_t ch, const char* name );
+void smx_cat_add_channel_in( smx_channel_t* ch, const char* name );
 
 /**
  * Add a zlog category for a channel sink end
@@ -372,15 +356,7 @@ void smx_cat_add_channel_in( uintptr_t ch, const char* name );
  * @param ch    the channel id
  * @param name  the name of the zlog category
  */
-void smx_cat_add_channel_out( uintptr_t ch, const char* name );
-
-/**
- * Create a zlog category for a channel end
- *
- * @param ch    the channel id
- * @param name  the name of the zlog category
- */
-smx_cat_ch_t* smx_cat_ch_create( uintptr_t ch, const char* name );
+void smx_cat_add_channel_out( smx_channel_t* ch, const char* name );
 
 /**
  * Change the state of a channel collector. The state is only changed if the
@@ -423,6 +399,13 @@ void smx_channel_change_write_state( smx_channel_t* ch,
  */
 smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
         int id, const char* name );
+
+/**
+ * Create a channel end.
+ *
+ * @return a pointer to a ne channel end
+ */
+smx_channel_end_t* smx_channel_create_end();
 
 /**
  * @brief Destroy Streamix channel structure
@@ -538,39 +521,6 @@ void smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
  * @return      1 if message was overwritten, 0 otherwise
  */
 int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
-
-/**
- * Fetch the zlog category from the global hash table depending on the thread
- * from which this function is called.
- *
- * @return  pointer to the thread-specific category
- */
-zlog_category_t* smx_get_category_th();
-
-/**
- * Get the zlog category of a source end of a channel given a channel id.
- *
- * @param id    the id of the channel to search for a zlog cat
- * @return      pointer to the channel-specific category
- */
-zlog_category_t* smx_get_category_ch_in( uintptr_t id );
-
-/**
- * Get the zlog category of a sink end of channel  a given a channel id.
- *
- * @param id    the id of the channel to search for a zlog cat
- * @return      pointer to the channel-specific category
- */
-zlog_category_t* smx_get_category_ch_out( uintptr_t id );
-
-/**
- * Check whether the zlog channel category exists.
- *
- * @param cat   pointer to the category hash structure
- * @return      either a pointer to the channel-specific category or a pointer
- *              to the main channel if the specific channel cat cannot be found.
- */
-zlog_category_t* smx_get_category_ch_check( smx_cat_ch_t* cat );
 
 /**
  * @brief create timed guard structure and initialise timer
@@ -698,12 +648,10 @@ void* smx_msg_unpack( smx_msg_t* msg );
  * Create a new net instance.
  *
  * @param id        a unique net identifier
- * @param name      the name of the net
  * @param cat_name  the name of the zlog category
  * @param sig       a pointer to the net signature
  */
-smx_net_t* smx_net_create( unsigned int id, const char* name,
-        const char* cat_name, void* sig );
+smx_net_t* smx_net_create( unsigned int id, const char* cat_name, void* sig );
 
 /**
  * @brief Destroy copy sync structure
@@ -722,12 +670,11 @@ void smx_net_rn_init( net_smx_rn_t* cp );
 /**
  * @brief create pthred of net
  *
- * @oaram name              the name of the net
  * @param box_impl( arg )   function pointer to the box implementation
- * @param arg               pointer to the net handler
+ * @param h                 pointer to the net handler
  * @return                  a pthread id
  */
-pthread_t smx_net_run( const char* name, void* box_impl( void* arg ), void* arg );
+pthread_t smx_net_run( void* box_impl( void* arg ), void* h );
 
 /**
  * @brief Update the state of the box
