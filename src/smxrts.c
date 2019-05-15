@@ -14,10 +14,13 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <errno.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
 #include "smxrts.h"
 #include "pthread.h"
+
+#define XML_PATH        "app.xml"
+#define XML_APP         "app"
+#define XML_LOG         "log"
+
 
 zlog_category_t* cat_ch;
 zlog_category_t* cat_main;
@@ -553,14 +556,30 @@ void* smx_msg_unpack( smx_msg_t* msg )
 }
 
 /*****************************************************************************/
-smx_net_t* smx_net_create( unsigned int id, const char* cat_name, void* sig )
+smx_net_t* smx_net_create( unsigned int id, const char* name,
+        const char* cat_name, void* sig, xmlDocPtr* conf )
 {
+    xmlNodePtr cur = NULL;
     smx_net_t* net = malloc( sizeof( struct smx_net_s ) );
     if( net == NULL ) smx_out_of_memory();
     net->id = id;
     net->cat = zlog_get_category( cat_name );
     net->sig = sig;
     net->timer = NULL;
+
+    cur = xmlDocGetRootElement( *conf );
+    cur = cur->xmlChildrenNode;
+    net->conf = NULL;
+    while(cur != NULL)
+    {
+        if(!xmlStrcmp(cur->name, (const xmlChar*)name))
+        {
+            net->conf = cur;
+            break;
+        }
+        cur = cur->next;
+    }
+
     zlog_debug( net->cat, "create net instance %d", id );
     return net;
 }
@@ -667,8 +686,9 @@ void smx_out_of_memory()
 }
 
 /*****************************************************************************/
-void smx_program_cleanup()
+void smx_program_cleanup( xmlDocPtr* doc )
 {
+    xmlFreeDoc( *doc );
     xmlCleanupParser();
     zlog_notice( cat_main, "end main thread" );
     zlog_fini();
@@ -676,9 +696,8 @@ void smx_program_cleanup()
 }
 
 /*****************************************************************************/
-void smx_program_init()
+void smx_program_init( xmlDocPtr* doc )
 {
-    xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
     xmlChar* conf = NULL;
 
@@ -686,7 +705,7 @@ void smx_program_init()
     xmlInitParser();
 
     /*parse the file and get the DOM */
-    doc = xmlParseFile(XML_PATH);
+    *doc = xmlParseFile(XML_PATH);
 
     if (doc == NULL)
     {
@@ -694,21 +713,14 @@ void smx_program_init()
         exit( 0 );
     }
 
-    cur = xmlDocGetRootElement(doc);
+    cur = xmlDocGetRootElement( *doc );
     if(cur == NULL || xmlStrcmp(cur->name, (const xmlChar*)XML_APP))
     {
         printf("error: app config root node name is '%s' instead of '%s'\n",
                 cur->name, XML_APP);
         exit( 0 );
     }
-
-    cur = cur->xmlChildrenNode;
-    while(cur != NULL)
-    {
-        if(!xmlStrcmp(cur->name, (const xmlChar*)XML_LOG))
-            conf = xmlGetProp(cur, (const xmlChar*)XML_LOG_CONF);
-        cur = cur->next;
-    }
+    conf = xmlGetProp(cur, (const xmlChar*)XML_LOG);
 
     if(conf == NULL)
     {
@@ -729,8 +741,6 @@ void smx_program_init()
     cat_net_tf = zlog_get_category( "net_smx_tf" );
 
     xmlFree(conf);
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
 
     zlog_notice( cat_main, "start thread main" );
 }
