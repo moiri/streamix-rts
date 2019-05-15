@@ -567,7 +567,7 @@ smx_net_t* smx_net_create( unsigned int id, const char* name, void* sig )
 {
     smx_net_t* net = malloc( sizeof( struct smx_net_s ) );
     if( net == NULL ) smx_out_of_memory();
-    zlog_debug( cat_main, "create net '%s(%d)' %p", name, id, sig );
+    zlog_debug( cat_main, "create net '%s(%d)'", name, id );
     net->id = id;
     net->cat = zlog_get_category( name );
     net->sig = sig;
@@ -817,14 +817,14 @@ int smx_rn( void* handler, void* state )
     bool has_msg = false;
     bool abort = false;
     int cur_count, i;
-    int count_in = ( ( net_smx_rn_t* )handler )->in.count;
-    int count_out = ( ( net_smx_rn_t* )handler )->out.count;
-    smx_channel_t** chs_in = ( ( net_smx_rn_t* )handler )->in.ports;
-    smx_channel_t** chs_out = ( ( net_smx_rn_t* )handler )->out.ports;
+    int count_in = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->in.count;
+    int count_out = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->out.count;
+    smx_channel_t** chs_in = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->in.ports;
+    smx_channel_t** chs_out = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->out.ports;
     smx_channel_t* ch = NULL;
     smx_msg_t* msg;
     smx_msg_t* msg_copy;
-    smx_collector_t* collector = ( ( net_smx_rn_t* )handler )->in.collector;
+    smx_collector_t* collector = ( ( net_smx_rn_t* )SMX_SIG( handler ) )->in.collector;
 
     pthread_mutex_lock( &collector->col_mutex );
     while( collector->state == SMX_CHANNEL_PENDING )
