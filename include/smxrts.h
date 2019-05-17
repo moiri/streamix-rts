@@ -74,6 +74,7 @@ enum smx_thread_state_e
  */
 struct smx_channel_s
 {
+    int                 id;         /**< the id of the channel */
     smx_channel_type_t  type;       /**< type of the channel */
     const char*         name;       /**< name of the channel */
     smx_fifo_t*         fifo;       /**< ::smx_fifo_s */
@@ -232,7 +233,7 @@ struct net_smx_tf_s
 
 #define SMX_CONNECT_ARR( net_id, ch_id, net_name, box_name, ch_name, mode )\
     smx_cat_add_channel_ ## mode( ( smx_channel_t* )ch_ ## ch_id,\
-            STRINGIFY(ch_ ## n:net_name ## _ ## c:ch_name) );\
+            STRINGIFY( ch_n ## net_name ## _c ## ch_name ## _ ## ch_id ) );\
     smx_connect_arr( ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## net_id ) )->mode.ports,\
             ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## net_id ) )->mode.count,\
             ( smx_channel_t* )ch_ ## ch_id, net_id, ch_id, #net_name, #ch_name, #mode );\
@@ -248,9 +249,9 @@ struct net_smx_tf_s
 
 #define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id, ch_name )\
     smx_cat_add_channel_in( ( smx_channel_t* )ch_ ## ch_in_id,\
-            STRINGIFY(ch_ ## n:smx_tf ## _ ## c:ch_name) );\
+            STRINGIFY( ch_nsmx_tf_c ## ch_name ## _ ## ch_in_id ) );\
     smx_cat_add_channel_out( ( smx_channel_t* )ch_ ## ch_out_id,\
-            STRINGIFY(ch_ ## n:smx_tf ## _ ## c:ch_name) );\
+            STRINGIFY( ch_nsmx_tf_c ## ch_name ## _ ## ch_out_id ) );\
     smx_tf_connect( SMX_SIG( timer_ ## timer_id ), ch_ ## ch_in_id , ch_ ## ch_out_id )
 
 #define SMX_LOG( h, level, format, ... )\
@@ -270,7 +271,7 @@ struct net_smx_tf_s
 
 #define SMX_NET_CREATE( id, net_name, box_name )\
     smx_net_t* net_ ## id = smx_net_create( id, #net_name,\
-            STRINGIFY( net_ ## n:net_name ),\
+            STRINGIFY( net_n ## net_name ## _ ## id ),\
             malloc( sizeof( struct net_ ## box_name ## _s ) ), &conf )
 
 #define SMX_NET_DESTROY( id, box_name )\
@@ -316,7 +317,7 @@ struct net_smx_tf_s
 
 #define SMX_TF_CREATE( id, sec, nsec )\
     smx_net_t* timer_ ## id = smx_net_create( id, STRINGIFY( smx_tf ),\
-            STRINGIFY( net_n:smx_tf ), NULL, &conf );\
+            STRINGIFY( net_nsmx_tf ## _ ## id ), NULL, &conf );\
     timer_ ## id->sig = smx_tf_create( timer_ ## id, sec, nsec );
 
 #define SMX_TF_DESTROY( id )\

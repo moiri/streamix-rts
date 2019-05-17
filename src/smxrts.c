@@ -85,6 +85,7 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
     smx_channel_t* ch = malloc( sizeof( struct smx_channel_s ) );
     if( ch == NULL ) smx_out_of_memory();
     zlog_debug( cat_ch, "create channel '%s(%d)' of length %d", name, id, len );
+    ch->id = id;
     ch->type = type;
     ch->fifo = smx_fifo_create( len );
     ch->collector = NULL;
@@ -116,8 +117,8 @@ smx_channel_end_t* smx_channel_create_end()
 /*****************************************************************************/
 void smx_channel_destroy( smx_channel_t* ch )
 {
-    zlog_debug( cat_ch, "destroy channel '%s' (msg count: %d)", ch->name,
-            ch->fifo->count);
+    zlog_debug( cat_ch, "destroy channel '%s(%d)' (msg count: %d)", ch->name,
+            ch->id, ch->fifo->count);
     pthread_mutex_destroy( &ch->sink->ch_mutex );
     pthread_cond_destroy( &ch->sink->ch_cv );
     pthread_mutex_destroy( &ch->source->ch_mutex );
