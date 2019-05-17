@@ -201,7 +201,8 @@ int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
         smx_msg_destroy( msg, true );
         return res;
     }
-    switch( ch->type ) {
+    switch( ch->type )
+    {
         case SMX_FIFO:
         case SMX_FIFO_D:
         case SMX_FIFO_DD:
@@ -219,7 +220,8 @@ int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
             SMX_LOG_CH( ch->sink, error, "undefined channel type '%d'",
                     ch->type );
     }
-    if( ch->collector != NULL ) {
+    if( ch->collector != NULL )
+    {
         pthread_mutex_lock( &ch->collector->col_mutex );
         ch->collector->count++;
         SMX_LOG_CH( ch->sink, info, "write to collector (new count: %d)",
@@ -349,7 +351,7 @@ smx_msg_t* smx_fifo_d_read( smx_channel_t* ch, smx_fifo_t* fifo )
             fifo->backup = smx_msg_copy( msg );
         }
         fifo->count--;
-        SMX_LOG_CH( ch->source, info, "read from fifo (new count: %d)",
+        SMX_LOG_CH( ch->source, info, "read from fifo_d (new count: %d)",
                 fifo->count );
     }
     else {
@@ -377,7 +379,7 @@ smx_msg_t* smx_fifo_dd_read( smx_channel_t* ch, smx_fifo_t* fifo )
         fifo->head->msg = NULL;
         fifo->head = fifo->head->prev;
         fifo->count--;
-        SMX_LOG_CH( ch->source, info, "read from fifo (new count: %d)",
+        SMX_LOG_CH( ch->source, info, "read from fifo_dd (new count: %d)",
                 fifo->count );
     }
     pthread_mutex_unlock( &fifo->fifo_mutex );
@@ -423,7 +425,7 @@ int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
     if( fifo->count < fifo->length ) {
         fifo->tail = fifo->tail->prev;
         fifo->count++;
-        SMX_LOG_CH( ch->sink, info, "write to fifo (new count: %d)",
+        SMX_LOG_CH( ch->sink, info, "write to d_fifo (new count: %d)",
                 fifo->count );
     }
     else {
@@ -642,19 +644,23 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
     // check if a triggering input is still producing
     for( i=0; i<len_in; i++ )
     {
-        if( ( chs_in[i]->type == SMX_FIFO ) || ( chs_in[i]->type == SMX_D_FIFO ) ) {
+        if( ( chs_in[i]->type == SMX_FIFO )
+                || ( chs_in[i]->type == SMX_D_FIFO ) )
+        {
             trigger_cnt++;
             if( ( chs_in[i]->source->state == SMX_CHANNEL_END )
                     && ( chs_in[i]->fifo->count == 0 ) )
                 done_cnt_in++;
         }
     }
+
     // check if consumer is available
     for( i=0; i<len_out; i++ )
     {
         if( chs_out[i]->sink->state == SMX_CHANNEL_END )
             done_cnt_out++;
     }
+
     // if all the triggering inputs are done, terminate the thread
     if( (trigger_cnt > 0) && (done_cnt_in >= trigger_cnt) )
     {
@@ -662,11 +668,13 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
         return SMX_NET_END;
     }
 
+    // if all the outputs are done, terminate the thread
     if( (len_out) > 0 && (done_cnt_out >= len_out) )
     {
         SMX_LOG( h, debug, "all consumers have terminated" );
         return SMX_NET_END;
     }
+
     return SMX_NET_CONTINUE;
 }
 
@@ -900,7 +908,8 @@ void smx_tf_propagate_msgs( smx_timer_t* tt, smx_channel_t** ch_in,
     for( i = 0; i < tt->count; i++ ) {
         if( ch_in[i]->source->state == SMX_CHANNEL_UNINITIALISED )
             continue;
-        if( ( ch_in[i]->source->state == SMX_CHANNEL_END )
+        if( ( ( ch_in[i]->fifo->count == 0 )
+                    && ( ch_in[i]->source->state == SMX_CHANNEL_END ) )
             || ( ch_out[i]->sink->state == SMX_CHANNEL_END ) )
         {
             if( ch_in[i]->source->state == SMX_CHANNEL_END )
@@ -1014,9 +1023,9 @@ void* start_routine_tf( void* h )
         SMX_LOG( h, info, "start net loop" );
         smx_tf_propagate_msgs( tt, ch_in, ch_out );
         SMX_LOG( h, debug, "wait for end of loop" );
+        smx_tf_wait( h, tt );
         state = smx_net_update_state( h, ch_in, tt->count, ch_out, tt->count,
                 SMX_NET_RETURN );
-        smx_tf_wait( h, tt );
     }
     smx_net_terminate( h, ch_in, tt->count, ch_out, tt->count );
     SMX_LOG( h, notice, "terminate net" );

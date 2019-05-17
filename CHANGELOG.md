@@ -1,12 +1,15 @@
 # `v0.1.0`
 
 ### Bug Fixes
- - fix the tf read function (#1)
+ - fix the TF read function (#1)
+ - fix the termination behaviour of TF
+ - fix the termination behaviour of RN
 
 ### Changes
  - Cleanup cond vars (move the cond var from fifo to channel level)
  - Use a common net structure to store information every net has
  - Create channel ends to better distinguish between read and write operations
+ - Add new FIFO types to handle special case of TFs
 
 ### New Features
  - Add a `unpack` function to the message callbacks
