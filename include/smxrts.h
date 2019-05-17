@@ -37,8 +37,10 @@ enum smx_channel_type_e
 {
     SMX_FIFO,           /**< a simple FIFO */
     SMX_FIFO_D,         /**< a FIFO with decoupled output */
+    SMX_FIFO_DD,        /**< a FIFO with decoupled output connected to a tf */
     SMX_D_FIFO,         /**< a FIFO with decoupled input */
     SMX_D_FIFO_D,       /**< a FIFO with decoupled input and output */
+    SMX_D_FIFO_DD,      /**< a FIFO with decoupled input and output (tf) */
 };
 
 /**
@@ -50,9 +52,10 @@ enum smx_channel_type_e
  */
 enum smx_channel_state_e
 {
-    SMX_CHANNEL_READY,      /**< channel is ready to read from */
-    SMX_CHANNEL_PENDING,    /**< channel is waiting for a signal */
-    SMX_CHANNEL_END         /**< producer connected to channel has terminated */
+    SMX_CHANNEL_UNINITIALISED, /**< decoupled channel was never written to */
+    SMX_CHANNEL_PENDING,       /**< channel is waiting for a signal */
+    SMX_CHANNEL_READY,         /**< channel is ready to read from */
+    SMX_CHANNEL_END            /**< net connected to channel end has terminated */
 };
 
 /**
@@ -149,6 +152,7 @@ struct smx_guard_s
  */
 struct smx_msg_s
 {
+    unsigned long id;               /**< the unique message id */
     void* data;                     /**< pointer to the data */
     int   size;                     /**< size of the data */
     void* (*copy)( void*, size_t ); /**< pointer to a fct making a deep copy */
@@ -164,7 +168,6 @@ struct smx_net_s
     unsigned int        id;         /**< a unique net id */
     zlog_category_t*    cat;        /**< the log category */
     void*               sig;        /**< the net port signature */
-    smx_timer_t*        timer;      /**< timer structure for tt */
     xmlNodePtr          conf;
 };
 
@@ -195,7 +198,6 @@ struct net_smx_rn_s
         smx_channel_t** ports;      /**< an array of channel pointers */
         int count;                  /**< the number of output ports */
     } out;                          /**< output channels */
-    smx_timer_t*        timer;      /**< timer structure for tt */
 };
 
 /**
@@ -245,11 +247,11 @@ struct net_smx_tf_s
         = ( ( net_smx_rn_t* )SMX_SIG( net_ ## net_id ) )->in.collector
 
 #define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id, ch_name )\
-    smx_cat_add_channel_in( ( smx_channel_t* )ch_ ## ch_id,\
+    smx_cat_add_channel_in( ( smx_channel_t* )ch_ ## ch_in_id,\
             STRINGIFY(ch_ ## n:smx_tf ## _ ## c:ch_name) );\
-    smx_cat_add_channel_out( ( smx_channel_t* )ch_ ## ch_id,\
+    smx_cat_add_channel_out( ( smx_channel_t* )ch_ ## ch_out_id,\
             STRINGIFY(ch_ ## n:smx_tf ## _ ## c:ch_name) );\
-    smx_tf_connect( timer_ ## timer_id, ch_ ## ch_in_id , ch_ ## ch_out_id )
+    smx_tf_connect( SMX_SIG( timer_ ## timer_id ), ch_ ## ch_in_id , ch_ ## ch_out_id )
 
 #define SMX_LOG( h, level, format, ... )\
     zlog_ ## level( ( ( smx_net_t* )h )->cat, format, ##__VA_ARGS__ )
@@ -267,7 +269,8 @@ struct net_smx_tf_s
     smx_msg_unpack( msg )
 
 #define SMX_NET_CREATE( id, net_name, box_name )\
-    smx_net_t* net_ ## id = smx_net_create( id, #net_name, STRINGIFY( net_ ## net_name ),\
+    smx_net_t* net_ ## id = smx_net_create( id, #net_name,\
+            STRINGIFY( net_ ## n:net_name ),\
             malloc( sizeof( struct net_ ## box_name ## _s ) ), &conf )
 
 #define SMX_NET_DESTROY( id, box_name )\
@@ -286,8 +289,7 @@ struct net_smx_tf_s
         = malloc( sizeof( smx_channel_t* ) * indegree );\
     ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->out.count = 0;\
     ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->out.ports\
-        = malloc( sizeof( smx_channel_t* ) * outdegree );\
-    ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->timer = NULL
+        = malloc( sizeof( smx_channel_t* ) * outdegree )
 
 #define SMX_NET_RUN( id, net_name, box_name )\
     pthread_t th_net_ ## id = smx_net_run( box_ ## box_name, net_ ## id )
@@ -313,14 +315,16 @@ struct net_smx_tf_s
 #define SMX_SIG( h ) ( ( smx_net_t* )h )->sig
 
 #define SMX_TF_CREATE( id, sec, nsec )\
-    smx_timer_t* timer_ ## id = smx_tf_create( sec, nsec )
+    smx_net_t* timer_ ## id = smx_net_create( id, STRINGIFY( smx_tf ),\
+            STRINGIFY( net_n:smx_tf ), NULL, &conf );\
+    timer_ ## id->sig = smx_tf_create( timer_ ## id, sec, nsec );
 
 #define SMX_TF_DESTROY( id )\
-    smx_tf_destroy( timer_ ## id )
+    smx_tf_destroy( SMX_SIG( timer_ ## id ) );\
+    free( timer_ ## id )
 
 #define SMX_TF_RUN( id )\
-    pthread_t th_timer_ ## id = smx_net_run( STRINGIFY( net_tf ),\
-            start_routine_tf, timer_ ## id )
+    pthread_t th_timer_ ## id = smx_net_run( start_routine_tf, timer_ ## id )
 
 #define SMX_TF_WAIT_END( id )\
     pthread_join( th_timer_ ## id, NULL )
@@ -505,14 +509,26 @@ smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo );
  *
  * Read from a channel that is decoupled at the output (the consumer is
  * decoupled at the input). This means that the msg at the head of the FIFO_D
- * will potentially be duplicated. However, the consumer is blocked on this
- * channel until a first message is available.
+ * will potentially be duplicated.
  *
  * @param ch    pointer to channel struct of the FIFO
  * @param fifo  pointer to a FIFO_D channel
  * @return      pointer to a message structure
  */
 smx_msg_t* smx_fifo_d_read( smx_channel_t* ch , smx_fifo_t* fifo );
+
+/**
+ * @brief read from a Streamix FIFO_DD channel
+ *
+ * Read from a channel that is decoupled at the output and connected to a
+ * temporal firewall. The read is non-blocking but no duplication of messages
+ * is done. If no message is available NULL is returned.
+ *
+ * @param ch    pointer to channel struct of the FIFO
+ * @param fifo  pointer to a FIFO_D channel
+ * @return      pointer to a message structure
+ */
+smx_msg_t* smx_fifo_dd_read( smx_channel_t* ch, smx_fifo_t* fifo );
 
 /**
  * @brief write to a Streamix FIFO channel
@@ -789,11 +805,12 @@ void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
 /**
  * @brief create a periodic timer structure
  *
+ * @param h     net handler
  * @param sec   time interval in seconds
  * @param nsec  time interval in nano seconds
  * @return      pointer to the created timer structure
  */
-smx_timer_t* smx_tf_create( int sec, int nsec);
+smx_timer_t* smx_tf_create( void* h, int sec, int nsec);
 
 /**
  * @brief destroy a timer structure and the list of temporal firewalls inside
@@ -805,22 +822,24 @@ void smx_tf_destroy( smx_timer_t* tt );
 /**
  * @brief enable periodic tt timer
  *
+ * @param h     the net handler
  * @param timer pointer to a timer structure
  */
-void smx_tf_enable( smx_timer_t* timer );
+void smx_tf_enable( void* h, smx_timer_t* timer );
 
 /**
- * @brief read all input channels of a temporal firewall
+ * Read all input channels of a temporal firewall and propagate the messages to
+ * the corresponding outputs of the temporal firewall.
  *
- * @param msg   a pointer to an initilaized message array. Here, the input
- *              messages will be stored. The array must be initialized to a
- *              length that matches the number of input channels to the
- *              temporal firewall
- * @param tt    a pointer to the timer
- * @param ch_in a pointer to an array of input channels
- * @return      a counter indicating how many channels have terminated
+ * @param tt     a pointer to the timer
+ * @param ch_in  a pointer to an array of input channels
+ * @param ch_out a pointer to an array of output channels
  */
-int smx_tf_read_inputs( smx_msg_t**, smx_timer_t*, smx_channel_t** );
+void smx_tf_propagate_msgs( smx_timer_t* tt, smx_channel_t** ch_in,
+        smx_channel_t** ch_out );
+
+void smx_tf_read_inputs( smx_msg_t** msg, smx_timer_t* tt,
+        smx_channel_t** ch_in, smx_channel_t** ch_out );
 
 /**
  * @brief blocking wait on timer
@@ -828,9 +847,10 @@ int smx_tf_read_inputs( smx_msg_t**, smx_timer_t*, smx_channel_t** );
  * Waits on the specified time interval. An error message is printed if the
  * deadline was missed.
  *
+ * @param h     the net handler
  * @param timer pointer to a timer structure
  */
-void smx_tf_wait( smx_timer_t* timer );
+void smx_tf_wait( void* h, smx_timer_t* timer );
 
 /**
  * @brief write to all output channels of a temporal firewall
