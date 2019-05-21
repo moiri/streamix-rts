@@ -885,9 +885,9 @@ void smx_program_init( xmlDocPtr* doc )
 /*****************************************************************************/
 int smx_rn( void* h, void* state )
 {
-    (void)(state);
+    int* last_idx = ( int* )state;
     bool has_msg = false;
-    int cur_count, i;
+    int cur_count, i, ch_count;
     int count_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.count;
     int count_out = ( ( net_smx_rn_t* )SMX_SIG( h ) )->out.count;
     smx_channel_t** chs_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.ports;
@@ -919,9 +919,17 @@ int smx_rn( void* h, void* state )
 
     if( has_msg )
     {
-        for( i=0; i<count_in; i++ ) {
+        ch_count = count_in;
+        i = *last_idx;
+        while( ch_count > 0)
+        {
+            i++;
+            if( i >= count_in )
+                i = 0;
+            ch_count--;
             if( smx_channel_ready_to_read( chs_in[i] ) ) {
                 ch = chs_in[i];
+                *last_idx = i;
                 break;
             }
         }
@@ -950,14 +958,18 @@ int smx_rn( void* h, void* state )
 int smx_rn_init( void* h, void** state )
 {
     (void)(h);
-    (void)(state);
+    *state = smx_malloc( sizeof( int ) );
+    if( *state == NULL )
+        return -1;
+
+    *( int* )( *state ) = -1;
     return 0;
 }
 
 /*****************************************************************************/
 void smx_rn_cleanup( void* state )
 {
-    (void)(state);
+    free( state );
 }
 
 /*****************************************************************************/
