@@ -11,15 +11,15 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-#ifndef HANDLER_H
-#define HANDLER_H
+#ifndef SMXRTS_H
+#define SMXRTS_H
 
 // TYPEDEFS -------------------------------------------------------------------
 typedef struct net_smx_rn_s net_smx_rn_t;             /**< ::net_smx_rn_s */
 typedef struct net_smx_tf_s net_smx_tf_t;             /**< ::net_smx_tf_s */
+typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
 typedef struct smx_channel_end_s smx_channel_end_t;   /**< ::smx_channel_end_s */
-typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
 typedef struct smx_fifo_s smx_fifo_t;                 /**< ::smx_fifo_s */
 typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
 typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
@@ -69,6 +69,33 @@ enum smx_thread_state_e
 };
 
 // STRUCTS --------------------------------------------------------------------
+
+/**
+ * @brief The signature of a copy synchronizer
+ */
+struct net_smx_rn_s
+{
+    struct {
+        smx_channel_t** ports;      /**< an array of channel pointers */
+        int count;                  /**< the number of input ports */
+        smx_collector_t* collector; /**< ::smx_collector_s */
+    } in;                           /**< input channels */
+    struct {
+        smx_channel_t** ports;      /**< an array of channel pointers */
+        int count;                  /**< the number of output ports */
+    } out;                          /**< output channels */
+};
+
+/**
+ * @brief The signature of a temporal firewall
+ */
+struct net_smx_tf_s
+{
+    smx_channel_t*      in;         /**< input channel */
+    smx_channel_t*      out;        /**< output channel */
+    net_smx_tf_t*       next;       /**< pointer to the next element */
+};
+
 /**
  * @brief A generic Streamix channel
  */
@@ -186,61 +213,36 @@ struct smx_timer_s
     int                 count;      /**< number of port pairs */
 };
 
-/**
- * @brief The signature of a copy synchronizer
- */
-struct net_smx_rn_s
-{
-    struct {
-        smx_channel_t** ports;      /**< an array of channel pointers */
-        int count;                  /**< the number of input ports */
-        smx_collector_t* collector; /**< ::smx_collector_s */
-    } in;                           /**< input channels */
-    struct {
-        smx_channel_t** ports;      /**< an array of channel pointers */
-        int count;                  /**< the number of output ports */
-    } out;                          /**< output channels */
-};
-
-/**
- * @brief The signature of a temporal firewall
- */
-struct net_smx_tf_s
-{
-    smx_channel_t*      in;         /**< input channel */
-    smx_channel_t*      out;        /**< output channel */
-    net_smx_tf_t*       next;       /**< pointer to the next element */
-};
-
 // USER MACROS -----------------------------------------------------------------
 /**
  *
  */
-/**!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 #define SMX_CHANNEL_READ( h, box_name, ch_name )\
-    smx_channel_read( ( ( net_ ## box_name ## _t* )\
-                SMX_SIG( h ) )->in.port_ ## ch_name )
+    smx_channel_read( SMX_SIG_PORT( h, box_name, ch_name, in ) )
 
 /**
  *
  */
-/**!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 #define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
-    smx_channel_write( ( ( net_ ## box_name ## _t* )\
-                SMX_SIG( h ) )->out.port_ ## ch_name, data )
+    smx_channel_write( SMX_SIG_PORT( h, box_name, ch_name, out ), data )
 
 /**
  *
  */
-/**!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 #define SMX_LOG( h, level, format, ... )\
-    zlog_ ## level( ( ( smx_net_t* )h )->cat, format, ##__VA_ARGS__ )
+    zlog_ ## level( SMX_SIG_CAT( h ), format, ##__VA_ARGS__ )
 
 /**
  *
  */
 #define SMX_MSG_CREATE( data, dsize, fcopy, ffree, funpack )\
     smx_msg_create( data, dsize, fcopy, ffree, funpack )
+
+/**
+ *
+ */
+#define SMX_MSG_COPY( msg )\
+    smx_msg_copy( msg )
 
 /**
  *
@@ -257,14 +259,12 @@ struct net_smx_tf_s
 /**
  *
  */
-/**!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-#define SMX_NET_GET_ID( h ) ( ( smx_net_t* )h )->id;
+#define SMX_NET_GET_ID( h ) ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->id;
 
 /**
  *
  */
-/**!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-#define SMX_NET_GET_CONF( h ) ( ( smx_net_t* )h )->conf;
+#define SMX_NET_GET_CONF( h ) ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf;
 
 // RTS MACROS ------------------------------------------------------------------
 #define SMX_CHANNEL_CREATE( id, len, type, name )\
@@ -274,7 +274,7 @@ struct net_smx_tf_s
     smx_channel_destroy( ch_ ## id )
 
 #define SMX_CONNECT( net_id, ch_id, net_name, box_name, ch_name, mode )\
-    smx_connect( SMX_SIG_PORT( net_ ## net_id, box_name, ch_name, mode ),\
+    smx_connect( SMX_SIG_PORT_PTR( net_ ## net_id, box_name, ch_name, mode ),\
             ch_ ## ch_id, net_id, ch_id, #net_name, #ch_name, #mode )
 
 #define SMX_CONNECT_ARR( net_id, ch_id, net_name, box_name, ch_name, mode )\
@@ -298,38 +298,33 @@ struct net_smx_tf_s
     smx_tf_connect( SMX_SIG( timer_ ## timer_id ), ch_ ## ch_in_id,\
             ch_ ## ch_out_id )
 
-#define SMX_LOG_CH( cat, level, format, ...)\
-    zlog_ ## level( cat, format, ##__VA_ARGS__ )
-
 #define SMX_NET_CREATE( id, net_name, box_name )\
     smx_net_t* net_ ## id = smx_net_create( id, #net_name,\
             STRINGIFY( net_n ## net_name ## _ ## id ),\
-            malloc( sizeof( struct net_ ## box_name ## _s ) ), &conf )
+            smx_malloc( sizeof( struct net_ ## box_name ## _s ) ), &conf )
 
-/**!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111*/
 #define SMX_NET_DESTROY( id, box_name )\
-    free( ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->in.ports );\
-    free( ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->out.ports );\
-    free( SMX_SIG( net_ ## id ) );\
-    free( net_ ## id )
+    smx_net_destroy(\
+            SMX_SIG_PORTS( net_ ## id, box_name, in ),\
+            SMX_SIG_PORTS( net_ ## id, box_name, out ),\
+            SMX_SIG( net_ ## id ),\
+            net_ ## id )
 
-/**!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111*/
 #define SMX_NET_INIT( id, box_name, indegree, outdegree )\
-    ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->in.count = 0;\
-    ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->in.ports\
-        = malloc( sizeof( smx_channel_t* ) * indegree );\
-    ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->out.count = 0;\
-    ( ( net_ ## box_name ## _t* )SMX_SIG( net_ ## id ) )->out.ports\
-        = malloc( sizeof( smx_channel_t* ) * outdegree )
-
-#define SMX_NET_RUN( id, net_name, box_name )\
-    pthread_t th_net_ ## id = smx_net_run( box_ ## box_name, net_ ## id )
+    smx_net_init(\
+            SMX_SIG_PORT_COUNT( net_ ## id, box_name, in ),\
+            SMX_SIG_PORTS_PTR( net_ ## id, box_name, in ), indegree,\
+            SMX_SIG_PORT_COUNT( net_ ## id, box_name, out ),\
+            SMX_SIG_PORTS_PTR( net_ ## id, box_name, out ), outdegree )
 
 #define SMX_NET_RN_DESTROY( id )\
     smx_net_rn_destroy( ( SMX_SIG( net_ ## id ) ) )
 
 #define SMX_NET_RN_INIT( id )\
     smx_net_rn_init( SMX_SIG( net_ ## id ) )
+
+#define SMX_NET_RUN( id, net_name, box_name )\
+    pthread_t th_net_ ## id = smx_net_run( box_ ## box_name, net_ ## id )
 
 #define SMX_NET_WAIT_END( id )\
     pthread_join( th_net_ ## id, NULL )
@@ -342,20 +337,6 @@ struct net_smx_tf_s
 #define SMX_PROGRAM_INIT()\
     xmlDocPtr conf = NULL;\
     smx_program_init( &conf )
-
-#define SMX_SIG( h ) smx_get_signature( h )
-
-#define SMX_SIG_PORT( h, box_name, port_name, mode )\
-    ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
-            ->mode.port_ ## port_name
-
-#define SMX_SIG_PORT_COUNT( h, box_name, mode )\
-    ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
-            ->mode.count
-
-#define SMX_SIG_PORTS( h, box_name, mode )\
-    ( SMX_SIG( h ) == NULL ) ? NULL : ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
-            ->mode.ports
 
 #define SMX_TF_CREATE( id, sec, nsec )\
     smx_net_t* timer_ ## id = smx_net_create( id, STRINGIFY( smx_tf ),\
@@ -371,18 +352,48 @@ struct net_smx_tf_s
 #define SMX_TF_WAIT_END( id )\
     pthread_join( th_timer_ ## id, NULL )
 
-/**!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1*/
 #define START_ROUTINE_NET( h, net_name, box_name )\
     start_routine_net( box_name, box_name ## _init, box_name ## _cleanup, h,\
-            ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )->in.ports,\
-            ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )->in.count,\
-            ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )->out.ports,\
-            ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )->out.count )
+            SMX_SIG_PORTS( h, box_name, in ),\
+            SMX_SIG_PORT_COUNT( h, box_name, in ),\
+            SMX_SIG_PORTS( h, box_name, out ),\
+            SMX_SIG_PORT_COUNT( h, box_name, out ) )
 
 #define SMX_NET_EXTERN( box_name )\
     extern int box_name( void*, void* );\
     extern int box_name ## _init( void*, void** );\
     extern void box_name ## _cleanup( void* )
+
+// HELPER MACROS --------------------------------------------------------------
+
+#define SMX_LOG_CH( cat, level, format, ...)\
+    zlog_ ## level( cat, format, ##__VA_ARGS__ )
+
+#define SMX_SIG( h )\
+    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->sig )
+
+#define SMX_SIG_CAT( h )\
+    ( h == NULL ) ? zlog_get_category( "undef" ) : ( ( smx_net_t* )h )->cat
+
+#define SMX_SIG_PORT( h, box_name, port_name, mode )\
+    ( SMX_SIG( h ) == NULL ) ? NULL : ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
+            ->mode.port_ ## port_name
+
+#define SMX_SIG_PORT_PTR( h, box_name, port_name, mode )\
+    ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
+            ->mode.port_ ## port_name
+
+#define SMX_SIG_PORT_COUNT( h, box_name, mode )\
+    ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
+            ->mode.count
+
+#define SMX_SIG_PORTS( h, box_name, mode )\
+    ( SMX_SIG( h ) == NULL ) ? NULL : ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
+            ->mode.ports
+
+#define SMX_SIG_PORTS_PTR( h, box_name, mode )\
+    ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
+            ->mode.ports
 
 #define STRINGIFY(x) #x
 
@@ -617,14 +628,6 @@ int smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
 int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
 
 /**
- * Get the net signature from the nat handler.
- *
- * @param h     pointer to the net handler
- * @return      pointer to the net signature or NULL on failure.
- */
-void* smx_get_signature( smx_net_t* h );
-
-/**
  * @brief create timed guard structure and initialise timer
  *
  * @param iats  minimal inter-arrival time in seconds
@@ -665,6 +668,14 @@ int smx_guard_write( smx_channel_t* ch );
  * @return      -1 if message was discarded, 0 otherwise
  */
 int smx_d_guard_write( smx_channel_t* ch, smx_msg_t* msg );
+
+/**
+ * Allocate space with malloc and log an error if malloc fails
+ *
+ * @param size  the memory size to allocate
+ * @return      a void pointer to the allocated memory
+ */
+void* smx_malloc( size_t size );
 
 /**
  * @brief make a deep copy of a message
@@ -761,6 +772,29 @@ smx_net_t* smx_net_create( unsigned int id, const char* name,
         const char* cat_name, void* sig, xmlDocPtr* conf );
 
 /**
+ * Destroy a net
+ *
+ * @param in    a pointer to the input port structure
+ * @param out   a pointer to the output port structure
+ * @param sig   a pointer to the net signature
+ * @param net   a pointer to the net handler
+ */
+void smx_net_destroy( void* in, void* out, void* sig, void* h );
+
+/**
+ * Initialise a net
+ *
+ * @param in_cnt        pointer to the input counter
+ * @param in_ports      pointer to the input ports array
+ * @param in_degree     number of input ports
+ * @param out_cnt       pointer to the output counter
+ * @param out_ports     pointer to the output ports array
+ * @param out_degree    number of output ports
+ */
+void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
+        int* out_cnt, smx_channel_t*** out_ports, int out_degree );
+
+/**
  * @brief Destroy copy sync structure
  *
  * @param cp    pointer to the cp sync structure
@@ -824,11 +858,6 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
  */
 void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
         smx_channel_t** chs_out, int len_out );
-
-/**
- * Function to be called if system is out of memory.
- */
-void smx_out_of_memory();
 
 /**
  * @brief Perfrom some cleanup tasks
@@ -945,14 +974,14 @@ void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
  * @param cleanup( arg )    pointer to the net cleanup function
  * @param h                 pointer to the net handler
  * @param chs_in            list of input channels
- * @param cnt_in            count of input ports
+ * @param cnt_in            pointer to count of input ports
  * @param chs_out           list of output channels
- * @param cnt_out           counter of output port
+ * @param cnt_out           pointer to counter of output port
  * @return                  returns NULL
  */
 void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
-        void cleanup( void* ), void* h, smx_channel_t** chs_in, int cnt_in,
-        smx_channel_t** chs_out, int cnt_out );
+        void cleanup( void* ), void* h, smx_channel_t** chs_in, int* cnt_in,
+        smx_channel_t** chs_out, int* cnt_out );
 
 /**
  * @brief start routine for a timer thread
@@ -963,4 +992,4 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
 void* start_routine_tf( void* h );
 
 
-#endif // HANDLER_H
+#endif // SMXRTS_H
