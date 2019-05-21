@@ -4,12 +4,13 @@
  - fix the TF read function (#1)
  - fix the termination behaviour of TF
  - fix the termination behaviour of RN
+ - Handle potential seg-faults by checking for null pointers consistently
 
 ### Changes
  - Cleanup cond vars (move the cond var from fifo to channel level)
  - Use a common net structure to store information every net has
  - Create channel ends to better distinguish between read and write operations
- - Add new FIFO types to handle special case of TFs
+ - Add new FIFO types to handle special case of TFs (see #1)
 
 ### New Features
  - Add a `unpack` function to the message callbacks
@@ -19,6 +20,7 @@
  - Propagate termination signals in both directions
  - Use zlog categories to distinguish between different concept
  - Include multiple log levels
+ - Make the routing node fair when reading from inputs (a rn has now state)
 
 # `diss_final`
 

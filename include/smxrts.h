@@ -471,6 +471,13 @@ smx_channel_end_t* smx_channel_create_end();
 void smx_channel_destroy( smx_channel_t* ch );
 
 /**
+ * @brief Destroy Streamix channel end structure
+ *
+ * @param end   pointer to the channel end to destroy
+ */
+void smx_channel_destroy_end( smx_channel_end_t* end );
+
+/**
  * @brief Read the data from an input port
  *
  * Allows to access the channel and read data. The channel ist protected by
@@ -487,7 +494,7 @@ smx_msg_t* smx_channel_read( smx_channel_t* ch );
  * @brief Returns the number of available messages in channel
  *
  * @param ch    pointer to the channel
- * @return      number of available messages in channel
+ * @return      number of available messages in channel or -1 on failure
  */
 int smx_channel_ready_to_read( smx_channel_t* ch );
 
@@ -500,7 +507,7 @@ int smx_channel_ready_to_read( smx_channel_t* ch );
  *
  * @param ch    pointer to the channel
  * @param msg   pointer to the a message structure
- * @return      1 if message was overwritten, 0 otherwise
+ * @return      0 on success, -1 otherwise
  */
 int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg );
 
@@ -540,18 +547,16 @@ void smx_connect_arr( smx_channel_t** dest, int* idx, smx_channel_t* src,
  *
  * @param ch    the target channel
  * @param guard the guard to be connected
- * @return      0 on success, -1 on failure
  */
-int smx_connect_guard( smx_channel_t* ch, smx_guard_t* guard );
+void smx_connect_guard( smx_channel_t* ch, smx_guard_t* guard );
 
 /**
  * Connect a routing node to a channel
  *
  * @param ch    the target channel
  * @param guard the rn to be connected
- * @return      0 on success, -1 on failure
  */
-int smx_connect_rn( smx_channel_t* ch, smx_net_t* rn );
+void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn );
 
 /**
  * @brief Create Streamix FIFO channel
@@ -805,9 +810,8 @@ void smx_net_rn_destroy( net_smx_rn_t* cp );
  * @brief Initialize copy synchronizer structure
  *
  * @param cp    pointer to the copy sync structure
- * @return      0 on success, -1 otherwise
  */
-int smx_net_rn_init( net_smx_rn_t* cp );
+void smx_net_rn_init( net_smx_rn_t* cp );
 
 /**
  * @brief create pthred of net

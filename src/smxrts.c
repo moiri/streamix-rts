@@ -29,12 +29,14 @@ zlog_category_t* cat_msg;
 /*****************************************************************************/
 void smx_cat_add_channel_in( smx_channel_t* ch, const char* name )
 {
+    if( ch == NULL || ch->source == NULL ) return;
     ch->source->cat = zlog_get_category( name );
 }
 
 /*****************************************************************************/
 void smx_cat_add_channel_out( smx_channel_t* ch, const char* name )
 {
+    if( ch == NULL || ch->sink == NULL ) return;
     ch->sink->cat = zlog_get_category( name );
 }
 
@@ -123,25 +125,36 @@ smx_channel_end_t* smx_channel_create_end()
 /*****************************************************************************/
 void smx_channel_destroy( smx_channel_t* ch )
 {
+    if( ch == NULL )
+        return;
     zlog_debug( cat_ch, "destroy channel '%s(%d)' (msg count: %d)", ch->name,
             ch->id, ch->fifo->count);
-    pthread_mutex_destroy( &ch->sink->ch_mutex );
-    pthread_cond_destroy( &ch->sink->ch_cv );
-    pthread_mutex_destroy( &ch->source->ch_mutex );
-    pthread_cond_destroy( &ch->source->ch_cv );
     smx_guard_destroy( ch->guard );
     smx_fifo_destroy( ch->fifo );
-    free( ch->sink );
-    free( ch->source );
+    smx_channel_destroy_end( ch->sink );
+    smx_channel_destroy_end( ch->source );
     free( ch );
+}
+
+/*****************************************************************************/
+void smx_channel_destroy_end( smx_channel_end_t* end )
+{
+    if( end == NULL )
+        return;
+    pthread_mutex_destroy( &end->ch_mutex );
+    pthread_cond_destroy( &end->ch_cv );
+    free( end );
 }
 
 /*****************************************************************************/
 smx_msg_t* smx_channel_read( smx_channel_t* ch )
 {
     smx_msg_t* msg = NULL;
-    if( ch == NULL )
+    if( ch == NULL || ch->source ==  NULL )
+    {
+        SMX_LOG_CH( cat_main, fatal, "channel not initialised" );
         return NULL;
+    }
 
     pthread_mutex_lock( &ch->source->ch_mutex);
     while( ch->source->state == SMX_CHANNEL_PENDING )
@@ -188,6 +201,7 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
         default:
             SMX_LOG_CH( ch->source->cat, error, "undefined channel type '%d'",
                     ch->type );
+            return -1;
     }
     return 0;
 }
@@ -196,8 +210,11 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
 int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg )
 {
     bool abort = false;
-    if( ch == NULL )
+    if( ch == NULL || ch->sink == NULL )
+    {
+        SMX_LOG_CH( cat_main, fatal, "channel not initialised" );
         return -1;
+    }
 
     pthread_mutex_lock( &ch->sink->ch_mutex );
     while( ch->sink->state == SMX_CHANNEL_PENDING )
@@ -256,7 +273,14 @@ void smx_connect( smx_channel_t** dest, smx_channel_t* src, int dest_id,
         int src_id, const char* dest_name, const char* src_name,
         const char* mode )
 {
-    if( dest ==  NULL || src == NULL ) return;
+    const char* elem;
+    if( dest ==  NULL || src == NULL )
+    {
+        elem = ( dest == NULL ) ? "dest" : "src";
+        SMX_LOG_CH( cat_main, fatal,
+                "unable to connect channels: not initialised, %s", elem );
+        return;
+    }
     const char* in = "->";
     const char* out = "<-";
     const char* dir = 0 == strcmp( mode, "in" ) ? in : out;
@@ -270,7 +294,14 @@ void smx_connect_arr( smx_channel_t** dest, int* idx, smx_channel_t* src,
         int dest_id, int src_id, const char* dest_name, const char* src_name,
         const char* mode )
 {
-    if( dest ==  NULL || idx == NULL || src == NULL ) return;
+    const char* elem;
+    if( dest ==  NULL || idx == NULL || src == NULL )
+    {
+        elem = ( idx == NULL || dest == NULL ) ? "dest" : "src";
+        SMX_LOG_CH( cat_main, fatal,
+                "unable to connect channels: not initialised, %s", elem );
+        return;
+    }
     const char* in = "->";
     const char* out = "<-";
     const char* dir = 0 == strcmp( mode, "in" ) ? in : out;
@@ -281,20 +312,31 @@ void smx_connect_arr( smx_channel_t** dest, int* idx, smx_channel_t* src,
 }
 
 /*****************************************************************************/
-int smx_connect_guard( smx_channel_t* ch, smx_guard_t* guard )
+void smx_connect_guard( smx_channel_t* ch, smx_guard_t* guard )
 {
-    if( ch == NULL ) return -1;
+    const char* elem;
+    if( ch == NULL || guard == NULL )
+    {
+        elem = ( ch == NULL ) ? "channel" : "guard";
+        SMX_LOG_CH( cat_main, fatal,
+                "unable to connect guard: not initialised %s", elem );
+        return;
+    }
     ch->guard = guard;
-    return 0;
 }
 
 /*****************************************************************************/
-int smx_connect_rn( smx_channel_t* ch, smx_net_t* rn )
+void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn )
 {
-    if( ch == NULL ) return -1;
-    if( rn == NULL ) return -1;
+    const char* elem;
+    if( ch == NULL || rn == NULL )
+    {
+        elem = ( ch == NULL ) ? "channel" : "rn";
+        SMX_LOG_CH( cat_main, fatal,
+                "unable to connect routing node: not initialised %s", elem );
+        return;
+    }
     ch->collector = ( ( net_smx_rn_t* )SMX_SIG( rn ) )->in.collector;
-    return 0;
 }
 
 /*****************************************************************************/
@@ -308,7 +350,10 @@ smx_fifo_t* smx_fifo_create( int length )
     for( int i=0; i < length; i++ ) {
         fifo->head = smx_malloc( sizeof( struct smx_fifo_item_s ) );
         if( fifo->head == NULL )
-            break;
+        {
+            smx_fifo_destroy( fifo );
+            return NULL;
+        }
 
         fifo->head->msg = NULL;
         fifo->head->prev = last_item;
@@ -332,16 +377,22 @@ smx_fifo_t* smx_fifo_create( int length )
 /*****************************************************************************/
 void smx_fifo_destroy( smx_fifo_t* fifo )
 {
+    if( fifo == NULL )
+        return;
+
     pthread_mutex_destroy( &fifo->fifo_mutex );
     for( int i=0; i < fifo->length; i++ ) {
-        if( fifo->head == NULL ) continue;
+        if( fifo->head == NULL )
+            continue;
+
         if( fifo->head->msg != NULL )
             smx_msg_destroy( fifo->head->msg, true );
         fifo->tail = fifo->head;
         fifo->head = fifo->head->next;
         free( fifo->tail );
     }
-    if( fifo->backup != NULL ) smx_msg_destroy( fifo->backup, true );
+    if( fifo->backup != NULL )
+        smx_msg_destroy( fifo->backup, true );
     free( fifo );
 }
 
@@ -350,6 +401,9 @@ smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo )
 {
     smx_msg_t* msg = NULL;
     int new_count;
+    if( ch == NULL || fifo == NULL )
+        return NULL;
+
     if( fifo->count > 0 ) {
         // messages are available
         pthread_mutex_lock( &fifo->fifo_mutex );
@@ -382,6 +436,9 @@ smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo )
 smx_msg_t* smx_fifo_d_read( smx_channel_t* ch, smx_fifo_t* fifo )
 {
     smx_msg_t* msg = NULL;
+    if( ch == NULL || fifo == NULL )
+        return NULL;
+
     pthread_mutex_lock( &fifo->fifo_mutex );
     if( fifo->count > 0 ) {
         // messages are available
@@ -418,6 +475,9 @@ smx_msg_t* smx_fifo_dd_read( smx_channel_t* ch, smx_fifo_t* fifo )
 {
     smx_msg_t* msg = NULL;
     int new_count;
+    if( ch == NULL || fifo == NULL )
+        return NULL;
+
     if( fifo->count > 0 ) {
         // messages are available
         pthread_mutex_lock( &fifo->fifo_mutex );
@@ -436,6 +496,9 @@ smx_msg_t* smx_fifo_dd_read( smx_channel_t* ch, smx_fifo_t* fifo )
 /*****************************************************************************/
 int smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
 {
+    if( ch == NULL || fifo == NULL || msg == NULL )
+        return -1;
+
     if(fifo->count < fifo->length)
     {
         pthread_mutex_lock( &fifo->fifo_mutex );
@@ -465,6 +528,9 @@ int smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
 int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg )
 {
     smx_msg_t* msg_tmp = NULL;
+    if( ch == NULL || fifo == NULL || msg == NULL )
+        return -1;
+
     pthread_mutex_lock( &fifo->fifo_mutex );
     msg_tmp = fifo->tail->msg;
     fifo->tail->msg = msg;
@@ -530,6 +596,9 @@ int smx_guard_write( smx_channel_t* ch )
 {
     uint64_t expired;
     struct itimerspec itval;
+    if( ch == NULL || ch->guard == NULL )
+        return -1;
+
     if( -1 == read( ch->guard->fd, &expired, sizeof( uint64_t ) ) )
     {
         SMX_LOG_CH( ch->sink->cat, error, "falied to read guard timer \
@@ -553,6 +622,9 @@ int smx_guard_write( smx_channel_t* ch )
 int smx_d_guard_write( smx_channel_t* ch, smx_msg_t* msg )
 {
     struct itimerspec itval;
+    if( ch == NULL || ch->guard == NULL )
+        return -1;
+
     if( -1 == timerfd_gettime( ch->guard->fd, &itval ) )
     {
         SMX_LOG_CH( ch->sink->cat, error, "falied to read guard timer \
@@ -587,11 +659,12 @@ void* smx_malloc( size_t size )
     return mem;
 }
 
-
 /*****************************************************************************/
 smx_msg_t* smx_msg_copy( smx_msg_t* msg )
 {
-    if( msg == NULL ) return NULL;
+    if( msg == NULL )
+        return NULL;
+
     zlog_info( cat_msg, "copy message '%lu'", msg->id );
     return smx_msg_create( msg->copy( msg->data, msg->size ),
             msg->size, msg->copy, msg->destroy, msg->unpack );
@@ -633,7 +706,9 @@ void* smx_msg_data_copy( void* data, size_t size )
 /*****************************************************************************/
 void smx_msg_data_destroy( void* data )
 {
-    if( data == NULL ) return;
+    if( data == NULL )
+        return;
+
     free( data );
 }
 
@@ -646,9 +721,12 @@ void* smx_msg_data_unpack( void* data )
 /*****************************************************************************/
 void smx_msg_destroy( smx_msg_t* msg, int deep )
 {
-    if( msg == NULL ) return;
+    if( msg == NULL )
+        return;
+
     zlog_info( cat_msg, "destroy message '%lu'", msg->id );
-    if( deep ) msg->destroy( msg->data );
+    if( deep )
+        msg->destroy( msg->data );
     free( msg );
 }
 
@@ -711,6 +789,7 @@ void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
 {
     if( in_cnt == NULL || in_ports == NULL || out_cnt == NULL || out_ports == NULL )
         return;
+
     *in_cnt = 0;
     *out_cnt = 0;
     *in_ports = smx_malloc( sizeof( smx_channel_t* ) * in_degree );
@@ -720,24 +799,25 @@ void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
 /*****************************************************************************/
 void smx_net_rn_destroy( net_smx_rn_t* cp )
 {
-    if( cp == NULL ) return;
+    if( cp == NULL )
+        return;
+
     pthread_mutex_destroy( &cp->in.collector->col_mutex );
     pthread_cond_destroy( &cp->in.collector->col_cv );
     free( cp->in.collector );
 }
 
 /*****************************************************************************/
-int smx_net_rn_init( net_smx_rn_t* cp )
+void smx_net_rn_init( net_smx_rn_t* cp )
 {
     cp->in.collector = smx_malloc( sizeof( struct smx_collector_s ) );
     if( cp->in.collector == NULL )
-        return -1;
+        return;
 
     pthread_mutex_init( &cp->in.collector->col_mutex, NULL );
     pthread_cond_init( &cp->in.collector->col_cv, NULL );
     cp->in.collector->count = 0;
     cp->in.collector->state = SMX_CHANNEL_UNINITIALISED;
-    return 0;
 }
 
 /*****************************************************************************/
@@ -756,6 +836,13 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
     int done_cnt_in = 0;
     int done_cnt_out = 0;
     int trigger_cnt = 0;
+    if( chs_in == NULL || chs_out == NULL )
+    {
+        SMX_LOG_CH( cat_main, fatal,
+                "net channels not initialised" );
+        return SMX_NET_END;
+    }
+
     // if state is forced by box implementation return forced state
     if( state != SMX_NET_RETURN ) return state;
 
@@ -801,6 +888,9 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
         smx_channel_t** chs_out, int len_out )
 {
     int i;
+    if( chs_in == NULL || chs_out == NULL )
+        return;
+
     SMX_LOG( h, notice, "send termination notice to neighbours" );
     for( i=0; i < len_in; i++ ) {
         SMX_LOG_CH( chs_in[i]->sink->cat, notice, "mark as stale" );
@@ -887,7 +977,7 @@ int smx_rn( void* h, void* state )
 {
     int* last_idx = ( int* )state;
     bool has_msg = false;
-    int cur_count, i, ch_count;
+    int cur_count, i, ch_count, ready_cnt;
     int count_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.count;
     int count_out = ( ( net_smx_rn_t* )SMX_SIG( h ) )->out.count;
     smx_channel_t** chs_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.ports;
@@ -927,7 +1017,9 @@ int smx_rn( void* h, void* state )
             if( i >= count_in )
                 i = 0;
             ch_count--;
-            if( smx_channel_ready_to_read( chs_in[i] ) ) {
+            ready_cnt = smx_channel_ready_to_read( chs_in[i] );
+            if( ready_cnt > 0 )
+            {
                 ch = chs_in[i];
                 *last_idx = i;
                 break;
@@ -969,13 +1061,21 @@ int smx_rn_init( void* h, void** state )
 /*****************************************************************************/
 void smx_rn_cleanup( void* state )
 {
-    free( state );
+    if( state != NULL )
+        free( state );
 }
 
 /*****************************************************************************/
 void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
         smx_channel_t* ch_out )
 {
+    if( timer == NULL )
+    {
+        SMX_LOG_CH( cat_main, fatal,
+                "unable to connect tf: timer not initialised" );
+        return;
+    }
+
     net_smx_tf_t* tf = smx_malloc( sizeof( struct net_smx_tf_s ) );
     if( tf == NULL )
         return;
@@ -1008,7 +1108,9 @@ smx_timer_t* smx_tf_create( int sec, int nsec )
 /*****************************************************************************/
 void smx_tf_destroy( smx_net_t* tt )
 {
-    if( tt == NULL ) return;
+    if( tt == NULL )
+        return;
+
     smx_timer_t* sig = SMX_SIG( tt );
     net_smx_tf_t* tf = sig->ports;
     net_smx_tf_t* tf_tmp;
@@ -1025,7 +1127,9 @@ void smx_tf_destroy( smx_net_t* tt )
 /*****************************************************************************/
 void smx_tf_enable( void* h, smx_timer_t* timer )
 {
-    if( timer == NULL ) return;
+    if( timer == NULL )
+        return;
+
     if( -1 == timerfd_settime( timer->fd, 0, &timer->itval, NULL ) )
         SMX_LOG( h, error, "timerfd_settime: %d", errno );
 }
@@ -1036,6 +1140,9 @@ void smx_tf_propagate_msgs( smx_timer_t* tt, smx_channel_t** ch_in,
 {
     int i;
     smx_msg_t* msg;
+    if( ch_in == NULL || ch_out == NULL )
+        return;
+
     for( i = 0; i < tt->count; i++ ) {
         if( ch_in[i]->source->state == SMX_CHANNEL_UNINITIALISED )
             continue;
@@ -1083,7 +1190,9 @@ void smx_tf_wait( void* h, smx_timer_t* timer )
     uint64_t expired;
     struct pollfd pfd;
     int poll_res;
-    if( timer == NULL ) return;
+    if( timer == NULL )
+        return;
+
     pfd.fd = timer->fd;
     pfd.events = POLLIN;
     pfd.revents = 0;
@@ -1102,8 +1211,14 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
         void cleanup( void* ), void* h, smx_channel_t** chs_in, int* cnt_in,
         smx_channel_t** chs_out, int* cnt_out )
 {
-    if( chs_in ==  NULL || chs_out == NULL || cnt_in == NULL || cnt_out == NULL )
+    if( h == NULL || chs_in ==  NULL || chs_out == NULL || cnt_in == NULL
+            || cnt_out == NULL )
+    {
+        SMX_LOG_CH( cat_main, fatal,
+                "unable to start net: not initialised" );
         return NULL;
+    }
+
     int state = SMX_NET_CONTINUE;
     SMX_LOG( h, notice, "init net" );
     void* net_state = NULL;
@@ -1145,6 +1260,13 @@ void* start_routine_tf( void* h )
     net_smx_tf_t* tf = tt->ports;
     smx_channel_t* ch_in[tt->count];
     smx_channel_t* ch_out[tt->count];
+    if( h == NULL || tt ==  NULL )
+    {
+        SMX_LOG_CH( cat_main, fatal,
+                "unable to start tf: not initialised" );
+        return NULL;
+    }
+
     SMX_LOG( h, notice, "init net" );
     int state = SMX_NET_CONTINUE;
     int tf_cnt = 0;
