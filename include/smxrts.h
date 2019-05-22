@@ -37,10 +37,8 @@ enum smx_channel_type_e
 {
     SMX_FIFO,           /**< a simple FIFO */
     SMX_FIFO_D,         /**< a FIFO with decoupled output */
-    SMX_FIFO_DD,        /**< a FIFO with decoupled output connected to a tf */
     SMX_D_FIFO,         /**< a FIFO with decoupled input */
-    SMX_D_FIFO_D,       /**< a FIFO with decoupled input and output */
-    SMX_D_FIFO_DD,      /**< a FIFO with decoupled input and output (tf) */
+    SMX_D_FIFO_D        /**< a FIFO with decoupled input and output */
 };
 
 /**
@@ -149,6 +147,7 @@ struct smx_fifo_s
     smx_fifo_item_t*  tail;      /**< pointer to the tail of the FIFO */
     smx_msg_t*        backup;    /**< ::smx_msg_s, msg space for decoupling */
     int     overwrite;           /**< counts number of overwrite operations */
+    int     copy;                /**< counts number of copy operations */
     int     count;               /**< counts occupied space */
     int     length;              /**< size of the FIFO */
     pthread_mutex_t fifo_mutex;  /**< mutual exclusion */
@@ -959,9 +958,10 @@ void smx_tf_enable( void* h, smx_timer_t* timer );
  * @param tt     a pointer to the timer
  * @param ch_in  a pointer to an array of input channels
  * @param ch_out a pointer to an array of output channels
+ * @param copy   1 if messages ought to be duplicated, 0 otherwise
  */
 void smx_tf_propagate_msgs( smx_timer_t* tt, smx_channel_t** ch_in,
-        smx_channel_t** ch_out );
+        smx_channel_t** ch_out, int copy );
 
 void smx_tf_read_inputs( smx_msg_t** msg, smx_timer_t* tt,
         smx_channel_t** ch_in, smx_channel_t** ch_out );
