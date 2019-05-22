@@ -14,6 +14,8 @@
 #ifndef SMXRTS_H
 #define SMXRTS_H
 
+#define SMX_TF_PRIO         3
+
 // TYPEDEFS -------------------------------------------------------------------
 typedef struct net_smx_rn_s net_smx_rn_t;             /**< ::net_smx_rn_s */
 typedef struct net_smx_tf_s net_smx_tf_t;             /**< ::net_smx_tf_s */
@@ -322,8 +324,8 @@ struct smx_timer_s
 #define SMX_NET_RN_INIT( id )\
     smx_net_rn_init( SMX_SIG( net_ ## id ) )
 
-#define SMX_NET_RUN( id, net_name, box_name )\
-    pthread_t th_net_ ## id = smx_net_run( box_ ## box_name, net_ ## id )
+#define SMX_NET_RUN( id, net_name, box_name, prio )\
+    pthread_t th_net_ ## id = smx_net_run( box_ ## box_name, net_ ## id, prio )
 
 #define SMX_NET_WAIT_END( id )\
     pthread_join( th_net_ ## id, NULL )
@@ -346,7 +348,8 @@ struct smx_timer_s
     smx_tf_destroy( timer_ ## id );\
 
 #define SMX_TF_RUN( id )\
-    pthread_t th_timer_ ## id = smx_net_run( start_routine_tf, timer_ ## id )
+    pthread_t th_timer_ ## id = smx_net_run( start_routine_tf, timer_ ## id,\
+            SMX_TF_PRIO )
 
 #define SMX_TF_WAIT_END( id )\
     pthread_join( th_timer_ ## id, NULL )
@@ -817,9 +820,10 @@ void smx_net_rn_init( net_smx_rn_t* cp );
  *
  * @param box_impl( arg )   function pointer to the box implementation
  * @param h                 pointer to the net handler
+ * @param prio              the RT thread priority (0 means no rt thread)
  * @return                  a pthread id
  */
-pthread_t smx_net_run( void* box_impl( void* arg ), void* h );
+pthread_t smx_net_run( void* box_impl( void* arg ), void* h, int prio );
 
 /**
  * @brief Update the state of the box

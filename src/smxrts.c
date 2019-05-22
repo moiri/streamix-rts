@@ -841,10 +841,34 @@ void smx_net_rn_init( net_smx_rn_t* cp )
 }
 
 /*****************************************************************************/
-pthread_t smx_net_run( void* box_impl( void* arg ), void* h )
+pthread_t smx_net_run( void* box_impl( void* arg ), void* h, int prio )
 {
+    pthread_attr_t sched_attr;
+    struct sched_param fifo_param;
     pthread_t thread;
-    pthread_create( &thread, NULL, box_impl, h );
+    int min_fifo, max_fifo;
+    pthread_attr_init(&sched_attr);
+    if( prio > 0 )
+    {
+        min_fifo = sched_get_priority_min( SCHED_FIFO );
+        max_fifo = sched_get_priority_max( SCHED_FIFO );
+        fifo_param.sched_priority = min_fifo + prio - 1;
+        if( fifo_param.sched_priority > max_fifo )
+        {
+            SMX_LOG( h, warn, "cannot use therad priority of %d, falling back\
+                    to the max priority %d", fifo_param.sched_priority,
+                    max_fifo );
+            fifo_param.sched_priority = max_fifo;
+        }
+        pthread_attr_setinheritsched(&sched_attr, PTHREAD_EXPLICIT_SCHED);
+        pthread_attr_setschedpolicy(&sched_attr, SCHED_FIFO);
+        pthread_attr_setschedparam(&sched_attr, &fifo_param);
+        SMX_LOG( h, debug, "creating RT thread of priority %d",
+                fifo_param.sched_priority );
+    }
+    if( ( errno = pthread_create( &thread, &sched_attr, box_impl, h ) ) != 0 )
+        SMX_LOG( h, error, "failed to create a new thread: %s",
+                strerror( errno ) );
     return thread;
 }
 
