@@ -852,7 +852,7 @@ pthread_t smx_net_run( void* box_impl( void* arg ), void* h, int prio )
     {
         min_fifo = sched_get_priority_min( SCHED_FIFO );
         max_fifo = sched_get_priority_max( SCHED_FIFO );
-        fifo_param.sched_priority = min_fifo + prio - 1;
+        fifo_param.sched_priority = min_fifo;
         if( fifo_param.sched_priority > max_fifo )
         {
             SMX_LOG( h, warn, "cannot use therad priority of %d, falling back\
