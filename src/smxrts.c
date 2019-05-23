@@ -1258,10 +1258,10 @@ void smx_tf_wait( void* h, smx_timer_t* timer )
     poll_res = poll( &pfd, 1, 0 ); // non-blocking poll to check for timer event
     if( -1 == poll_res )
         SMX_LOG( h, error, "timerfd poll: %d", errno );
-    if( poll_res > 0 ) {
+    else if( poll_res > 0 ) {
         SMX_LOG( h, error, "deadline missed" );
     }
-    else if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
+    if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
         SMX_LOG( h, error, "timerfd read: %d", errno );
 }
 
