@@ -14,7 +14,9 @@
 #ifndef SMXRTS_H
 #define SMXRTS_H
 
-#define SMX_TF_PRIO         3
+#define SMX_TF_PRIO     3
+#define SMX_MODE_in     "<-"
+#define SMX_MODE_out    "->"
 
 // TYPEDEFS -------------------------------------------------------------------
 typedef struct net_smx_rn_s net_smx_rn_t;             /**< ::net_smx_rn_s */
@@ -276,14 +278,14 @@ struct smx_timer_s
 
 #define SMX_CONNECT( net_id, ch_id, net_name, box_name, ch_name, mode )\
     smx_connect( SMX_SIG_PORT_PTR( net_ ## net_id, box_name, ch_name, mode ),\
-            ch_ ## ch_id, net_id, ch_id, #net_name, #ch_name, #mode )
+            ch_ ## ch_id )
 
 #define SMX_CONNECT_ARR( net_id, ch_id, net_name, box_name, ch_name, mode )\
     smx_cat_add_channel_ ## mode( ch_ ## ch_id,\
             STRINGIFY( ch_n ## net_name ## _c ## ch_name ## _ ## ch_id ) );\
     smx_connect_arr( SMX_SIG_PORTS( net_ ## net_id, box_name, mode ),\
             SMX_SIG_PORT_COUNT( net_ ## net_id, box_name, mode ),\
-            ch_ ## ch_id, net_id, ch_id, #net_name, #ch_name, #mode )
+            ch_ ## ch_id, net_id, ch_id, #net_name, #ch_name, SMX_MODE_ ## mode )
 
 #define SMX_CONNECT_GUARD( id, iats, iatns )\
     smx_connect_guard( ch_ ## id, smx_guard_create( iats, iatns, ch_ ## id ) )
@@ -297,7 +299,7 @@ struct smx_timer_s
     smx_cat_add_channel_out( ch_ ## ch_out_id,\
             STRINGIFY( ch_nsmx_tf_c ## ch_name ## _ ## ch_out_id ) );\
     smx_tf_connect( SMX_SIG( timer_ ## timer_id ), ch_ ## ch_in_id,\
-            ch_ ## ch_out_id )
+            ch_ ## ch_out_id, timer_id )
 
 #define SMX_NET_CREATE( id, net_name, box_name )\
     smx_net_t* net_ ## id = smx_net_create( id, #net_name,\
@@ -367,9 +369,6 @@ struct smx_timer_s
     extern void box_name ## _cleanup( void* )
 
 // HELPER MACROS --------------------------------------------------------------
-
-#define SMX_LOG_CH( cat, level, format, ...)\
-    zlog_ ## level( cat, format, ##__VA_ARGS__ )
 
 #define SMX_SIG( h )\
     ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->sig )
@@ -518,15 +517,8 @@ int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg );
  *
  * @param dest        a pointer to the destination
  * @param src         a pointer to the source
- * @param dest_id     the id of the destination
- * @param src_id      the id of the source
- * @param dest_name   a string literal of the destination name
- * @param src_name    a string literal of the source name
- * @param mode        the direction of the connection
  */
-void smx_connect( smx_channel_t** dest, smx_channel_t* src, int dest_id,
-        int src_id, const char* dest_name, const char* src_name,
-        const char* mode );
+void smx_connect( smx_channel_t** dest, smx_channel_t* src );
 
 /**
  * Connect a channel to a net by index.
@@ -927,9 +919,10 @@ void smx_rn_cleanup( void* state );
  * @param timer     pointer to a timer structure
  * @param ch_in     input channel to the temporal firewall
  * @param ch_out    output channel from the temporal firewall
+ * @param id        the id of the timer
  */
 void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
-        smx_channel_t* ch_out );
+        smx_channel_t* ch_out, int id );
 
 /**
  * @brief create a periodic timer structure
