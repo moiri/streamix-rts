@@ -8,8 +8,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <zlog.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
 
 #ifndef SMXRTS_H
 #define SMXRTS_H
@@ -200,7 +198,7 @@ struct smx_net_s
     unsigned int        id;         /**< a unique net id */
     zlog_category_t*    cat;        /**< the log category */
     void*               sig;        /**< the net port signature */
-    xmlNodePtr          conf;
+    void*               conf;
 };
 
 /**
@@ -333,7 +331,7 @@ struct smx_timer_s
     smx_program_cleanup( &conf )
 
 #define SMX_PROGRAM_INIT()\
-    xmlDocPtr conf = NULL;\
+    void* conf = NULL;\
     smx_program_init( &conf )
 
 #define SMX_TF_CREATE( id, sec, nsec )\
@@ -755,7 +753,7 @@ void* smx_msg_unpack( smx_msg_t* msg );
  * @param sig       a pointer to the net signature
  */
 smx_net_t* smx_net_create( unsigned int id, const char* name,
-        const char* cat_name, void* sig, xmlDocPtr* conf );
+        const char* cat_name, void* sig, void** conf );
 
 /**
  * Destroy a net
@@ -852,7 +850,7 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
  *
  * @param conf   a pointer to the configurcation structure
  */
-void smx_program_cleanup( xmlDocPtr* conf );
+void smx_program_cleanup( void** doc );
 
 /**
  * @brief Perfrom some initialisation tasks
@@ -861,7 +859,7 @@ void smx_program_cleanup( xmlDocPtr* conf );
  *
  * @param conf   a pointer to the configurcation structure
  */
-void smx_program_init( xmlDocPtr* conf );
+void smx_program_init( void** doc );
 
 /**
  * @brief the box implementattion of a routing node (former known as copy sync)

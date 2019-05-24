@@ -6,6 +6,8 @@
  */
 
 #include <time.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 #include <sys/time.h>
 #include <sys/timerfd.h>
 #include <sys/resource.h>
@@ -752,7 +754,7 @@ void* smx_msg_unpack( smx_msg_t* msg )
 
 /*****************************************************************************/
 smx_net_t* smx_net_create( unsigned int id, const char* name,
-        const char* cat_name, void* sig, xmlDocPtr* conf )
+        const char* cat_name, void* sig, void** conf )
 {
     // sig is allocated in the macro, hence, the NULL check is done here
     if( sig == NULL )
@@ -768,7 +770,7 @@ smx_net_t* smx_net_create( unsigned int id, const char* name,
     net->sig = sig;
     net->conf = NULL;
 
-    cur = xmlDocGetRootElement( *conf );
+    cur = xmlDocGetRootElement( (xmlDocPtr)(*conf) );
     cur = cur->xmlChildrenNode;
     while(cur != NULL)
     {
@@ -952,9 +954,9 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
 }
 
 /*****************************************************************************/
-void smx_program_cleanup( xmlDocPtr* doc )
+void smx_program_cleanup( void** doc )
 {
-    xmlFreeDoc( *doc );
+    xmlFreeDoc( (xmlDocPtr)*doc );
     xmlCleanupParser();
     zlog_notice( cat_main, "end main thread" );
     zlog_fini();
@@ -962,7 +964,7 @@ void smx_program_cleanup( xmlDocPtr* doc )
 }
 
 /*****************************************************************************/
-void smx_program_init( xmlDocPtr* doc )
+void smx_program_init( void** doc )
 {
     xmlNodePtr cur = NULL;
     xmlChar* conf = NULL;
@@ -979,7 +981,7 @@ void smx_program_init( xmlDocPtr* doc )
         exit( 0 );
     }
 
-    cur = xmlDocGetRootElement( *doc );
+    cur = xmlDocGetRootElement( (xmlDocPtr)*doc );
     if( cur == NULL || xmlStrcmp(cur->name, ( const xmlChar* )XML_APP ) )
     {
         printf( "error: app config root node name is '%s' instead of '%s'\n",
