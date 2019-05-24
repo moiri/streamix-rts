@@ -538,6 +538,19 @@ void smx_connect_guard( smx_channel_t* ch, smx_guard_t* guard );
 void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn );
 
 /**
+ * Read from a collector of a net.
+ *
+ * @param h         pointer to the net handler
+ * @param collector pointer to the net collector structure
+ * @param in        pointer to the input port array
+ * @param count_in  number of input ports
+ * @param last_idx  pointer to the state variable storing the last port index
+ * @return          the message that was read or NULL if no message was read
+ */
+smx_msg_t* smx_collector_read( void* h, smx_collector_t* collector,
+        smx_channel_t** in, int count_in, int* last_idx );
+
+/**
  * @brief Create Streamix FIFO channel
  *
  * @param length    length of the FIFO

@@ -328,6 +328,64 @@ void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn )
 }
 
 /*****************************************************************************/
+smx_msg_t* smx_collector_read( void* h, smx_collector_t* collector,
+        smx_channel_t** in, int count_in, int* last_idx )
+{
+    bool has_msg = false;
+    int cur_count, i, ch_count, ready_cnt;
+    smx_msg_t* msg = NULL;
+    smx_channel_t* ch = NULL;
+    pthread_mutex_lock( &collector->col_mutex );
+    while( collector->state == SMX_CHANNEL_PENDING )
+    {
+        SMX_LOG( h, debug, "waiting for message on collector" );
+        pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
+    }
+    if( collector->count > 0 )
+    {
+        collector->count--;
+        has_msg = true;
+    }
+    else
+    {
+        SMX_LOG( h, debug, "collector state change %d -> %d", collector->state,
+                SMX_CHANNEL_PENDING );
+        collector->state = SMX_CHANNEL_PENDING;
+    }
+    cur_count = collector->count;
+    pthread_mutex_unlock( &collector->col_mutex );
+
+    if( has_msg )
+    {
+        ch_count = count_in;
+        i = *last_idx;
+        while( ch_count > 0)
+        {
+            i++;
+            if( i >= count_in )
+                i = 0;
+            ch_count--;
+            ready_cnt = smx_channel_ready_to_read( in[i] );
+            if( ready_cnt > 0 )
+            {
+                ch = in[i];
+                *last_idx = i;
+                break;
+            }
+        }
+        if( ch == NULL )
+        {
+            SMX_LOG( h, error, "something went wrong: no msg ready in collector (count: %d)",
+                    collector->count );
+            return NULL;
+        }
+        SMX_LOG( h, info, JSON_LOG_ACCESS, "read", "collector", cur_count );
+        msg = smx_channel_read( ch );
+    }
+    return msg;
+}
+
+/*****************************************************************************/
 smx_fifo_t* smx_fifo_create( int length )
 {
     smx_fifo_item_t* last_item = NULL;
@@ -1017,71 +1075,23 @@ void smx_program_init( void** doc )
 int smx_rn( void* h, void* state )
 {
     int* last_idx = ( int* )state;
-    bool has_msg = false;
-    int cur_count, i, ch_count, ready_cnt;
+    int i;
     int count_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.count;
     int count_out = ( ( net_smx_rn_t* )SMX_SIG( h ) )->out.count;
     smx_channel_t** chs_in = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.ports;
     smx_channel_t** chs_out = ( ( net_smx_rn_t* )SMX_SIG( h ) )->out.ports;
-    smx_channel_t* ch = NULL;
     smx_msg_t* msg;
     smx_msg_t* msg_copy;
     smx_collector_t* collector = ( ( net_smx_rn_t* )SMX_SIG( h ) )->in.collector;
 
-    pthread_mutex_lock( &collector->col_mutex );
-    while( collector->state == SMX_CHANNEL_PENDING )
+    msg = smx_collector_read( h, collector, chs_in, count_in, last_idx );
+    if(msg != NULL)
     {
-        SMX_LOG( h, debug, "waiting for message on collector" );
-        pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
-    }
-    if( collector->count > 0 )
-    {
-        collector->count--;
-        has_msg = true;
-    }
-    else
-    {
-        SMX_LOG( h, debug, "collector state change %d -> %d", collector->state,
-                SMX_CHANNEL_PENDING );
-        collector->state = SMX_CHANNEL_PENDING;
-    }
-    cur_count = collector->count;
-    pthread_mutex_unlock( &collector->col_mutex );
-
-    if( has_msg )
-    {
-        ch_count = count_in;
-        i = *last_idx;
-        while( ch_count > 0)
-        {
-            i++;
-            if( i >= count_in )
-                i = 0;
-            ch_count--;
-            ready_cnt = smx_channel_ready_to_read( chs_in[i] );
-            if( ready_cnt > 0 )
-            {
-                ch = chs_in[i];
-                *last_idx = i;
-                break;
-            }
+        for( i=0; i<count_out; i++ ) {
+            msg_copy = smx_msg_copy( msg );
+            smx_channel_write( chs_out[i], msg_copy );
         }
-        if( ch == NULL )
-        {
-            SMX_LOG( h, error, "something went wrong: no msg ready in collector (count: %d)",
-                    collector->count );
-            return SMX_NET_RETURN;
-        }
-        SMX_LOG( h, info, JSON_LOG_ACCESS, "read", "collector", cur_count );
-        msg = smx_channel_read( ch );
-        if(msg != NULL)
-        {
-            for( i=0; i<count_out; i++ ) {
-                msg_copy = smx_msg_copy( msg );
-                smx_channel_write( chs_out[i], msg_copy );
-            }
-            smx_msg_destroy( msg, true );
-        }
+        smx_msg_destroy( msg, true );
     }
     return SMX_NET_RETURN;
 }
