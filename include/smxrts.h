@@ -111,6 +111,7 @@ struct smx_channel_s
     smx_collector_t*    collector;  /**< ::smx_collector_s, collect signals */
     smx_channel_end_t*  sink;       /**< ::smx_channel_end_s */
     smx_channel_end_t*  source;     /**< ::smx_channel_end_s */
+    zlog_category_t*    cat;        /**< zlog category of a channel end */
 };
 
 /**
@@ -118,7 +119,6 @@ struct smx_channel_s
  */
 struct smx_channel_end_s
 {
-    zlog_category_t*    cat;      /**< zlog category of a channel end */
     smx_channel_state_t state;    /**< state of the channel end */
     pthread_mutex_t     ch_mutex; /**< mutual exclusion */
     pthread_cond_t      ch_cv;    /**< conditional variable to trigger producer */
@@ -271,7 +271,8 @@ struct smx_timer_s
 
 // RTS MACROS ------------------------------------------------------------------
 #define SMX_CHANNEL_CREATE( id, len, type, name )\
-    smx_channel_t* ch_ ## id = smx_channel_create( len, type, id, #name )
+    smx_channel_t* ch_ ## id = smx_channel_create( len, type, id, #name );\
+    smx_cat_add_channel( ch_ ## id, STRINGIFY( ch_ ## name ## _ ## id ) )
 
 #define SMX_CHANNEL_DESTROY( id )\
     smx_channel_destroy( ch_ ## id )
@@ -281,8 +282,6 @@ struct smx_timer_s
             ch_ ## ch_id )
 
 #define SMX_CONNECT_ARR( net_id, ch_id, net_name, box_name, ch_name, mode )\
-    smx_cat_add_channel_ ## mode( ch_ ## ch_id,\
-            STRINGIFY( ch_n ## net_name ## _c ## ch_name ## _ ## ch_id ) );\
     smx_connect_arr( SMX_SIG_PORTS( net_ ## net_id, box_name, mode ),\
             SMX_SIG_PORT_COUNT( net_ ## net_id, box_name, mode ),\
             ch_ ## ch_id, net_id, ch_id, #net_name, #ch_name, SMX_MODE_ ## mode )
@@ -294,16 +293,12 @@ struct smx_timer_s
     smx_connect_rn( ch_ ## ch_id, net_ ## net_id )
 
 #define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id, ch_name )\
-    smx_cat_add_channel_in( ch_ ## ch_in_id,\
-            STRINGIFY( ch_nsmx_tf_c ## ch_name ## _ ## ch_in_id ) );\
-    smx_cat_add_channel_out( ch_ ## ch_out_id,\
-            STRINGIFY( ch_nsmx_tf_c ## ch_name ## _ ## ch_out_id ) );\
     smx_tf_connect( SMX_SIG( timer_ ## timer_id ), ch_ ## ch_in_id,\
             ch_ ## ch_out_id, timer_id )
 
 #define SMX_NET_CREATE( id, net_name, box_name )\
     smx_net_t* net_ ## id = smx_net_create( id, #net_name,\
-            STRINGIFY( net_n ## net_name ## _ ## id ),\
+            STRINGIFY( net_ ## net_name ## _ ## id ),\
             smx_malloc( sizeof( struct net_ ## box_name ## _s ) ), &conf )
 
 #define SMX_NET_DESTROY( id, box_name )\
@@ -400,20 +395,12 @@ struct smx_timer_s
 
 // FUNCTIONS ------------------------------------------------------------------
 /**
- * Add a zlog category for a channel source end
+ * Add a zlog category to a channel
  *
  * @param ch    the channel id
  * @param name  the name of the zlog category
  */
-void smx_cat_add_channel_in( smx_channel_t* ch, const char* name );
-
-/**
- * Add a zlog category for a channel sink end
- *
- * @param ch    the channel id
- * @param name  the name of the zlog category
- */
-void smx_cat_add_channel_out( smx_channel_t* ch, const char* name );
+void smx_cat_add_channel( smx_channel_t* ch, const char* name );
 
 /**
  * Change the state of a channel collector. The state is only changed if the
