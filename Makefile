@@ -37,6 +37,9 @@ all: $(STATLIB) $(DYNLIB)
 debug: CFLAGS += $(DEBUG_FLAGS)
 debug: all
 
+unsafe: CFLAGS += -DSMX_LOG_UNSAFE
+unsafe: all
+
 $(STATLIB): $(OBJECTS)
 	mkdir -p lib
 	ar -cq $@ $^

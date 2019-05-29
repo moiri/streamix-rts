@@ -15,13 +15,6 @@
 #include "smxlog.h"
 
 /*****************************************************************************/
-void smx_cat_add_channel( smx_channel_t* ch, const char* name )
-{
-    if( ch == NULL || ch->source == NULL ) return;
-    ch->cat = zlog_get_category( name );
-}
-
-/*****************************************************************************/
 void smx_channel_change_collector_state( smx_channel_t* ch,
         smx_channel_state_t state )
 {
@@ -62,12 +55,19 @@ void smx_channel_change_write_state( smx_channel_t* ch,
 }
 
 /*****************************************************************************/
-smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
-        int id, const char* name )
+int smx_channel_create( smx_channel_t** chs, int* ch_cnt, int len,
+        smx_channel_type_t type, int id, const char* name,
+        const char* cat_name )
 {
+    chs[id] = NULL;
+    if( id >= SMX_MAX_CHS )
+    {
+        SMX_LOG_MAIN( main, fatal, "channel count exeeds maximum %d", id );
+        return -1;
+    }
     smx_channel_t* ch = smx_malloc( sizeof( struct smx_channel_s ) );
     if( ch == NULL )
-        return NULL;
+        return -1;
 
     SMX_LOG_MAIN( ch, info, "create channel '%s(%d)' of length %d", name, id,
             len );
@@ -77,6 +77,7 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
     ch->collector = NULL;
     ch->guard = NULL;
     ch->name = name;
+    ch->cat = zlog_get_category( cat_name );
     ch->sink = smx_channel_create_end();
     ch->source = smx_channel_create_end();
     ch->source->state = SMX_CHANNEL_PENDING;
@@ -87,8 +88,10 @@ smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
         ch->source->state = SMX_CHANNEL_UNINITIALISED;
     }
     if( ch->sink == NULL || ch->source == NULL )
-        return NULL;
-    return ch;
+        return -1;
+    chs[id] = ch;
+    (*ch_cnt)++;
+    return 0;
 }
 
 /*****************************************************************************/

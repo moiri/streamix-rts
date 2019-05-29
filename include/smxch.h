@@ -12,6 +12,8 @@
 #ifndef SMXCH_H
 #define SMXCH_H
 
+#define SMX_MAX_CHS 10000
+
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
 typedef struct smx_channel_end_s smx_channel_end_t;   /**< ::smx_channel_end_s */
 typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
@@ -126,15 +128,7 @@ struct smx_guard_s
 };
 
 #define SMX_LOG_CH( ch, level, format, ... )\
-    SMX_LOG_LOCK( level, ch->cat, format,  ##__VA_ARGS__ )
-
-/**
- * Add a zlog category to a channel
- *
- * @param ch    the channel id
- * @param name  the name of the zlog category
- */
-void smx_cat_add_channel( smx_channel_t* ch, const char* name );
+    SMX_LOG_INTERN( level, ch->cat, format,  ##__VA_ARGS__ )
 
 /**
  * Change the state of a channel collector. The state is only changed if the
@@ -169,14 +163,19 @@ void smx_channel_change_write_state( smx_channel_t* ch,
 /**
  * @brief Create Streamix channel
  *
- * @param len   length of a FIFO
- * @param type  type of the buffer
- * @param id    unique identifier of the channel
- * @param name  name of the channel
- * @return      pointer to the created channel or NULL if something went wrong
+ * @param chs       the target array where the channel will be stored
+ * @param ch_cnt    pointer to the channel counter (is increased by one after
+ *                  channel creation)
+ * @param len       length of a FIFO
+ * @param type      type of the buffer
+ * @param id        unique identifier of the channel
+ * @param name      name of the channel
+ * @param cat_name  name of the channel zlog category
+ * @return          0 on success, -1 otherwise
  */
-smx_channel_t* smx_channel_create( int len, smx_channel_type_t type,
-        int id, const char* name );
+int smx_channel_create( smx_channel_t** chs, int* ch_cnt, int len,
+        smx_channel_type_t type, int id, const char* name,
+        const char* cat_name );
 
 /**
  * Create a channel end.

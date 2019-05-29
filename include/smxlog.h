@@ -11,6 +11,12 @@
 #ifndef SMXLOG_H
 #define SMXLOG_H
 
+#ifndef SMX_LOG_UNSAFE
+#define SMX_LOG_INTERN SMX_LOG_LOCK
+#else
+#define SMX_LOG_INTERN SMX_LOG_FREE
+#endif
+
 /**
  *
  */
@@ -19,11 +25,14 @@
     zlog_ ## level( cat, format, ##__VA_ARGS__ );\
     pthread_mutex_unlock( smx_get_mlog() ); } while( 0 )
 
+#define SMX_LOG_FREE( level, cat, format, ... )\
+    zlog_ ## level( cat, format, ##__VA_ARGS__ )
+
 /**
  *
  */
 #define SMX_LOG_MAIN( cat, level, format, ... )\
-    SMX_LOG_LOCK( level, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ );\
+    SMX_LOG_INTERN( level, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ );\
 
 /**
  *

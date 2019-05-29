@@ -6,6 +6,12 @@ Runtime system for the coordination language Streamix
     make
     sudo make install
 
+Note that time-triggered nets are executed with RT-Tasks. In order to prevent
+priority-inversion the logging is locked by a mutex (instead of a simple
+rw-lock). This is not necessary if the Streamix network does not have any tt
+nets. In this case the mutex locking of the RTS can be disabled at compile time
+with `make unsafe`.
+
 Requires
  - [`zlog`](https://github.com/HardySimpson/zlog)
     is added as a git submodule and can be used to compile from source.
@@ -31,11 +37,5 @@ Requires
     ```
 
 ## Examples
-In the folder `examples` choose an example and run
-
-    make
-    ./<example>.out
-
-Requires
- - [`smxc`](https://github.com/moiri/streamix-c) to compile the streamix code
- - [`graph2c`](https://github.com/moiri/streamix-graph2c) to translate the streamix dependency graph into c code
+Some example can be found in the [root repository of Streamix](https://github.com/moiri/streamix).
+Refer to this repo for compilation instructions.

@@ -13,17 +13,24 @@
 #include "smxutils.h"
 
 /*****************************************************************************/
-smx_net_t* smx_net_create( unsigned int id, const char* name,
-        const char* cat_name, void* sig, void** conf )
+int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
+        const char* name, const char* cat_name, void* sig, void** conf )
 {
+    nets[id] = NULL;
     // sig is allocated in the macro, hence, the NULL check is done here
     if( sig == NULL )
-        return NULL;
+        return -1;
+
+    if( id >= SMX_MAX_NETS )
+    {
+        SMX_LOG_MAIN( main, fatal, "net count exeeds maximum %d", id );
+        return -1;
+    }
 
     xmlNodePtr cur = NULL;
     smx_net_t* net = smx_malloc( sizeof( struct smx_net_s ) );
     if( net == NULL )
-        return NULL;
+        return -1;
 
     net->id = id;
     net->cat = zlog_get_category( cat_name );
@@ -42,8 +49,10 @@ smx_net_t* smx_net_create( unsigned int id, const char* name,
         cur = cur->next;
     }
 
+    nets[id] = net;
+    (*net_cnt)++;
     SMX_LOG_MAIN( net, info, "create net instance %s(%d)", name, id );
-    return net;
+    return 0;
 }
 
 /*****************************************************************************/
@@ -73,12 +82,20 @@ void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
 }
 
 /*****************************************************************************/
-pthread_t smx_net_run( void* box_impl( void* arg ), void* h, int prio )
+int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
+        int prio )
 {
     pthread_attr_t sched_attr;
     struct sched_param fifo_param;
     pthread_t thread;
     int min_fifo, max_fifo;
+
+    if( idx >= SMX_MAX_NETS )
+    {
+        SMX_LOG_MAIN( main, fatal, "thread count exeeds maximum %d", idx );
+        return -1;
+    }
+
     pthread_attr_init(&sched_attr);
     if( prio > 0 )
     {
@@ -99,9 +116,13 @@ pthread_t smx_net_run( void* box_impl( void* arg ), void* h, int prio )
                 fifo_param.sched_priority );
     }
     if( ( errno = pthread_create( &thread, &sched_attr, box_impl, h ) ) != 0 )
+    {
         SMX_LOG_NET( h, error, "failed to create a new thread: %s",
                 strerror( errno ) );
-    return thread;
+        return -1;
+    }
+    ths[idx] = thread;
+    return 0;
 }
 
 /*****************************************************************************/

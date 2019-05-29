@@ -30,9 +30,11 @@ typedef struct smx_rts_s smx_rts_t;
 struct smx_rts_s
 {
     void* conf;
-    smx_channel_t** chs;
-    smx_net_t** nets;
-    pthread_t* ths;
+    smx_channel_t* chs[SMX_MAX_CHS];
+    smx_net_t* nets[SMX_MAX_NETS];
+    pthread_t ths[SMX_MAX_NETS];
+    int ch_cnt;
+    int net_cnt;
 };
 
 // USER MACROS -----------------------------------------------------------------
@@ -80,85 +82,85 @@ struct smx_rts_s
 
 // RTS MACROS ------------------------------------------------------------------
 #define SMX_CHANNEL_CREATE( id, len, type, name )\
-    smx_channel_t* ch_ ## id = smx_channel_create( len, type, id, #name );\
-    smx_cat_add_channel( ch_ ## id, STRINGIFY( ch_ ## name ## _ ## id ) )
+    smx_channel_create( rts->chs, &rts->ch_cnt, len, type, id, #name,\
+            STRINGIFY( ch_ ## name ## _ ## id ) )
 
 #define SMX_CHANNEL_DESTROY( id )\
-    smx_channel_destroy( ch_ ## id )
+    smx_channel_destroy( rts->chs[id] )
 
 #define SMX_CONNECT( net_id, ch_id, net_name, box_name, ch_name, mode )\
-    smx_connect( SMX_SIG_PORT_PTR( net_ ## net_id, box_name, ch_name, mode ),\
-            ch_ ## ch_id )
+    smx_connect( SMX_SIG_PORT_PTR( rts->nets[net_id], box_name, ch_name, mode ),\
+            rts->chs[ch_id] )
 
 #define SMX_CONNECT_ARR( net_id, ch_id, net_name, box_name, ch_name, mode )\
-    smx_connect_arr( SMX_SIG_PORTS( net_ ## net_id, box_name, mode ),\
-            SMX_SIG_PORT_COUNT( net_ ## net_id, box_name, mode ),\
-            ch_ ## ch_id, net_id, ch_id, #net_name, #ch_name, SMX_MODE_ ## mode )
+    smx_connect_arr( SMX_SIG_PORTS( rts->nets[net_id], box_name, mode ),\
+            SMX_SIG_PORT_COUNT( rts->nets[net_id], box_name, mode ),\
+            rts->chs[ch_id], net_id, ch_id, #net_name, #ch_name,\
+            SMX_MODE_ ## mode )
 
 #define SMX_CONNECT_GUARD( id, iats, iatns )\
-    smx_connect_guard( ch_ ## id, smx_guard_create( iats, iatns, ch_ ## id ) )
+    smx_connect_guard( rts->chs[id],\
+            smx_guard_create( iats, iatns, rts->chs[id] ) )
 
 #define SMX_CONNECT_RN( net_id, ch_id )\
-    smx_connect_rn( ch_ ## ch_id, net_ ## net_id )
+    smx_connect_rn( rts->chs[ch_id], rts->nets[net_id] )
 
 #define SMX_CONNECT_TF( timer_id, ch_in_id, ch_out_id, ch_name )\
-    smx_tf_connect( SMX_SIG( timer_ ## timer_id ), ch_ ## ch_in_id,\
-            ch_ ## ch_out_id, timer_id )
+    smx_tf_connect( SMX_SIG( rts->nets[timer_id] ), rts->chs[ch_in_id],\
+            rts->chs[ch_out_id], timer_id )
 
 #define SMX_NET_CREATE( id, net_name, box_name )\
-    smx_net_t* net_ ## id = smx_net_create( id, #net_name,\
+    smx_net_create( rts->nets, &rts->net_cnt, id, #net_name,\
             STRINGIFY( net_ ## net_name ## _ ## id ),\
-            smx_malloc( sizeof( struct net_ ## box_name ## _s ) ), &conf )
+            smx_malloc( sizeof( struct net_ ## box_name ## _s ) ), &rts->conf )
 
 #define SMX_NET_DESTROY( id, box_name )\
     smx_net_destroy(\
-            SMX_SIG_PORTS( net_ ## id, box_name, in ),\
-            SMX_SIG_PORTS( net_ ## id, box_name, out ),\
-            SMX_SIG( net_ ## id ),\
-            net_ ## id )
+            SMX_SIG_PORTS( rts->nets[id], box_name, in ),\
+            SMX_SIG_PORTS( rts->nets[id], box_name, out ),\
+            SMX_SIG( rts->nets[id] ),\
+            rts->nets[id] )
 
 #define SMX_NET_INIT( id, box_name, indegree, outdegree )\
     smx_net_init(\
-            SMX_SIG_PORT_COUNT( net_ ## id, box_name, in ),\
-            SMX_SIG_PORTS_PTR( net_ ## id, box_name, in ), indegree,\
-            SMX_SIG_PORT_COUNT( net_ ## id, box_name, out ),\
-            SMX_SIG_PORTS_PTR( net_ ## id, box_name, out ), outdegree )
+            SMX_SIG_PORT_COUNT( rts->nets[id], box_name, in ),\
+            SMX_SIG_PORTS_PTR( rts->nets[id], box_name, in ), indegree,\
+            SMX_SIG_PORT_COUNT( rts->nets[id], box_name, out ),\
+            SMX_SIG_PORTS_PTR( rts->nets[id], box_name, out ), outdegree )
 
 #define SMX_NET_RN_DESTROY( id )\
-    smx_net_rn_destroy( ( SMX_SIG( net_ ## id ) ) )
+    smx_net_rn_destroy( ( SMX_SIG( rts->nets[id] ) ) )
 
 #define SMX_NET_RN_INIT( id )\
-    smx_net_rn_init( SMX_SIG( net_ ## id ) )
+    smx_net_rn_init( SMX_SIG( rts->nets[id] ) )
 
 #define SMX_NET_RUN( id, net_name, box_name, prio )\
-    pthread_t th_net_ ## id = smx_net_run( box_ ## box_name, net_ ## id, prio )
+    smx_net_run( rts->ths, id, box_ ## box_name, rts->nets[id], prio )
 
 #define SMX_NET_WAIT_END( id )\
-    pthread_join( th_net_ ## id, NULL )
+    pthread_join( rts->ths[id], NULL )
 
 #define SMX_PROGRAM_INIT_RUN() ;
 
 #define SMX_PROGRAM_CLEANUP()\
-    smx_program_cleanup( &conf )
+    smx_program_cleanup( rts )
 
 #define SMX_PROGRAM_INIT()\
-    void* conf = NULL;\
-    smx_program_init( &conf )
+    smx_rts_t* rts = smx_program_init()
 
 #define SMX_TF_CREATE( id, sec, nsec )\
-    smx_net_t* timer_ ## id = smx_net_create( id, STRINGIFY( smx_tf ),\
+    smx_net_create( rts->nets, &rts->net_cnt, id, STRINGIFY( smx_tf ),\
             STRINGIFY( net_nsmx_tf ## _ ## id ), smx_tf_create( sec, nsec ),\
-            &conf )
+            &rts->conf )
 
 #define SMX_TF_DESTROY( id )\
-    smx_tf_destroy( timer_ ## id );\
+    smx_tf_destroy( rts->nets[id] );\
 
 #define SMX_TF_RUN( id )\
-    pthread_t th_timer_ ## id = smx_net_run( start_routine_tf, timer_ ## id,\
-            SMX_TF_PRIO )
+    smx_net_run( rts->ths, id, start_routine_tf, rts->nets[id], SMX_TF_PRIO )
 
 #define SMX_TF_WAIT_END( id )\
-    pthread_join( th_timer_ ## id, NULL )
+    pthread_join( rts->ths[id], NULL )
 
 #define START_ROUTINE_NET( h, net_name, box_name )\
     start_routine_net( box_name, box_name ## _init, box_name ## _cleanup, h,\
@@ -179,18 +181,17 @@ struct smx_rts_s
  *
  * Close the log file
  *
- * @param conf   a pointer to the configurcation structure
+ * @param rts   a pointer to the RTS structure
  */
-void smx_program_cleanup( void** doc );
+void smx_program_cleanup( smx_rts_t* rts );
 
 /**
- * @brief Perfrom some initialisation tasks
+ * Initialize the rts structure, read the configuration files, and initialize
+ * the log.
  *
- * Initialize logs and log the beginning of the program
- *
- * @param conf   a pointer to the configurcation structure
+ * @return a pointer to the RTS structure which holds the network information.
  */
-void smx_program_init( void** doc );
+smx_rts_t* smx_program_init();
 
 
 #endif // SMXRTS_H

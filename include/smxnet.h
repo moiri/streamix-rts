@@ -11,6 +11,8 @@
 #ifndef SMXNET_H
 #define SMXNET_H
 
+#define SMX_MAX_NETS 1000
+
 typedef struct smx_net_s smx_net_t;                   /**< ::smx_net_s */
 
 /**
@@ -35,7 +37,7 @@ struct smx_net_s
 };
 
 #define SMX_LOG_NET( net, level, format, ... )\
-    SMX_LOG_LOCK( level, SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )
+    SMX_LOG_INTERN( level, SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )
 
 /**
  *
@@ -53,12 +55,18 @@ struct smx_net_s
  *  - assigning the net-specifix XML configuartion
  *  - assigning the net signature
  *
+ * @param nets      the target array where the new net will be stored
+ * @param net_cnt   pointer to the net counter (is increased by one after net
+ *                  creation)
  * @param id        a unique net identifier
+ * @param name      the name of the net
  * @param cat_name  the name of the zlog category
  * @param sig       a pointer to the net signature
+ * @param conf      a pointer to the net configuration structure
+ * @return          0 on success, -1 on failure
  */
-smx_net_t* smx_net_create( unsigned int id, const char* name,
-        const char* cat_name, void* sig, void** conf );
+int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
+        const char* name, const char* cat_name, void* sig, void** conf );
 
 /**
  * Destroy a net
@@ -86,12 +94,16 @@ void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
 /**
  * @brief create pthred of net
  *
+ * @param ths               the target array to store the thread id
+ * @param idx               the index of where to store the thread id in the
+ *                          target array
  * @param box_impl( arg )   function pointer to the box implementation
  * @param h                 pointer to the net handler
  * @param prio              the RT thread priority (0 means no rt thread)
- * @return                  a pthread id
+ * @return                  0 on success, -1 on failure
  */
-pthread_t smx_net_run( void* box_impl( void* arg ), void* h, int prio );
+int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
+        int prio );
 
 /**
  * @brief Update the state of the box
