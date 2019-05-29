@@ -5,24 +5,11 @@
  * @author  Simon Maurer
  */
 
-#include "smxch.h"
+#include <zlog.h>
+#include <pthread.h>
 
 #ifndef SMXLOG_H
 #define SMXLOG_H
-
-typedef struct net_smx_log_s net_smx_log_t;             /**< ::net_smx_log_s */
-
-/**
- * @brief The signature of a logger
- */
-struct net_smx_log_s
-{
-    struct {
-        smx_channel_t** ports;      /**< an array of channel pointers */
-        int count;                  /**< the number of input ports */
-        smx_collector_t* collector; /**< ::smx_collector_s */
-    } in;                           /**< input channels */
-};
 
 /**
  *
@@ -41,11 +28,36 @@ struct net_smx_log_s
 /**
  *
  */
-int smx_init_log( const char* conf );
+int smx_log_init( const char* conf );
+
+/**
+ *
+ */
+void smx_log_cleanup();
+
+/**
+ *
+ */
 pthread_mutex_t* smx_get_mlog();
+
+/**
+ *
+ */
 zlog_category_t* smx_get_zcat_ch();
-zlog_category_t* smx_get_zcat_net();
+
+/**
+ *
+ */
 zlog_category_t* smx_get_zcat_main();
+
+/**
+ *
+ */
 zlog_category_t* smx_get_zcat_msg();
+
+/**
+ *
+ */
+zlog_category_t* smx_get_zcat_net();
 
 #endif

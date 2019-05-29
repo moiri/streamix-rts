@@ -14,7 +14,8 @@ zlog_category_t* smx_zcat_main;
 zlog_category_t* smx_zcat_msg;
 pthread_mutex_t mlog;
 
-int smx_init_log( const char* conf )
+/*****************************************************************************/
+int smx_log_init( const char* conf )
 {
     pthread_mutexattr_t mutexattr_prioinherit;
 
@@ -37,8 +38,23 @@ int smx_init_log( const char* conf )
     return 0;
 }
 
+/*****************************************************************************/
+void smx_log_cleanup()
+{
+    zlog_fini();
+}
+
+/*****************************************************************************/
 pthread_mutex_t* smx_get_mlog() { return &mlog; }
+
+/*****************************************************************************/
 zlog_category_t* smx_get_zcat_ch() { return smx_zcat_ch; }
-zlog_category_t* smx_get_zcat_net() { return smx_zcat_net; }
+
+/*****************************************************************************/
 zlog_category_t* smx_get_zcat_main() { return smx_zcat_main; }
+
+/*****************************************************************************/
 zlog_category_t* smx_get_zcat_msg() { return smx_zcat_msg; }
+
+/*****************************************************************************/
+zlog_category_t* smx_get_zcat_net() { return smx_zcat_net; }

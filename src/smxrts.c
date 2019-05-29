@@ -27,7 +27,7 @@ void smx_program_cleanup( void** doc )
     xmlFreeDoc( (xmlDocPtr)*doc );
     xmlCleanupParser();
     SMX_LOG_MAIN( main, notice, "end main thread" );
-    zlog_fini();
+    smx_log_cleanup();
     exit( EXIT_SUCCESS );
 }
 
@@ -64,7 +64,7 @@ void smx_program_init( void** doc )
         exit( 0 );
     }
 
-    int rc = smx_init_log( (const char*)conf );
+    int rc = smx_log_init( (const char*)conf );
 
     if( rc ) {
         printf( "error: zlog init failed with conf: '%s'\n", conf );
