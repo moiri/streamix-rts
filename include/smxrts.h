@@ -14,6 +14,7 @@
 #include "smxutils.h"
 #include "box_smx_rn.h"
 #include "box_smx_tf.h"
+#include "box_smx_mongo.h"
 
 #ifndef SMXRTS_H
 #define SMXRTS_H
@@ -140,7 +141,8 @@ struct smx_rts_s
 #define SMX_NET_WAIT_END( id )\
     pthread_join( rts->ths[id], NULL )
 
-#define SMX_PROGRAM_INIT_RUN() ;
+#define SMX_PROGRAM_INIT_RUN()\
+    smx_program_init_run( rts )
 
 #define SMX_PROGRAM_CLEANUP()\
     smx_program_cleanup( rts )
@@ -193,5 +195,11 @@ void smx_program_cleanup( smx_rts_t* rts );
  */
 smx_rts_t* smx_program_init();
 
+/**
+ * Initialize the profiler if enabled.
+ *
+ * @param rts a pointer to the RTS structure which holds the network information.
+ */
+void smx_program_init_run( smx_rts_t* rts );
 
 #endif // SMXRTS_H

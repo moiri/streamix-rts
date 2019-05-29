@@ -10,8 +10,8 @@
 #ifndef SMXUTILS_H
 #define SMXUTILS_H
 
-#define SMX_MODE_in     "<-"
-#define SMX_MODE_out    "->"
+#define SMX_MODE_in     "->"
+#define SMX_MODE_out    "<-"
 
 #define SMX_SIG( h )\
     ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->sig )

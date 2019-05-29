@@ -19,12 +19,10 @@ INCLUDES = $(LOC_INC_DIR)/smxrts.h
 
 INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I/usr/include/libxml2 \
+			   -I/usr/include/libmongoc-1.0 \
+			   -I/usr/include/libbson-1.0 \
 			   -I./uthash/src \
 			   -I.
-
-LINK_FILE = -lpthread \
-			-lzlog \
-			-lxml2
 
 CFLAGS = -Wall -fPIC
 DEBUG_FLAGS = -g -O0

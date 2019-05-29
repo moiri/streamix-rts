@@ -18,22 +18,31 @@ Requires
  - [`libxml2`](http://www.xmlsoft.org/)
 
     ```
-    sudo apt update
     sudo apt install libxml2-dev
     ```
 
  - [`uthash`](https://github.com/troydhanson/uthash)
 
     ```
-    sudo apt update
     sudo apt install uthash-dev
     ```
 
  - [`pthread`](https://computing.llnl.gov/tutorials/pthreads/)
 
     ```
-    sudo apt update
     sudo apt install libpthread-stubs0-dev
+    ```
+
+ - [`libmongoc`](http://mongoc.org/libmongoc/current/index.html)
+
+    ```
+    sudo apt install libmongoc-dev
+    ```
+
+ - [`libbson`](http://mongoc.org/libbson/current/)
+
+    ```
+    sudo apt install libbson-dev
     ```
 
 ## Examples

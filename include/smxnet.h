@@ -34,6 +34,8 @@ struct smx_net_s
     zlog_category_t*    cat;        /**< the log category */
     void*               sig;        /**< the net port signature */
     void*               conf;       /**< pointer to the XML configuration */
+    smx_channel_t*      profile;    /**< a pointer to the profile channel */
+    const char*         name;       /**< the name of the net */
 };
 
 #define SMX_LOG_NET( net, level, format, ... )\
@@ -42,12 +44,30 @@ struct smx_net_s
 /**
  *
  */
-#define SMX_NET_GET_ID( h ) ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->id;
+#define SMX_NET_GET_ID( h ) ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->id
 
 /**
  *
  */
-#define SMX_NET_GET_CONF( h ) ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf;
+#define SMX_NET_GET_CONF( h ) ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf
+
+/**
+ *
+ */
+#define SMX_NET_GET_NAME( h ) ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->name
+
+/**
+ * Read from a collector of a net.
+ *
+ * @param h         pointer to the net handler
+ * @param collector pointer to the net collector structure
+ * @param in        pointer to the input port array
+ * @param count_in  number of input ports
+ * @param last_idx  pointer to the state variable storing the last port index
+ * @return          the message that was read or NULL if no message was read
+ */
+smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
+        smx_channel_t** in, int count_in, int* last_idx );
 
 /**
  * Create a new net instance. This includes
