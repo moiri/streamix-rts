@@ -9,33 +9,43 @@
 #include <libxml/tree.h>
 #include "box_smx_mongo.h"
 #include "smxlog.h"
+#include "smxnet.h"
 #include "smxutils.h"
 
 #define SMX_MONGO_APP   "smx_mongo"
 
 /*****************************************************************************/
-int _smx_mongo( void* h, void* state )
-{
-    return smx_mongo( h, state );
-}
-
-/*****************************************************************************/
-void _smx_mongo_cleanup( void* state )
-{
-    smx_mongo_cleanup( state );
-}
-
-/*****************************************************************************/
-int _smx_mongo_init( void* h, void** state )
-{
-    return smx_mongo_init( h, state );
-}
-
-/*****************************************************************************/
 int smx_mongo( void* h, void* state )
 {
-    ( void )( h );
-    ( void )( state );
+    char snum[7];
+    int id_ui;
+    smx_msg_t* msg_net;
+    smx_msg_t* msg_ui;
+    smx_mongo_msg_t* mg_msg;
+    smx_mongo_state_t* mg_state = state;
+    net_smx_mongo_t* net = SMX_SIG( h );
+
+    msg_net = smx_channel_read( h, net->in.port_net );
+    mg_msg = msg_net->data;
+
+    if( mg_msg->ts.tv_sec != mg_state->last_ts.tv_sec )
+    {
+        if( mg_state->doc != NULL )
+            smx_mongo_doc_finish( state );
+
+        msg_ui = smx_channel_read( h, net->in.port_ui );
+        id_ui = ( msg_ui == NULL ) ? 0 : *( int* )msg_ui->data;
+        smx_mongo_doc_init( state, mg_msg, id_ui );
+        smx_msg_destroy( msg_ui, 1 );
+    }
+    sprintf( snum, "%ld", mg_msg->ts.tv_nsec/1000 );
+    BSON_APPEND_ARRAY( mg_state->data, snum,
+            bson_new_from_json( ( const uint8_t * )mg_msg->j_data, -1, NULL ) );
+
+    mg_state->last_ts = mg_msg->ts;
+
+    smx_msg_destroy( msg_net, 1 );
+
     return SMX_NET_RETURN;
 }
 
@@ -43,11 +53,37 @@ int smx_mongo( void* h, void* state )
 void smx_mongo_cleanup( void* state )
 {
     smx_mongo_state_t* ms = state;
+    if( ms->doc != NULL )
+        smx_mongo_doc_finish( state );
     mongoc_collection_destroy( ms->collection );
     mongoc_database_destroy( ms->database );
     mongoc_client_destroy( ms->client );
     mongoc_uri_destroy( ms->uri );
     mongoc_cleanup();
+}
+
+/*****************************************************************************/
+void smx_mongo_doc_finish( smx_mongo_state_t* state )
+{
+    bson_append_document_end( state->doc, state->data );
+    mongoc_collection_insert_one( state->collection, state->doc,
+            NULL, NULL, NULL );
+    bson_destroy( state->doc );
+    bson_free( state->data );
+    state->doc = NULL;
+    state->data = NULL;
+}
+
+/*****************************************************************************/
+void smx_mongo_doc_init( smx_mongo_state_t* state, smx_mongo_msg_t* msg_net,
+        int msg_ui )
+{
+    state->doc = smx_malloc( sizeof( bson_t ) );
+    state->data = smx_malloc( sizeof( bson_t ) );
+    bson_init( state->doc );
+    BSON_APPEND_INT32( state->doc, "ui", msg_ui );
+    BSON_APPEND_TIME_T( state->doc, "ts", msg_net->ts.tv_sec );
+    BSON_APPEND_DOCUMENT_BEGIN( state->doc, "data", state->data );
 }
 
 /*****************************************************************************/
@@ -83,6 +119,8 @@ int smx_mongo_init( void* h, void** state )
 
     *state = smx_malloc( sizeof( struct smx_mongo_state_s ) );
     ms = *state;
+    ms->data = NULL;
+    ms->doc = NULL;
 
     mongoc_init();
 

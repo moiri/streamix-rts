@@ -11,7 +11,9 @@
 #include <string.h>
 #include <errno.h>
 #include "smxnet.h"
+#include "smxlog.h"
 #include "smxutils.h"
+#include "smxprofiler.h"
 
 /*****************************************************************************/
 smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
@@ -67,7 +69,8 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
             return NULL;
         }
         SMX_LOG_NET( h, info, "read from collector (new count: %d)", cur_count );
-        msg = smx_channel_read( ch );
+        smx_profiler_log_net( h, SMX_PROFILER_ACTION_READ_COLLECTOR );
+        msg = smx_channel_read( h, ch );
     }
     return msg;
 }
@@ -96,6 +99,7 @@ int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
     net->cat = zlog_get_category( cat_name );
     net->sig = sig;
     net->conf = NULL;
+    net->profile = NULL;
     net->name = name;
 
     cur = xmlDocGetRootElement( (xmlDocPtr)*conf );
@@ -291,6 +295,7 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
         while( state == SMX_NET_CONTINUE )
         {
             SMX_LOG_NET( h, info, "start net loop" );
+        smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
             state = impl( h, net_state );
             state = smx_net_update_state( h, chs_in, *cnt_in, chs_out, *cnt_out,
                     state );

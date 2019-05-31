@@ -16,6 +16,7 @@
 #include "box_smx_tf.h"
 #include "smxutils.h"
 #include "smxlog.h"
+#include "smxprofiler.h"
 
 /*****************************************************************************/
 void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
@@ -91,7 +92,7 @@ void smx_tf_enable( void* h, smx_timer_t* timer )
 }
 
 /*****************************************************************************/
-void smx_tf_propagate_msgs( smx_timer_t* tt, smx_channel_t** ch_in,
+void smx_tf_propagate_msgs( void* h, smx_timer_t* tt, smx_channel_t** ch_in,
         smx_channel_t** ch_out, int copy )
 {
     int i;
@@ -123,9 +124,9 @@ void smx_tf_propagate_msgs( smx_timer_t* tt, smx_channel_t** ch_in,
             continue;
         }
         if( copy )
-            msg = smx_fifo_d_read( ch_in[i], ch_in[i]->fifo );
+            msg = smx_fifo_d_read( h, ch_in[i], ch_in[i]->fifo );
         else
-            msg = smx_fifo_dd_read( ch_in[i], ch_in[i]->fifo );
+            msg = smx_fifo_dd_read( h, ch_in[i], ch_in[i]->fifo );
 
         // notify producer that space is available
         pthread_mutex_lock( &ch_in[i]->sink->ch_mutex );
@@ -141,7 +142,7 @@ void smx_tf_propagate_msgs( smx_timer_t* tt, smx_channel_t** ch_in,
         }
         if( msg != NULL )
         {
-            smx_channel_write( ch_out[i], msg );
+            smx_channel_write( h, ch_out[i], msg );
             if( ch_out[i]->fifo->overwrite )
             {
                 pthread_mutex_lock( &ch_out[i]->fifo->fifo_mutex );
@@ -232,7 +233,8 @@ void* start_routine_tf( void* h )
     while( state == SMX_NET_CONTINUE )
     {
         SMX_LOG_NET( h, info, "start net loop" );
-        smx_tf_propagate_msgs( tt, ch_in, ch_out, copy );
+        smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
+        smx_tf_propagate_msgs( h, tt, ch_in, ch_out, copy );
         SMX_LOG_NET( h, debug, "wait for end of loop" );
         smx_tf_wait( h, tt );
         state = smx_net_update_state( h, ch_in, tt->count, ch_out, tt->count,

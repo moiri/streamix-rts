@@ -205,11 +205,12 @@ void smx_channel_destroy_end( smx_channel_end_t* end );
  * mutual exclusion. The macro SMX_CHANNEL_READ( h, net, port ) provides a
  * convenient interface to access the ports by name.
  *
+ * @param h     pointer to the net handler
  * @param ch    pointer to the channel
  * @return      pointer to a message structure ::smx_msg_s or NULL if something
  *              went wrong.
  */
-smx_msg_t* smx_channel_read( smx_channel_t* ch );
+smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch );
 
 /**
  * @brief Returns the number of available messages in channel
@@ -226,11 +227,12 @@ int smx_channel_ready_to_read( smx_channel_t* ch );
  * mutual exclusion. The macro SMX_CHANNEL_WRITE( h, net, port, data ) provides
  * a convenient interface to access the ports by name.
  *
+ * @param h     pointer to the net handler
  * @param ch    pointer to the channel
  * @param msg   pointer to the a message structure
  * @return      0 on success, -1 otherwise
  */
-int smx_channel_write( smx_channel_t* ch, smx_msg_t* msg );
+int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg );
 
 /**
  * Connect a channel to a net by name matching.
@@ -282,11 +284,12 @@ void smx_fifo_destroy( smx_fifo_t* fifo );
 /**
  * @brief read from a Streamix FIFO channel
  *
+ * @param h     pointer to the net handler
  * @param ch    pointer to channel struct of the FIFO
  * @param fifo  pointer to a FIFO channel
  * @return      pointer to a message structure
  */
-smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo );
+smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo );
 
 /**
  * @brief read from a Streamix FIFO_D channel
@@ -295,11 +298,12 @@ smx_msg_t* smx_fifo_read( smx_channel_t* ch, smx_fifo_t* fifo );
  * decoupled at the input). This means that the msg at the head of the FIFO_D
  * will potentially be duplicated.
  *
+ * @param h     pointer to the net handler
  * @param ch    pointer to channel struct of the FIFO
  * @param fifo  pointer to a FIFO_D channel
  * @return      pointer to a message structure
  */
-smx_msg_t* smx_fifo_d_read( smx_channel_t* ch , smx_fifo_t* fifo );
+smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch , smx_fifo_t* fifo );
 
 /**
  * @brief read from a Streamix FIFO_DD channel
@@ -308,21 +312,24 @@ smx_msg_t* smx_fifo_d_read( smx_channel_t* ch , smx_fifo_t* fifo );
  * temporal firewall. The read is non-blocking but no duplication of messages
  * is done. If no message is available NULL is returned.
  *
+ * @param h     pointer to the net handler
  * @param ch    pointer to channel struct of the FIFO
  * @param fifo  pointer to a FIFO_D channel
  * @return      pointer to a message structure
  */
-smx_msg_t* smx_fifo_dd_read( smx_channel_t* ch, smx_fifo_t* fifo );
+smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo );
 
 /**
  * @brief write to a Streamix FIFO channel
  *
+ * @param h     pointer to the net handler
  * @param ch    pointer to channel struct of the FIFO
  * @param fifo  pointer to a FIFO channel
  * @param msg   pointer to the data
  * @return      0 on success, 1 otherwise
  */
-int smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
+int smx_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
+        smx_msg_t* msg );
 
 /**
  * @brief write to a Streamix D_FIFO channel
@@ -331,12 +338,14 @@ int smx_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
  * at the output). This means that the tail of the D_FIFO will potentially be
  * overwritten.
  *
+ * @param h     pointer to the net handler
  * @param ch    pointer to channel struct of the FIFO
  * @param fifo  pointer to a D_FIFO channel
  * @param msg   pointer to the data
  * @return      0 on success, 1 otherwise
  */
-int smx_d_fifo_write( smx_channel_t* ch, smx_fifo_t* fifo, smx_msg_t* msg );
+int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
+        smx_msg_t* msg );
 
 /**
  * @brief create timed guard structure and initialise timer
@@ -361,10 +370,11 @@ void smx_guard_destroy( smx_guard_t* guard );
  * A producer is blocked until the minimum inter-arrival-time between two
  * consecutive messges has passed
  *
+ * @param h     pointer to the net handler
  * @param ch pointer to the channel structure
  * @return      0 on success, 1 otherwise
  */
-int smx_guard_write( smx_channel_t* ch );
+int smx_guard_write( void* h, smx_channel_t* ch );
 
 /**
  * @brief imposes a rate-control on decoupled write operations
@@ -373,11 +383,12 @@ int smx_guard_write( smx_channel_t* ch );
  * arrival time (messages are not buffered and delayed, it's only a very simple
  * implementation)
  *
+ * @param h     pointer to the net handler
  * @param ch    pointer to the channel structure
  * @param msg   pointer to the message structure
  *
  * @return      -1 if message was discarded, 0 otherwise
  */
-int smx_d_guard_write( smx_channel_t* ch, smx_msg_t* msg );
+int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg );
 
 #endif

@@ -77,12 +77,13 @@ void smx_tf_enable( void* h, smx_timer_t* timer );
  * Read all input channels of a temporal firewall and propagate the messages to
  * the corresponding outputs of the temporal firewall.
  *
+ * @param h     pointer to the net handler
  * @param tt     a pointer to the timer
  * @param ch_in  a pointer to an array of input channels
  * @param ch_out a pointer to an array of output channels
  * @param copy   1 if messages ought to be duplicated, 0 otherwise
  */
-void smx_tf_propagate_msgs( smx_timer_t* tt, smx_channel_t** ch_in,
+void smx_tf_propagate_msgs( void* h, smx_timer_t* tt, smx_channel_t** ch_in,
         smx_channel_t** ch_out, int copy );
 
 /**

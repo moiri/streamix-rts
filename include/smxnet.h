@@ -6,7 +6,6 @@
  */
 
 #include "smxch.h"
-#include "smxlog.h"
 
 #ifndef SMXNET_H
 #define SMXNET_H
