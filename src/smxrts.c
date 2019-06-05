@@ -113,6 +113,7 @@ void smx_program_init_run( smx_rts_t* rts )
         SMX_CHANNEL_CREATE( i + new_ch_id, 1, SMX_FIFO, profile );
 
     SMX_NET_CREATE( rn_id, smx_profile_rn, smx_rn );
+    rts->nets[rn_id]->is_profiler = 1;
     SMX_NET_INIT( rn_id, smx_rn, rn_id, 1 );
     SMX_NET_RN_INIT( rn_id );
 
@@ -127,6 +128,7 @@ void smx_program_init_run( smx_rts_t* rts )
     new_ch_id = rts->ch_cnt;
     SMX_CHANNEL_CREATE( new_ch_id, 1, SMX_FIFO, net );
     SMX_NET_CREATE( profile_id, smx_profile, smx_mongo );
+    rts->nets[profile_id]->is_profiler = 1;
     SMX_NET_INIT( profile_id, smx_mongo, 1, 0 );
     SMX_CONNECT_ARR( rn_id, new_ch_id, smx_profile_rn, smx_rn, net, out );
     SMX_CONNECT_ARR( profile_id, new_ch_id, smx_profile, smx_mongo, net, in );

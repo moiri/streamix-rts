@@ -35,6 +35,7 @@ struct smx_net_s
     void*               conf;       /**< pointer to the XML configuration */
     smx_channel_t*      profile;    /**< a pointer to the profile channel */
     const char*         name;       /**< the name of the net */
+    int is_profiler;                /**< 1 if the net is a profiler, 0 otherwise */
 };
 
 #define SMX_LOG_NET( net, level, format, ... )\

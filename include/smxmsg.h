@@ -26,8 +26,6 @@ struct smx_msg_s
     void* (*copy)( void*, size_t ); /**< pointer to a fct making a deep copy */
     void  (*destroy)( void* );      /**< pointer to a fct that frees data */
     void* (*unpack)( void* );       /**< pointer to a fct that unpacks data */
-    int is_profiler;                /**< 1 if the message was created by the
-                                      profiler, 0 otherwise */
 };
 
 /**
@@ -64,13 +62,11 @@ smx_msg_t* smx_msg_copy( void* h, smx_msg_t* msg );
  *                          argument that points to the message payload and
  *                          returns a void pointer that points to the unpacked
  *                          message payload.
- * @param is_profiler       1 if the message was created by the profiler,
- *                          0 otherwise
  * @return                  a pointer to the created message structure
  */
 smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
         void* copy( void*, size_t ), void destroy( void* ),
-        void* unpack( void* ), int is_profiler );
+        void* unpack( void* ) );
 
 /**
  * @brief Default copy function to perform a shallow copy of the message data

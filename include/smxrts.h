@@ -61,7 +61,7 @@ struct smx_rts_s
  *
  */
 #define SMX_MSG_CREATE( h, data, dsize, fcopy, ffree, funpack )\
-    smx_msg_create( h, data, dsize, fcopy, ffree, funpack, 0 )
+    smx_msg_create( h, data, dsize, fcopy, ffree, funpack )
 
 /**
  *

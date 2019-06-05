@@ -101,6 +101,7 @@ int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
     net->conf = NULL;
     net->profile = NULL;
     net->name = name;
+    net->is_profiler = 0;
 
     cur = xmlDocGetRootElement( (xmlDocPtr)*conf );
     cur = cur->xmlChildrenNode;

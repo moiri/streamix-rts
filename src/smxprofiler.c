@@ -38,7 +38,7 @@ void smx_profiler_destroy_msg( void* data )
 void smx_profiler_log( smx_net_t* net, smx_profiler_type_t type,
         const char* format, ... )
 {
-    if( ( net == NULL ) || ( net->profile == NULL ) )
+    if( ( net == NULL ) || ( net->profile == NULL ) || net->is_profiler )
         return;
 
     va_list arg_ptr;
@@ -52,7 +52,7 @@ void smx_profiler_log( smx_net_t* net, smx_profiler_type_t type,
     va_end( arg_ptr );
 
     smx_msg_t* msg = smx_msg_create( net, data, sizeof( data ), NULL,
-            smx_profiler_destroy_msg, NULL, 1 );
+            smx_profiler_destroy_msg, NULL );
     smx_channel_write( net, net->profile, msg );
 }
 
