@@ -36,7 +36,7 @@ int smx_mongo( void* h, void* state )
         msg_ui = smx_channel_read( h, net->in.port_ui );
         id_ui = ( msg_ui == NULL ) ? 0 : *( int* )msg_ui->data;
         smx_mongo_doc_init( state, mg_msg, id_ui );
-        smx_msg_destroy( msg_ui, 1 );
+        smx_msg_destroy( h, msg_ui, 1 );
     }
     sprintf( snum, "%ld", mg_msg->ts.tv_nsec/1000 );
     BSON_APPEND_ARRAY( mg_state->data, snum,
@@ -44,7 +44,7 @@ int smx_mongo( void* h, void* state )
 
     mg_state->last_ts = mg_msg->ts;
 
-    smx_msg_destroy( msg_net, 1 );
+    smx_msg_destroy( h, msg_net, 1 );
 
     return SMX_NET_RETURN;
 }
@@ -60,6 +60,16 @@ void smx_mongo_cleanup( void* state )
     mongoc_client_destroy( ms->client );
     mongoc_uri_destroy( ms->uri );
     mongoc_cleanup();
+}
+
+/*****************************************************************************/
+smx_mongo_msg_t* smx_mongo_create_msg( char* j_data, time_t sec, long nsec )
+{
+    smx_mongo_msg_t* data = smx_malloc( sizeof( struct smx_mongo_msg_s ) );
+    data->j_data = j_data;
+    data->ts.tv_sec = sec;
+    data->ts.tv_nsec = nsec;
+    return data;
 }
 
 /*****************************************************************************/

@@ -209,7 +209,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     if( abort )
     {
         SMX_LOG_CH( ch, notice, "write aborted" );
-        smx_msg_destroy( msg, true );
+        smx_msg_destroy( h, msg, true );
         return -1;
     }
     switch( ch->type )
@@ -346,13 +346,13 @@ void smx_fifo_destroy( smx_fifo_t* fifo )
             continue;
 
         if( fifo->head->msg != NULL )
-            smx_msg_destroy( fifo->head->msg, true );
+            smx_msg_destroy( NULL, fifo->head->msg, true );
         fifo->tail = fifo->head;
         fifo->head = fifo->head->next;
         free( fifo->tail );
     }
     if( fifo->backup != NULL )
-        smx_msg_destroy( fifo->backup, true );
+        smx_msg_destroy( NULL, fifo->backup, true );
     free( fifo );
 }
 
@@ -414,13 +414,13 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
             // last message, backup for later duplication
             if( fifo->backup != NULL ) // delete old backup
                 old_backup = fifo->backup;
-            fifo->backup = smx_msg_copy( msg );
+            fifo->backup = smx_msg_copy( h, msg );
         }
         fifo->count--;
         new_count = fifo->count;
         pthread_mutex_unlock( &fifo->fifo_mutex );
 
-        smx_msg_destroy( old_backup, true );
+        smx_msg_destroy( h, old_backup, true );
         SMX_LOG_CH( ch, info, "read from fifo_d (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_READ, new_count );
     }
@@ -429,7 +429,7 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         if( fifo->backup != NULL )
         {
             pthread_mutex_lock( &fifo->fifo_mutex );
-            msg = smx_msg_copy( fifo->backup );
+            msg = smx_msg_copy( h, fifo->backup );
             fifo->copy++;
             pthread_mutex_unlock( &fifo->fifo_mutex );
             SMX_LOG_CH( ch, info, "fifo_d is empty, duplicate backup" );
@@ -530,7 +530,7 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         fifo->overwrite++;
         pthread_mutex_unlock( &fifo->fifo_mutex );
 
-        smx_msg_destroy( msg_tmp, true );
+        smx_msg_destroy( h, msg_tmp, true );
         SMX_LOG_CH( ch, notice, "overwrite tail of fifo" );
         smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_OVERWRITE,
                 fifo->length );
@@ -626,7 +626,7 @@ int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
                 msg->id );
         smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_DISMISS,
                 ch->fifo->count );
-        smx_msg_destroy( msg, true );
+        smx_msg_destroy( h, msg, true );
         return 1;
     }
     itval.it_value = ch->guard->iat;

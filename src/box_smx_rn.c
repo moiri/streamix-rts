@@ -73,10 +73,10 @@ int smx_rn( void* h, void* state )
     if(msg != NULL)
     {
         for( i=0; i<count_out; i++ ) {
-            msg_copy = smx_msg_copy( msg );
+            msg_copy = smx_msg_copy( h, msg );
             smx_channel_write( h, chs_out[i], msg_copy );
         }
-        smx_msg_destroy( msg, true );
+        smx_msg_destroy( h, msg, true );
     }
     return SMX_NET_RETURN;
 }

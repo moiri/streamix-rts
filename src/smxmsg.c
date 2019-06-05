@@ -9,21 +9,25 @@
 #include "smxmsg.h"
 #include "smxutils.h"
 #include "smxlog.h"
+#include "smxprofiler.h"
 
 /*****************************************************************************/
-smx_msg_t* smx_msg_copy( smx_msg_t* msg )
+smx_msg_t* smx_msg_copy( void* h, smx_msg_t* msg )
 {
     if( msg == NULL )
         return NULL;
 
     SMX_LOG_MAIN( msg, info, "copy message '%lu'", msg->id );
-    return smx_msg_create( msg->copy( msg->data, msg->size ),
-            msg->size, msg->copy, msg->destroy, msg->unpack );
+    if( !msg->is_profiler )
+        smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_COPY );
+    return smx_msg_create( h, msg->copy( msg->data, msg->size ),
+            msg->size, msg->copy, msg->destroy, msg->unpack, msg->is_profiler );
 }
 
 /*****************************************************************************/
-smx_msg_t* smx_msg_create( void* data, size_t size, void* copy( void*, size_t ),
-        void destroy( void* ), void* unpack( void* ) )
+smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
+        void* copy( void*, size_t ), void destroy( void* ),
+        void* unpack( void* ), int is_profiler )
 {
     static unsigned long msg_count = 0;
     smx_msg_t* msg = smx_malloc( sizeof( struct smx_msg_s ) );
@@ -31,7 +35,11 @@ smx_msg_t* smx_msg_create( void* data, size_t size, void* copy( void*, size_t ),
         return NULL;
 
     msg->id = msg_count++;
+    msg->is_profiler = 0;
     SMX_LOG_MAIN( msg, info, "create message '%lu'", msg->id );
+    msg->is_profiler = is_profiler;
+    if( !is_profiler )
+        smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_CREATE );
     msg->data = data;
     msg->size = size;
     if( copy == NULL ) msg->copy = smx_msg_data_copy;
@@ -70,12 +78,14 @@ void* smx_msg_data_unpack( void* data )
 }
 
 /*****************************************************************************/
-void smx_msg_destroy( smx_msg_t* msg, int deep )
+void smx_msg_destroy( void* h, smx_msg_t* msg, int deep )
 {
     if( msg == NULL )
         return;
 
     SMX_LOG_MAIN( msg, info, "destroy message '%lu'", msg->id );
+    if( !msg->is_profiler )
+        smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_DESTROY );
     if( deep )
         msg->destroy( msg->data );
     free( msg );

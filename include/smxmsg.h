@@ -26,15 +26,18 @@ struct smx_msg_s
     void* (*copy)( void*, size_t ); /**< pointer to a fct making a deep copy */
     void  (*destroy)( void* );      /**< pointer to a fct that frees data */
     void* (*unpack)( void* );       /**< pointer to a fct that unpacks data */
+    int is_profiler;                /**< 1 if the message was created by the
+                                      profiler, 0 otherwise */
 };
 
 /**
  * @brief make a deep copy of a message
  *
+ * @param h     pointer to the net handler
  * @param msg   pointer to the message structure to copy
  * @return      pointer to the newly created message structure
  */
-smx_msg_t* smx_msg_copy( smx_msg_t* msg );
+smx_msg_t* smx_msg_copy( void* h, smx_msg_t* msg );
 
 /**
  * @brief Create a message structure
@@ -43,6 +46,7 @@ smx_msg_t* smx_msg_copy( smx_msg_t* msg );
  * in the message structure. If defined, the init function handler is called
  * after the message structure is created.
  *
+ * @param h                 pointer to the net handler
  * @param data              a pointer to the data to be added to the message
  * @param size              the size of the data
  * @param copy( data,size ) a pointer to a function perfroming a deep copy of
@@ -60,10 +64,13 @@ smx_msg_t* smx_msg_copy( smx_msg_t* msg );
  *                          argument that points to the message payload and
  *                          returns a void pointer that points to the unpacked
  *                          message payload.
+ * @param is_profiler       1 if the message was created by the profiler,
+ *                          0 otherwise
  * @return                  a pointer to the created message structure
  */
-smx_msg_t* smx_msg_create( void* data, size_t size, void* copy( void*, size_t ),
-        void destroy( void* ), void* unpack( void* ) );
+smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
+        void* copy( void*, size_t ), void destroy( void* ),
+        void* unpack( void* ), int is_profiler );
 
 /**
  * @brief Default copy function to perform a shallow copy of the message data
@@ -95,11 +102,12 @@ void* smx_msg_data_unpack( void* data );
  * Allows to destroy a message structure. If defined (see smx_msg_create()), the
  * destroy function handler is called before the message structure is freed.
  *
+ * @param h     pointer to the net handler
  * @param msg   a pointer to the message structure to be destroyed
  * @param deep  a flag to indicate whether the data shoudl be deleted as well
  *              if msg->destroy() is NULL this flag is ignored
  */
-void smx_msg_destroy( smx_msg_t* msg, int deep );
+void smx_msg_destroy( void* h, smx_msg_t* msg, int deep );
 
 /**
  * @brief Unpack the message payload

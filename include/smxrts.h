@@ -60,20 +60,20 @@ struct smx_rts_s
 /**
  *
  */
-#define SMX_MSG_CREATE( data, dsize, fcopy, ffree, funpack )\
-    smx_msg_create( data, dsize, fcopy, ffree, funpack )
+#define SMX_MSG_CREATE( h, data, dsize, fcopy, ffree, funpack )\
+    smx_msg_create( h, data, dsize, fcopy, ffree, funpack, 0 )
 
 /**
  *
  */
-#define SMX_MSG_COPY( msg )\
-    smx_msg_copy( msg )
+#define SMX_MSG_COPY( h, msg )\
+    smx_msg_copy( h, msg )
 
 /**
  *
  */
-#define SMX_MSG_DESTROY( msg )\
-    smx_msg_destroy( msg, 1 )
+#define SMX_MSG_DESTROY( h, msg )\
+    smx_msg_destroy( h, msg, 1 )
 
 /**
  *

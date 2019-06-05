@@ -14,53 +14,78 @@
 typedef enum smx_profiler_type_e smx_profiler_type_t;
 typedef enum smx_profiler_action_e smx_profiler_action_t;
 
+/**
+ * The different profiler message types
+ */
 enum smx_profiler_type_e
 {
-    SMX_PROFILER_TYPE_CH,
-    SMX_PROFILER_TYPE_MSG,
-    SMX_PROFILER_TYPE_NET
-};
-
-enum smx_profiler_action_e
-{
-    SMX_PROFILER_ACTION_START,
-    SMX_PROFILER_ACTION_CREATE,
-    SMX_PROFILER_ACTION_DESTROY,
-    SMX_PROFILER_ACTION_COPY,
-    SMX_PROFILER_ACTION_READ,
-    SMX_PROFILER_ACTION_READ_COLLECTOR,
-    SMX_PROFILER_ACTION_WRITE,
-    SMX_PROFILER_ACTION_WRITE_COLLECTOR,
-    SMX_PROFILER_ACTION_OVERWRITE,
-    SMX_PROFILER_ACTION_DISMISS,
-    SMX_PROFILER_ACTION_DUPLICATE,
-    SMX_PROFILER_ACTION_DL_MISS
+    SMX_PROFILER_TYPE_CH,   /**< The smx_channel message type. */
+    SMX_PROFILER_TYPE_MSG,  /**< The smx_message message type. */
+    SMX_PROFILER_TYPE_NET   /**< The smx_net message type */
 };
 
 /**
+ * The different actions a profiler can log.
+ */
+enum smx_profiler_action_e
+{
+    SMX_PROFILER_ACTION_START,          /**< start a net. */
+    SMX_PROFILER_ACTION_CREATE,         /**< create a msg, channel, or net. */
+    SMX_PROFILER_ACTION_DESTROY,        /**< destroy a msg, channel, or net. */
+    SMX_PROFILER_ACTION_COPY,           /**< copy a message. */
+    SMX_PROFILER_ACTION_READ,           /**< read from a channel. */
+    SMX_PROFILER_ACTION_READ_COLLECTOR, /**< read from a collector. */
+    SMX_PROFILER_ACTION_WRITE,          /**< write to a channel. */
+    SMX_PROFILER_ACTION_WRITE_COLLECTOR,/**< write to a collector. */
+    SMX_PROFILER_ACTION_OVERWRITE,      /**< overwrite a message in a channel. */
+    SMX_PROFILER_ACTION_DISMISS,        /**< dismiss a message in a channel. */
+    SMX_PROFILER_ACTION_DUPLICATE,      /**< duplicate a message ina channel. */
+    SMX_PROFILER_ACTION_DL_MISS         /**< missed a deadline. */
+};
+
+/**
+ * The desrtuction handler passed to the smx message structure
  *
+ * @param data  a pointer to the message payload.
  */
 void smx_profiler_destroy_msg( void* data );
 
 /**
+ * A variadic function wich allows to log profiler events.
  *
+ * @param net       a pointer to the net handler which logs the event.
+ * @param type      the profiler message type.
+ * @param format    the format of the message.
  */
-void smx_profiler_log( smx_net_t* net, smx_profiler_type_t type, ... );
+void smx_profiler_log( smx_net_t* net, smx_profiler_type_t type,
+        const char* format, ... );
 
 /**
+ * The function to log profiler messages related to a channel.
  *
+ * @param net       a pointer to the net handler which logs the event.
+ * @param ch        a pointer to the channel which logs the event.
+ * @param action    the channel action.
+ * @param val       the current message count held in the channel.
  */
 void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch,
         smx_profiler_action_t action, int val );
 
 /**
+ * The function to log profiler messages related to a smx message.
  *
+ * @param net       a pointer to the net handler which logs the event.
+ * @param ch        a pointer to the message which logs the event.
+ * @param action    the message action.
  */
 void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
         smx_profiler_action_t action );
 
 /**
+ * The function to log profiler messages related to a smx net.
  *
+ * @param net       a pointer to the net handler which logs the event.
+ * @param action    the net action.
  */
 void smx_profiler_log_net( smx_net_t* net, smx_profiler_action_t action );
 
