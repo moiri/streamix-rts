@@ -19,13 +19,9 @@ typedef struct net_smx_rn_s net_smx_rn_t;             /**< ::net_smx_rn_s */
 struct net_smx_rn_s
 {
     struct {
-        smx_channel_t** ports;      /**< an array of channel pointers */
-        int count;                  /**< the number of input ports */
         smx_collector_t* collector; /**< ::smx_collector_s */
     } in;                           /**< input channels */
     struct {
-        smx_channel_t** ports;      /**< an array of channel pointers */
-        int count;                  /**< the number of output ports */
     } out;                          /**< output channels */
 };
 

@@ -52,12 +52,8 @@ struct net_smx_mongo_s
     struct {
         smx_channel_t*   port_ui;   /**< the id of the session manager item */
         smx_channel_t*   port_net; /**< the data item (see ::smx_mongo_msg_s)*/
-        smx_channel_t**  ports;
-        int              count;
     } in;
     struct {
-        smx_channel_t**  ports;
-        int              count;
     } out;
 };
 

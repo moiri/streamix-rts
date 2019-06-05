@@ -94,8 +94,8 @@ struct smx_rts_s
             rts->chs[ch_id] )
 
 #define SMX_CONNECT_ARR( net_id, ch_id, net_name, box_name, ch_name, mode )\
-    smx_connect_arr( SMX_SIG_PORTS( rts->nets[net_id], box_name, mode ),\
-            SMX_SIG_PORT_COUNT( rts->nets[net_id], box_name, mode ),\
+    smx_connect_arr( SMX_SIG_PORTS( rts->nets[net_id], mode ),\
+            SMX_SIG_PORT_COUNT( rts->nets[net_id], mode ),\
             rts->chs[ch_id], net_id, ch_id, #net_name, #ch_name,\
             SMX_MODE_ ## mode )
 
@@ -118,17 +118,17 @@ struct smx_rts_s
 
 #define SMX_NET_DESTROY( id, box_name )\
     smx_net_destroy(\
-            SMX_SIG_PORTS( rts->nets[id], box_name, in ),\
-            SMX_SIG_PORTS( rts->nets[id], box_name, out ),\
+            SMX_SIG_PORTS( rts->nets[id], in ),\
+            SMX_SIG_PORTS( rts->nets[id], out ),\
             SMX_SIG( rts->nets[id] ),\
             rts->nets[id] )
 
 #define SMX_NET_INIT( id, box_name, indegree, outdegree )\
     smx_net_init(\
-            SMX_SIG_PORT_COUNT( rts->nets[id], box_name, in ),\
-            SMX_SIG_PORTS_PTR( rts->nets[id], box_name, in ), indegree,\
-            SMX_SIG_PORT_COUNT( rts->nets[id], box_name, out ),\
-            SMX_SIG_PORTS_PTR( rts->nets[id], box_name, out ), outdegree )
+            SMX_SIG_PORT_COUNT( rts->nets[id], in ),\
+            SMX_SIG_PORTS_PTR( rts->nets[id], in ), indegree,\
+            SMX_SIG_PORT_COUNT( rts->nets[id], out ),\
+            SMX_SIG_PORTS_PTR( rts->nets[id], out ), outdegree )
 
 #define SMX_NET_RN_DESTROY( id )\
     smx_net_rn_destroy( ( SMX_SIG( rts->nets[id] ) ) )
@@ -168,10 +168,10 @@ struct smx_rts_s
 
 #define START_ROUTINE_NET( h, net_name, box_name )\
     start_routine_net( box_name, box_name ## _init, box_name ## _cleanup, h,\
-            SMX_SIG_PORTS( h, box_name, in ),\
-            SMX_SIG_PORT_COUNT( h, box_name, in ),\
-            SMX_SIG_PORTS( h, box_name, out ),\
-            SMX_SIG_PORT_COUNT( h, box_name, out ) )
+            SMX_SIG_PORTS( h, in ),\
+            SMX_SIG_PORT_COUNT( h, in ),\
+            SMX_SIG_PORTS( h, out ),\
+            SMX_SIG_PORT_COUNT( h, out ) )
 
 #define SMX_NET_EXTERN( box_name )\
     extern int box_name( void*, void* );\

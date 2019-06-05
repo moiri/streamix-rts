@@ -38,6 +38,14 @@ struct smx_net_s
     const char*         name;       /**< the name of the net */
     unsigned int        id;         /**< a unique net id */
     int                 is_profiler;/**< 1 if the net is a profiler, 0 otherwise */
+    struct {
+        smx_channel_t** ports;      /**< an array of channel pointers */
+        int count;                  /**< the number of input ports */
+    } in;                           /**< input channels */
+    struct {
+        smx_channel_t** ports;      /**< an array of channel pointers */
+        int count;                  /**< the number of output ports */
+    } out;                          /**< output channels */
 };
 
 #define SMX_LOG_NET( net, level, format, ... )\

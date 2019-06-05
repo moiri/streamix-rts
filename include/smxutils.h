@@ -27,17 +27,14 @@
     ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
             ->mode.port_ ## port_name
 
-#define SMX_SIG_PORT_COUNT( h, box_name, mode )\
-    ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
-            ->mode.count
+#define SMX_SIG_PORT_COUNT( h, mode )\
+    ( h == NULL ) ? NULL : &( ( smx_net_t* )h )->mode.count
 
-#define SMX_SIG_PORTS( h, box_name, mode )\
-    ( SMX_SIG( h ) == NULL ) ? NULL : ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
-            ->mode.ports
+#define SMX_SIG_PORTS( h, mode )\
+    ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->mode.ports
 
-#define SMX_SIG_PORTS_PTR( h, box_name, mode )\
-    ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
-            ->mode.ports
+#define SMX_SIG_PORTS_PTR( h, mode )\
+    ( h == NULL ) ? NULL : &( ( smx_net_t* )h )->mode.ports
 
 #define STRINGIFY(x) #x
 

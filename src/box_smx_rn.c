@@ -63,10 +63,11 @@ int smx_rn( void* h, void* state )
 
     smx_msg_t* msg;
     smx_msg_t* msg_copy;
-    int count_in = rn->in.count;
-    int count_out = rn->out.count;
-    smx_channel_t** chs_in = rn->in.ports;
-    smx_channel_t** chs_out = rn->out.ports;
+    smx_net_t* net = h;
+    int count_in = net->in.count;
+    int count_out = net->out.count;
+    smx_channel_t** chs_in = net->in.ports;
+    smx_channel_t** chs_out = net->out.ports;
     smx_collector_t* collector = rn->in.collector;
 
     msg = smx_net_collector_read( h, collector, chs_in, count_in, last_idx );
