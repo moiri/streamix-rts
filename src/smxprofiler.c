@@ -57,24 +57,30 @@ void smx_profiler_log( smx_net_t* net, smx_profiler_type_t type,
 }
 
 /*****************************************************************************/
-void smx_profile_log_ch( smx_net_t* net, smx_channel_t* ch,
+void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch,
         smx_profiler_action_t action, int val )
 {
+    if( net == NULL )
+        return;
     smx_profiler_log( net, SMX_PROFILER_TYPE_CH, JSON_PROFILER_CH,
             ch->id, net->name, ch->name, action, val );
 }
 
 /*****************************************************************************/
-void smx_profile_log_msg( smx_net_t* net, smx_msg_t* msg,
+void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
         smx_profiler_action_t action )
 {
+    if( net == NULL )
+        return;
     smx_profiler_log( net, SMX_PROFILER_TYPE_MSG, JSON_PROFILER_MSG, msg->id,
             net->name, action );
 }
 
 /*****************************************************************************/
-void smx_profile_log_net( smx_net_t* net, smx_profiler_action_t action )
+void smx_profiler_log_net( smx_net_t* net, smx_profiler_action_t action )
 {
+    if( net == NULL )
+        return;
     smx_profiler_log( net, SMX_PROFILER_TYPE_NET, JSON_PROFILER_NET, net->id,
             net->name, action );
 }

@@ -90,10 +90,10 @@ void smx_program_init_run( smx_rts_t* rts )
 {
     xmlNodePtr cur = NULL;
     xmlChar* conf = NULL;
-    int rn_id = rts->net_cnt;
-    int profile_id = rn_id + 1;
-    int new_ch_id = rts->ch_cnt;
-    int i, ch_id;
+    /* int rn_id = rts->net_cnt; */
+    /* int profile_id = rn_id + 1; */
+    /* int new_ch_id = rts->ch_cnt; */
+    /* int i, ch_id; */
 
     cur = xmlDocGetRootElement( rts->conf );
     conf = xmlGetProp( cur, ( const xmlChar* )XML_PROFILE );
@@ -102,28 +102,28 @@ void smx_program_init_run( smx_rts_t* rts )
 
     SMX_LOG_MAIN( main, notice, "intitialising profiler" );
 
-    for( i = 0; i < rn_id; i++ )
-        SMX_CHANNEL_CREATE( i + new_ch_id, 1, SMX_FIFO, profile );
+    /* for( i = 0; i < rn_id; i++ ) */
+    /*     SMX_CHANNEL_CREATE( i + new_ch_id, 1, SMX_FIFO, profile ); */
 
-    SMX_NET_CREATE( rn_id, smx_profile_rn, smx_rn );
-    rts->nets[rn_id]->is_profiler = 1;
-    SMX_NET_INIT( rn_id, smx_rn, rn_id, 1 );
-    SMX_NET_RN_INIT( rn_id );
+    /* SMX_NET_CREATE( rn_id, smx_profile_rn, smx_rn ); */
+    /* rts->nets[rn_id]->is_profiler = 1; */
+    /* SMX_NET_INIT( rn_id, smx_rn, rn_id, 1 ); */
+    /* SMX_NET_RN_INIT( rn_id ); */
 
-    for( i = 0; i < rn_id; i++ )
-    {
-        ch_id = i + new_ch_id;
-        rts->nets[i]->profile = rts->chs[ch_id];
-        SMX_CONNECT_ARR( rn_id, ch_id, smx_profile_rn, smx_rn, profile, in );
-        SMX_CONNECT_RN( rn_id, ch_id );
-    }
+    /* for( i = 0; i < rn_id; i++ ) */
+    /* { */
+    /*     ch_id = i + new_ch_id; */
+    /*     rts->nets[i]->profile = rts->chs[ch_id]; */
+    /*     SMX_CONNECT_ARR( rn_id, ch_id, smx_profile_rn, smx_rn, profile, in ); */
+    /*     SMX_CONNECT_RN( rn_id, ch_id ); */
+    /* } */
 
-    new_ch_id = rts->ch_cnt;
-    SMX_CHANNEL_CREATE( new_ch_id, 1, SMX_FIFO, net );
-    SMX_NET_CREATE( profile_id, smx_profile, smx_mongo );
-    rts->nets[profile_id]->is_profiler = 1;
-    SMX_NET_INIT( profile_id, smx_mongo, 1, 0 );
-    SMX_CONNECT_ARR( rn_id, new_ch_id, smx_profile_rn, smx_rn, net, out );
-    SMX_CONNECT_ARR( profile_id, new_ch_id, smx_profile, smx_mongo, net, in );
-    SMX_CONNECT( profile_id, new_ch_id, smx_profile, smx_mongo, net, in );
+    /* new_ch_id = rts->ch_cnt; */
+    /* SMX_CHANNEL_CREATE( new_ch_id, 1, SMX_FIFO, net ); */
+    /* SMX_NET_CREATE( profile_id, smx_profile, smx_mongo ); */
+    /* rts->nets[profile_id]->is_profiler = 1; */
+    /* SMX_NET_INIT( profile_id, smx_mongo, 1, 0 ); */
+    /* SMX_CONNECT_ARR( rn_id, new_ch_id, smx_profile_rn, smx_rn, net, out ); */
+    /* SMX_CONNECT_ARR( profile_id, new_ch_id, smx_profile, smx_mongo, net, in ); */
+    /* SMX_CONNECT( profile_id, new_ch_id, smx_profile, smx_mongo, net, in ); */
 }

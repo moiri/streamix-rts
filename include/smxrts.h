@@ -30,10 +30,10 @@ typedef struct smx_rts_s smx_rts_t;
 
 struct smx_rts_s
 {
-    void* conf;
     smx_channel_t* chs[SMX_MAX_CHS];
     smx_net_t* nets[SMX_MAX_NETS];
     pthread_t ths[SMX_MAX_NETS];
+    void* conf;
     int ch_cnt;
     int net_cnt;
 };
@@ -43,7 +43,7 @@ struct smx_rts_s
  *
  */
 #define SMX_CHANNEL_READ( h, box_name, ch_name )\
-    smx_channel_read( SMX_SIG_PORT( h, box_name, ch_name, in ) )
+    smx_channel_read( h, SMX_SIG_PORT( h, box_name, ch_name, in ) )
 
 /**
  *
@@ -60,20 +60,20 @@ struct smx_rts_s
 /**
  *
  */
-#define SMX_MSG_CREATE( h, data, dsize, fcopy, ffree, funpack )\
-    smx_msg_create( h, data, dsize, fcopy, ffree, funpack )
+#define SMX_MSG_CREATE( data, dsize, fcopy, ffree, funpack )\
+    smx_msg_create( NULL, data, dsize, fcopy, ffree, funpack )
 
 /**
  *
  */
-#define SMX_MSG_COPY( h, msg )\
-    smx_msg_copy( h, msg )
+#define SMX_MSG_COPY( msg )\
+    smx_msg_copy( NULL, msg )
 
 /**
  *
  */
-#define SMX_MSG_DESTROY( h, msg )\
-    smx_msg_destroy( h, msg, 1 )
+#define SMX_MSG_DESTROY( msg )\
+    smx_msg_destroy( NULL, msg, 1 )
 
 /**
  *
@@ -113,7 +113,8 @@ struct smx_rts_s
 #define SMX_NET_CREATE( id, net_name, box_name )\
     smx_net_create( rts->nets, &rts->net_cnt, id, #net_name,\
             STRINGIFY( net_ ## net_name ## _ ## id ),\
-            smx_malloc( sizeof( struct net_ ## box_name ## _s ) ), &rts->conf )
+            smx_malloc( sizeof( struct net_ ## box_name ## _s ) ), &rts->conf,\
+            box_ ## box_name )
 
 #define SMX_NET_DESTROY( id, box_name )\
     smx_net_destroy(\
@@ -135,8 +136,8 @@ struct smx_rts_s
 #define SMX_NET_RN_INIT( id )\
     smx_net_rn_init( SMX_SIG( rts->nets[id] ) )
 
-#define SMX_NET_RUN( id, net_name, box_name, prio )\
-    smx_net_run( rts->ths, id, box_ ## box_name, rts->nets[id], prio )
+#define SMX_NET_RUN( id, a, b, prio )\
+    smx_net_run( rts->ths, id, rts->nets[id]->start_routine, rts->nets[id], prio )
 
 #define SMX_NET_WAIT_END( id )\
     pthread_join( rts->ths[id], NULL )
@@ -153,13 +154,14 @@ struct smx_rts_s
 #define SMX_TF_CREATE( id, sec, nsec )\
     smx_net_create( rts->nets, &rts->net_cnt, id, STRINGIFY( smx_tf ),\
             STRINGIFY( net_nsmx_tf ## _ ## id ), smx_tf_create( sec, nsec ),\
-            &rts->conf )
+            &rts->conf, start_routine_tf )
 
 #define SMX_TF_DESTROY( id )\
     smx_tf_destroy( rts->nets[id] );\
 
 #define SMX_TF_RUN( id )\
-    smx_net_run( rts->ths, id, start_routine_tf, rts->nets[id], SMX_TF_PRIO )
+    smx_net_run( rts->ths, id, rts->nets[id]->start_routine, rts->nets[id],\
+            SMX_TF_PRIO )
 
 #define SMX_TF_WAIT_END( id )\
     pthread_join( rts->ths[id], NULL )

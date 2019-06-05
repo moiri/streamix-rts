@@ -11,7 +11,6 @@
 #include <string.h>
 #include <errno.h>
 #include "smxnet.h"
-#include "smxlog.h"
 #include "smxutils.h"
 #include "smxprofiler.h"
 
@@ -77,7 +76,8 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
 
 /*****************************************************************************/
 int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
-        const char* name, const char* cat_name, void* sig, void** conf )
+        const char* name, const char* cat_name, void* sig, void** conf,
+        void* ( *start_routine )( void* ) )
 {
     nets[id] = NULL;
     // sig is allocated in the macro, hence, the NULL check is done here
@@ -102,6 +102,7 @@ int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
     net->profile = NULL;
     net->name = name;
     net->is_profiler = 0;
+    net->start_routine = start_routine;
 
     cur = xmlDocGetRootElement( (xmlDocPtr)*conf );
     cur = cur->xmlChildrenNode;
