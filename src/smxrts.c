@@ -15,13 +15,6 @@
 #define XML_LOG         "log"
 #define XML_PROFILE     "profile"
 
-#define JSON_LOG_NET "{\"%s\":{\"name\":\"%s\",\"id\":%d}}"
-#define JSON_LOG_CH "{\"%s\":{\"name\":\"%s\",\"id\":%d,\"len\":%d}}"
-#define JSON_LOG_CONNECT "{\"connect\":{\"ch\":{\"name\":\"%s\",\"id\":%d,\"mode\":\"%s\"},\"net\":{\"name\":\"%s\",\"id\":%d}}}"
-#define JSON_LOG_ACCESS "{\"%s\":{\"tgt\":\"%s\",\"count\":%d}}"
-#define JSON_LOG_ACTION "{\"%s\":{\"tgt\":\"%s\"}}"
-#define JSON_LOG_MSG "{\"%s\":{\"id\":%lu}}"
-
 /*****************************************************************************/
 void smx_program_cleanup( smx_rts_t* rts )
 {
