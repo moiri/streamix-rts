@@ -149,8 +149,6 @@ void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
 int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
         int prio )
 {
-    xmlChar* profiler_port = NULL;
-    smx_net_t* net = h;
     pthread_attr_t sched_attr;
     struct sched_param fifo_param;
     pthread_t thread;
@@ -160,14 +158,6 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
     {
         SMX_LOG_MAIN( main, fatal, "thread count exeeds maximum %d", idx );
         return -1;
-    }
-
-    if( net != NULL && net->conf != NULL )
-    {
-        profiler_port = xmlGetProp( net->conf, ( const xmlChar* )"profiler" );
-        if( profiler_port != NULL )
-            net->profiler = smx_get_channel_by_name( net->out.ports,
-                    net->out.count, ( const char* )profiler_port );
     }
 
     pthread_attr_init(&sched_attr);
@@ -288,6 +278,11 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
         void cleanup( void* ), void* h, smx_channel_t** chs_in, int* cnt_in,
         smx_channel_t** chs_out, int* cnt_out )
 {
+    int state = SMX_NET_CONTINUE;
+    void* net_state = NULL;
+    xmlChar* profiler_port = NULL;
+    smx_net_t* net = h;
+
     if( h == NULL || chs_in ==  NULL || chs_out == NULL || cnt_in == NULL
             || cnt_out == NULL )
     {
@@ -295,9 +290,24 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
         return NULL;
     }
 
-    int state = SMX_NET_CONTINUE;
     SMX_LOG_NET( h, notice, "init net" );
-    void* net_state = NULL;
+
+    if( net != NULL && net->conf != NULL )
+    {
+        profiler_port = xmlGetProp( net->conf, ( const xmlChar* )"profiler" );
+        if( profiler_port != NULL )
+        {
+            net->profiler = smx_get_channel_by_name( net->out.ports,
+                    net->out.count, ( const char* )profiler_port );
+            if( net->profiler == NULL )
+                SMX_LOG_NET( h, warn, "profiler port '%s' does not exist",
+                        profiler_port );
+            else
+                SMX_LOG_NET( h, notice, "profiler enabled on port '%s'",
+                        profiler_port );
+        }
+    }
+
     if(init( h, &net_state ) == 0)
     {
         SMX_LOG_NET( h, notice, "start net" );
