@@ -6,6 +6,9 @@ LOC_SRC_DIR = src
 LOC_OBJ_DIR = obj
 LOC_LIB_DIR = lib
 
+TGT_INCLUDE = /usr/local/include/libsmx
+TGT_LIB = /usr/local/lib/libsmx
+
 STATLIB = $(LOC_LIB_DIR)/lib$(PROJECT).a
 DYNLIB = $(LOC_LIB_DIR)/lib$(PROJECT).so
 
@@ -19,8 +22,6 @@ INCLUDES = $(LOC_INC_DIR)/smxrts.h
 
 INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I/usr/include/libxml2 \
-			   -I/usr/include/libmongoc-1.0 \
-			   -I/usr/include/libbson-1.0 \
 			   -I./uthash/src \
 			   -I.
 
@@ -53,10 +54,9 @@ $(LOC_OBJ_DIR)/%.o: $(LOC_SRC_DIR)/%.c
 .PHONY: clean install doc
 
 install:
-	mkdir -p /usr/local/include/libsmxrts /usr/local/lib
-	cp -a $(LOC_INC_DIR)/*.h /usr/local/include/libsmxrts/.
-	cp -a $(LOC_LIB_DIR)/lib$(PROJECT).a /usr/local/lib/.
-	cp -a $(LOC_LIB_DIR)/lib$(PROJECT).so /usr/local/lib/.
+	mkdir -p $(TGT_LIB) $(TGT_INCLUDE)
+	cp -a $(LOC_INC_DIR)/*.h $(TGT_INCLUDE)/.
+	cp -a $(LOC_LIB_DIR)/* $(TGT_LIB)/.
 
 clean:
 	rm -f $(LOC_OBJ_DIR)/*
