@@ -20,6 +20,7 @@ typedef struct smx_msg_s smx_msg_t;                   /**< ::smx_msg_s */
  */
 struct smx_msg_s
 {
+    int   is_profiler;              /**< 1 if the msg is produced by a profiler, 0 otherwise */
     unsigned long id;               /**< the unique message id */
     void* data;                     /**< pointer to the data */
     int   size;                     /**< size of the data */
@@ -62,11 +63,12 @@ smx_msg_t* smx_msg_copy( void* h, smx_msg_t* msg );
  *                          argument that points to the message payload and
  *                          returns a void pointer that points to the unpacked
  *                          message payload.
+ * @param is_profiler       1 if the msg is produced by a profiler, 0 otherwise
  * @return                  a pointer to the created message structure
  */
 smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
         void* copy( void*, size_t ), void destroy( void* ),
-        void* unpack( void* ) );
+        void* unpack( void* ), int is_profiler );
 
 /**
  * @brief Default copy function to perform a shallow copy of the message data

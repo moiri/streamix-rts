@@ -30,14 +30,12 @@ enum smx_thread_state_e
  */
 struct smx_net_s
 {
-    void* ( *start_routine )( void* );
     zlog_category_t*    cat;        /**< the log category */
-    smx_channel_t*      profile;    /**< a pointer to the profile channel */
+    smx_channel_t*      profiler;   /**< a pointer to the profiler channel */
     void*               sig;        /**< the net port signature */
     void*               conf;       /**< pointer to the XML configuration */
     const char*         name;       /**< the name of the net */
     unsigned int        id;         /**< a unique net id */
-    int                 is_profiler;/**< 1 if the net is a profiler, 0 otherwise */
     struct {
         smx_channel_t** ports;      /**< an array of channel pointers */
         int count;                  /**< the number of input ports */
@@ -93,13 +91,10 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
  * @param cat_name  the name of the zlog category
  * @param sig       a pointer to the net signature
  * @param conf      a pointer to the net configuration structure
- * @param start_routine
- *      poionter to the start routine function of the net
  * @return          0 on success, -1 on failure
  */
 int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
-        const char* name, const char* cat_name, void* sig, void** conf,
-        void* ( *start_routine )( void* ) );
+        const char* name, const char* cat_name, void* sig, void** conf );
 
 /**
  * Destroy a net

@@ -8,13 +8,14 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <zlog.h>
-#include "smxch.h"
-#include "smxmsg.h"
-#include "smxnet.h"
-#include "smxutils.h"
 #include "box_smx_rn.h"
 #include "box_smx_tf.h"
-#include "box_smx_mongo.h"
+#include "smxch.h"
+#include "smxlog.h"
+#include "smxmsg.h"
+#include "smxnet.h"
+#include "smxprofiler.h"
+#include "smxutils.h"
 
 #ifndef SMXRTS_H
 #define SMXRTS_H
@@ -61,7 +62,7 @@ struct smx_rts_s
  *
  */
 #define SMX_MSG_CREATE( data, dsize, fcopy, ffree, funpack )\
-    smx_msg_create( NULL, data, dsize, fcopy, ffree, funpack )
+    smx_msg_create( NULL, data, dsize, fcopy, ffree, funpack, 0 )
 
 /**
  *
@@ -80,6 +81,12 @@ struct smx_rts_s
  */
 #define SMX_MSG_UNPACK( msg )\
     smx_msg_unpack( msg )
+
+/**
+ *
+ */
+#define SMX_SET_PROFILER_PORT( h, box_name, ch_name )\
+    ( ( smx_net_t* ) h )->profiler = SMX_SIG_PORT( h, box_name, ch_name, out )
 
 // RTS MACROS ------------------------------------------------------------------
 #define SMX_CHANNEL_CREATE( id, len, type, name )\
@@ -113,8 +120,7 @@ struct smx_rts_s
 #define SMX_NET_CREATE( id, net_name, box_name )\
     smx_net_create( rts->nets, &rts->net_cnt, id, #net_name,\
             STRINGIFY( net_ ## net_name ## _ ## id ),\
-            smx_malloc( sizeof( struct net_ ## box_name ## _s ) ), &rts->conf,\
-            box_ ## box_name )
+            smx_malloc( sizeof( struct net_ ## box_name ## _s ) ), &rts->conf )
 
 #define SMX_NET_DESTROY( id, box_name )\
     smx_net_destroy(\
@@ -136,14 +142,13 @@ struct smx_rts_s
 #define SMX_NET_RN_INIT( id )\
     smx_net_rn_init( SMX_SIG( rts->nets[id] ) )
 
-#define SMX_NET_RUN( id, a, b, prio )\
-    smx_net_run( rts->ths, id, rts->nets[id]->start_routine, rts->nets[id], prio )
+#define SMX_NET_RUN( id, net_name, box_name, prio )\
+    smx_net_run( rts->ths, id, box_ ## box_name, rts->nets[id], prio )
 
 #define SMX_NET_WAIT_END( id )\
     pthread_join( rts->ths[id], NULL )
 
-#define SMX_PROGRAM_INIT_RUN()\
-    smx_program_init_run( rts )
+#define SMX_PROGRAM_INIT_RUN() ;
 
 #define SMX_PROGRAM_CLEANUP()\
     smx_program_cleanup( rts )
@@ -154,14 +159,13 @@ struct smx_rts_s
 #define SMX_TF_CREATE( id, sec, nsec )\
     smx_net_create( rts->nets, &rts->net_cnt, id, STRINGIFY( smx_tf ),\
             STRINGIFY( net_nsmx_tf ## _ ## id ), smx_tf_create( sec, nsec ),\
-            &rts->conf, start_routine_tf )
+            &rts->conf )
 
 #define SMX_TF_DESTROY( id )\
     smx_tf_destroy( rts->nets[id] );\
 
 #define SMX_TF_RUN( id )\
-    smx_net_run( rts->ths, id, rts->nets[id]->start_routine, rts->nets[id],\
-            SMX_TF_PRIO )
+    smx_net_run( rts->ths, id, start_routine_tf, rts->nets[id], SMX_TF_PRIO )
 
 #define SMX_TF_WAIT_END( id )\
     pthread_join( rts->ths[id], NULL )

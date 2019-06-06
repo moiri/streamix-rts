@@ -76,8 +76,7 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
 
 /*****************************************************************************/
 int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
-        const char* name, const char* cat_name, void* sig, void** conf,
-        void* ( *start_routine )( void* ) )
+        const char* name, const char* cat_name, void* sig, void** conf )
 {
     nets[id] = NULL;
     // sig is allocated in the macro, hence, the NULL check is done here
@@ -99,10 +98,8 @@ int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
     net->cat = zlog_get_category( cat_name );
     net->sig = sig;
     net->conf = NULL;
-    net->profile = NULL;
+    net->profiler = NULL;
     net->name = name;
-    net->is_profiler = 0;
-    net->start_routine = start_routine;
 
     cur = xmlDocGetRootElement( (xmlDocPtr)*conf );
     cur = cur->xmlChildrenNode;
@@ -152,6 +149,8 @@ void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
 int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
         int prio )
 {
+    xmlChar* profiler_port = NULL;
+    smx_net_t* net = h;
     pthread_attr_t sched_attr;
     struct sched_param fifo_param;
     pthread_t thread;
@@ -161,6 +160,14 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
     {
         SMX_LOG_MAIN( main, fatal, "thread count exeeds maximum %d", idx );
         return -1;
+    }
+
+    if( net != NULL && net->conf != NULL )
+    {
+        profiler_port = xmlGetProp( net->conf, ( const xmlChar* )"profiler" );
+        if( profiler_port != NULL )
+            net->profiler = smx_get_channel_by_name( net->out.ports,
+                    net->out.count, ( const char* )profiler_port );
     }
 
     pthread_attr_init(&sched_attr);

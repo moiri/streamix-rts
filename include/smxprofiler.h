@@ -13,6 +13,7 @@
 
 typedef enum smx_profiler_type_e smx_profiler_type_t;
 typedef enum smx_profiler_action_e smx_profiler_action_t;
+typedef struct smx_mongo_msg_s smx_mongo_msg_t;
 
 /**
  * The different profiler message types
@@ -44,6 +45,15 @@ enum smx_profiler_action_e
 };
 
 /**
+ * The expected mongo db message structure
+ */
+struct smx_mongo_msg_s
+{
+    struct timespec ts; /**< the timestamp of the data item */
+    char* j_data;       /**< a valid json string holding the data */
+};
+
+/**
  * The desrtuction handler passed to the smx message structure
  *
  * @param data  a pointer to the message payload.
@@ -54,28 +64,27 @@ void smx_profiler_destroy_msg( void* data );
  * A variadic function wich allows to log profiler events.
  *
  * @param net       a pointer to the net handler which logs the event.
- * @param type      the profiler message type.
  * @param format    the format of the message.
  */
-void smx_profiler_log( smx_net_t* net, smx_profiler_type_t type,
-        const char* format, ... );
+void smx_profiler_log( smx_net_t* net, const char* format, ... );
 
 /**
  * The function to log profiler messages related to a channel.
  *
  * @param net       a pointer to the net handler which logs the event.
  * @param ch        a pointer to the channel which logs the event.
+ * @param msg       a pointer to the message invloved in the log event.
  * @param action    the channel action.
  * @param val       the current message count held in the channel.
  */
-void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch,
+void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
         smx_profiler_action_t action, int val );
 
 /**
  * The function to log profiler messages related to a smx message.
  *
  * @param net       a pointer to the net handler which logs the event.
- * @param ch        a pointer to the message which logs the event.
+ * @param msg       a pointer to the message which logs the event.
  * @param action    the message action.
  */
 void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,

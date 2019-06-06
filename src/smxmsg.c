@@ -17,16 +17,17 @@ smx_msg_t* smx_msg_copy( void* h, smx_msg_t* msg )
     if( msg == NULL )
         return NULL;
 
-    SMX_LOG_MAIN( msg, info, "copy message '%lu'", msg->id );
+    SMX_LOG_MAIN( msg, info, "copy message '%lu' in net '%s(%d)'", msg->id,
+            SMX_NET_GET_NAME( h ), SMX_NET_GET_ID( h ) );
     smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_COPY );
     return smx_msg_create( h, msg->copy( msg->data, msg->size ),
-            msg->size, msg->copy, msg->destroy, msg->unpack );
+            msg->size, msg->copy, msg->destroy, msg->unpack, msg->is_profiler );
 }
 
 /*****************************************************************************/
 smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
         void* copy( void*, size_t ), void destroy( void* ),
-        void* unpack( void* ) )
+        void* unpack( void* ), int is_profiler )
 {
     static unsigned long msg_count = 0;
     smx_msg_t* msg = smx_malloc( sizeof( struct smx_msg_s ) );
@@ -34,10 +35,13 @@ smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
         return NULL;
 
     msg->id = msg_count++;
-    SMX_LOG_MAIN( msg, info, "create message '%lu'", msg->id );
-    smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_CREATE );
+    SMX_LOG_MAIN( msg, info, "create message '%lu' in '%s(%d)'", msg->id,
+            SMX_NET_GET_NAME( h ), SMX_NET_GET_ID( h ) );
+    if( !is_profiler )
+        smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_CREATE );
     msg->data = data;
     msg->size = size;
+    msg->is_profiler = is_profiler;
     if( copy == NULL ) msg->copy = smx_msg_data_copy;
     else msg->copy = copy;
     if( destroy == NULL ) msg->destroy = smx_msg_data_destroy;
@@ -79,7 +83,8 @@ void smx_msg_destroy( void* h, smx_msg_t* msg, int deep )
     if( msg == NULL )
         return;
 
-    SMX_LOG_MAIN( msg, info, "destroy message '%lu'", msg->id );
+    SMX_LOG_MAIN( msg, info, "destroy message '%lu' in '%s(%d)'", msg->id,
+            SMX_NET_GET_NAME( h ), SMX_NET_GET_ID( h ) );
     smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_DESTROY );
     if( deep )
         msg->destroy( msg->data );

@@ -348,6 +348,17 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         smx_msg_t* msg );
 
 /**
+ * Given a port name return a pointer to the port.
+ *
+ * @param ports     an array of ports to be searched
+ * @param count     the number of ports to search
+ * @param name      the name to search for
+ * @return          the pointer to a port on success, NULL otherwise
+ */
+smx_channel_t* smx_get_channel_by_name( smx_channel_t** ports, int count,
+        const char* name );
+
+/**
  * @brief create timed guard structure and initialise timer
  *
  * @param iats  minimal inter-arrival time in seconds

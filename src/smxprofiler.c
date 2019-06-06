@@ -6,11 +6,8 @@
  */
 
 #include <time.h>
-#include "box_smx_mongo.h"
-#include "smxlog.h"
 #include "smxprofiler.h"
 #include "smxutils.h"
-#include "zlog.h"
 
 /**
  * [type, id_net, name_net, action]
@@ -18,29 +15,27 @@
 #define JSON_PROFILER_NET   "[%d,%d,\"%s\",%d]"
 
 /**
- * [type, id_ch, name_net, name_ch, action, count]
+ * [type, id_ch, name_net, name_ch, id_msg, action, count]
  */
-#define JSON_PROFILER_CH    "[%d,%d,\"%s\",\"%s\",%d,%d]"
+#define JSON_PROFILER_CH    "[%d,%d,\"%s\",\"%s\",%d,%d,%d]"
 
 /**
  * [type, id_msg, name_net, action]
  */
-#define JSON_PROFILER_MSG   "[%d,%d,\"%s\",%s]"
+#define JSON_PROFILER_MSG   "[%d,%d,\"%s\",%d]"
 
 /*****************************************************************************/
 void smx_profiler_destroy_msg( void* data )
 {
-    free( ( ( smx_mongo_msg_t* )data )->j_data );
+    smx_mongo_msg_t* mg = data;
+    if( mg->j_data != NULL )
+        free( mg->j_data );
     free( data );
 }
 
 /*****************************************************************************/
-void smx_profiler_log( smx_net_t* net, smx_profiler_type_t type,
-        const char* format, ... )
+void smx_profiler_log( smx_net_t* net, const char* format, ... )
 {
-    if( ( net == NULL ) || ( net->profile == NULL ) || net->is_profiler )
-        return;
-
     va_list arg_ptr;
     smx_mongo_msg_t* data = smx_malloc( sizeof( struct smx_mongo_msg_s ) );
     data->j_data = smx_malloc( 2000 );
@@ -48,39 +43,39 @@ void smx_profiler_log( smx_net_t* net, smx_profiler_type_t type,
     clock_gettime( CLOCK_REALTIME, &data->ts );
 
     va_start( arg_ptr, format );
-    sprintf( data->j_data, format, type, arg_ptr );
+    vsprintf( data->j_data, format, arg_ptr );
     va_end( arg_ptr );
 
     smx_msg_t* msg = smx_msg_create( net, data, sizeof( data ), NULL,
-            smx_profiler_destroy_msg, NULL );
-    smx_channel_write( net, net->profile, msg );
+            smx_profiler_destroy_msg, NULL, 1 );
+    smx_channel_write( net, net->profiler, msg );
 }
 
 /*****************************************************************************/
-void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch,
+void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
         smx_profiler_action_t action, int val )
 {
-    if( net == NULL )
+    if( ( net == NULL ) || ( net->profiler == NULL ) || msg->is_profiler )
         return;
-    smx_profiler_log( net, SMX_PROFILER_TYPE_CH, JSON_PROFILER_CH,
-            ch->id, net->name, ch->name, action, val );
+    smx_profiler_log( net, JSON_PROFILER_CH, SMX_PROFILER_TYPE_CH,
+            ch->id, net->name, ch->name, msg->id, action, val );
 }
 
 /*****************************************************************************/
 void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
         smx_profiler_action_t action )
 {
-    if( net == NULL )
+    if( ( net == NULL ) || ( net->profiler == NULL ) || msg->is_profiler )
         return;
-    smx_profiler_log( net, SMX_PROFILER_TYPE_MSG, JSON_PROFILER_MSG, msg->id,
+    smx_profiler_log( net, JSON_PROFILER_MSG, SMX_PROFILER_TYPE_MSG, msg->id,
             net->name, action );
 }
 
 /*****************************************************************************/
 void smx_profiler_log_net( smx_net_t* net, smx_profiler_action_t action )
 {
-    if( net == NULL )
+    if( ( net == NULL ) || ( net->profiler == NULL ) )
         return;
-    smx_profiler_log( net, SMX_PROFILER_TYPE_NET, JSON_PROFILER_NET, net->id,
+    smx_profiler_log( net, JSON_PROFILER_NET, SMX_PROFILER_TYPE_NET, net->id,
             net->name, action );
 }

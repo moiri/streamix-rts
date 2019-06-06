@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
 #include "smxch.h"
@@ -240,7 +241,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         pthread_mutex_unlock( &ch->collector->col_mutex );
         SMX_LOG_CH( ch, info, "write to collector (new count: %d)",
                 new_count );
-        smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_WRITE_COLLECTOR,
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE_COLLECTOR,
                 new_count );
     }
     // notify consumer that messages are available
@@ -376,7 +377,7 @@ smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "read from fifo (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_READ, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
         if( new_count == 0 )
         {
             pthread_mutex_lock( &ch->source->ch_mutex );
@@ -422,7 +423,7 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
 
         smx_msg_destroy( h, old_backup, true );
         SMX_LOG_CH( ch, info, "read from fifo_d (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_READ, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
     }
     else
     {
@@ -433,7 +434,7 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
             fifo->copy++;
             pthread_mutex_unlock( &fifo->fifo_mutex );
             SMX_LOG_CH( ch, info, "fifo_d is empty, duplicate backup" );
-            smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_DUPLICATE, 0 );
+            smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_DUPLICATE, 0 );
         }
         else
             SMX_LOG_CH( ch, notice,
@@ -462,7 +463,7 @@ smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "read from fifo_dd (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_READ, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
     }
     return msg;
 }
@@ -485,7 +486,7 @@ int smx_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "write to fifo (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_WRITE, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE, new_count );
         if( new_count == fifo->length )
         {
             pthread_mutex_lock( &ch->sink->ch_mutex );
@@ -520,7 +521,7 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "write to fifo_d (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_WRITE, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE, new_count );
     }
     else
     {
@@ -532,10 +533,21 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
 
         smx_msg_destroy( h, msg_tmp, true );
         SMX_LOG_CH( ch, notice, "overwrite tail of fifo" );
-        smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_OVERWRITE,
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_OVERWRITE,
                 fifo->length );
     }
     return 0;
+}
+
+/*****************************************************************************/
+smx_channel_t* smx_get_channel_by_name( smx_channel_t** ports, int count,
+        const char* name )
+{
+    int i;
+    for( i = 0; i < count; i++ )
+        if( 0 == strcmp( ports[i]->name, name ) )
+            return ports[i];
+    return NULL;
 }
 
 /*****************************************************************************/
@@ -624,7 +636,7 @@ int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     if( ( itval.it_value.tv_sec != 0 ) || ( itval.it_value.tv_nsec != 0 ) ) {
         SMX_LOG_CH( ch, notice, "rate_control: discard message '%lu'",
                 msg->id );
-        smx_profiler_log_ch( h, ch, SMX_PROFILER_ACTION_DISMISS,
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_DISMISS,
                 ch->fifo->count );
         smx_msg_destroy( h, msg, true );
         return 1;
