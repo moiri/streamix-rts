@@ -232,7 +232,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
             SMX_LOG_CH( ch, error, "undefined channel type '%d'", ch->type );
             return -1;
     }
-    if( ch->collector != NULL )
+    if( ch->collector != NULL && ch->fifo->overwrite == 0 )
     {
         pthread_mutex_lock( &ch->collector->col_mutex );
         ch->collector->count++;
@@ -518,6 +518,7 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         fifo->tail = fifo->tail->prev;
         fifo->count++;
         new_count = fifo->count;
+        fifo->overwrite = 0;
         pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "write to fifo_d (new count: %d)", new_count );

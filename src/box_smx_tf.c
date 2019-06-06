@@ -144,13 +144,7 @@ void smx_tf_propagate_msgs( void* h, smx_timer_t* tt, smx_channel_t** ch_in,
         {
             smx_channel_write( h, ch_out[i], msg );
             if( ch_out[i]->fifo->overwrite )
-            {
-                pthread_mutex_lock( &ch_out[i]->fifo->fifo_mutex );
-                ch_out[i]->fifo->overwrite = 0;
-                pthread_mutex_unlock( &ch_out[i]->fifo->fifo_mutex );
-                zlog_error( ch_out[i]->cat,
-                        "missed deadline to consume" );
-            }
+                zlog_error( ch_out[i]->cat, "missed deadline to consume" );
         }
     }
 }
