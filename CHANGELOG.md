@@ -21,6 +21,10 @@
  - Use zlog categories to distinguish between different concept
  - Include multiple log levels
  - Make the routing node fair when reading from inputs (a rn has now state)
+ - Allow to configure whether a TF copies msgs on DL miss of the producer or
+   sends a NULL msg (if copy is enabled every msg has to be backed up)
+ - Run TF and TF-framed nets as RT-Tasks with different priorities
+ - Add profiling capabilities (requires a `smx_mongo` box in the streamix nw)
 
 # `diss_final`
 
