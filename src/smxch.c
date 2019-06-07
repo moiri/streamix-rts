@@ -136,7 +136,10 @@ void smx_channel_destroy_end( smx_channel_end_t* end )
 smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
 {
     smx_msg_t* msg = NULL;
-    if( ch == NULL || ch->source ==  NULL )
+    if( ch == NULL )
+        return NULL;
+
+    if( ch->source ==  NULL )
     {
         SMX_LOG_MAIN( main, fatal, "channel not initialised" );
         return NULL;
@@ -193,7 +196,10 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
 {
     bool abort = false;
     int new_count;
-    if( ch == NULL || ch->sink == NULL )
+    if( ch == NULL )
+        return 0;
+
+    if( ch->sink == NULL )
     {
         SMX_LOG_MAIN( main, fatal, "channel not initialised" );
         return -1;
