@@ -221,6 +221,20 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch );
 int smx_channel_ready_to_read( smx_channel_t* ch );
 
 /**
+ * Send the termination signal to a channel sink
+ *
+ * @param ch    pointer to the channel
+ */
+void smx_channel_terminate_sink( smx_channel_t* ch );
+
+/**
+ * Send the termination signal to a channel source
+ *
+ * @param ch    pointer to the channel
+ */
+void smx_channel_terminate_source( smx_channel_t* ch );
+
+/**
  * @brief Write data to an output port
  *
  * Allows to access the channel and write data. The channel ist protected by
@@ -233,6 +247,14 @@ int smx_channel_ready_to_read( smx_channel_t* ch );
  * @return      0 on success, -1 otherwise
  */
 int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg );
+
+/**
+ * Send the termination signal to the collector
+ *
+ * @param ch    pointer to the channel
+ *
+ */
+void smx_collector_terminate( smx_channel_t* ch );
 
 /**
  * Connect a channel to a net by name matching.

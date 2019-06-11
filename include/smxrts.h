@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <zlog.h>
+#include "box_smx_profiler.h"
 #include "box_smx_rn.h"
 #include "box_smx_tf.h"
 #include "smxch.h"
@@ -105,7 +106,7 @@ struct smx_rts_s
             smx_guard_create( iats, iatns, rts->chs[id] ) )
 
 #define SMX_CONNECT_PROFILER( net_id )\
-    smx_connect_rn( rts->nets[net_id], rts->nets, rts->net_cnt )
+    smx_connect_profiler( rts->nets[net_id], rts->nets, rts->net_cnt )
 
 #define SMX_CONNECT_RN( net_id, ch_id )\
     smx_connect_rn( rts->chs[ch_id], rts->nets[net_id] )
@@ -134,10 +135,10 @@ struct smx_rts_s
             SMX_SIG_PORTS_PTR( rts->nets[id], out ), outdegree )
 
 #define SMX_NET_PROFILER_DESTROY( id )\
-    smx_net_profiler_destroy( ( SMX_SIG( rts->nets[id] ) ) )
+    smx_net_profiler_destroy( rts->nets[id] )
 
 #define SMX_NET_PROFILER_INIT( id )\
-    smx_net_profiler_init( SMX_SIG( rts->nets[id] ) )
+    smx_net_profiler_init( rts->nets[id] )
 
 #define SMX_NET_RN_DESTROY( id )\
     smx_net_rn_destroy( ( SMX_SIG( rts->nets[id] ) ) )

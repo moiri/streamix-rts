@@ -46,7 +46,7 @@ void smx_net_rn_init( net_smx_rn_t* cp )
     pthread_mutex_init( &cp->in.collector->col_mutex, NULL );
     pthread_cond_init( &cp->in.collector->col_cv, NULL );
     cp->in.collector->count = 0;
-    cp->in.collector->state = SMX_CHANNEL_UNINITIALISED;
+    cp->in.collector->state = SMX_CHANNEL_PENDING;
 }
 
 /*****************************************************************************/

@@ -248,28 +248,22 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
         smx_channel_t** chs_out, int len_out )
 {
     int i;
+    smx_net_t* net = h;
     if( chs_in == NULL || chs_out == NULL )
         return;
 
     SMX_LOG_NET( h, notice, "send termination notice to neighbours" );
     for( i=0; i < len_in; i++ ) {
-        zlog_notice( chs_in[i]->cat, "mark as stale" );
-        pthread_mutex_lock( &chs_in[i]->sink->ch_mutex );
-        smx_channel_change_write_state( chs_in[i], SMX_CHANNEL_END );
-        pthread_mutex_unlock( &chs_in[i]->sink->ch_mutex );
+        smx_channel_terminate_sink( chs_in[i] );
     }
     for( i=0; i < len_out; i++ ) {
-        zlog_notice( chs_out[i]->cat, "mark as stale" );
-        pthread_mutex_lock( &chs_out[i]->source->ch_mutex );
-        smx_channel_change_read_state( chs_out[i], SMX_CHANNEL_END );
-        pthread_mutex_unlock( &chs_out[i]->source->ch_mutex );
-        if( chs_out[i]->collector != NULL ) {
-            zlog_notice( chs_out[i]->cat,
-                    "mark collector as stale" );
-            pthread_mutex_lock( &chs_out[i]->collector->col_mutex );
-            smx_channel_change_collector_state( chs_out[i], SMX_CHANNEL_END );
-            pthread_mutex_unlock( &chs_out[i]->collector->col_mutex );
-        }
+        smx_channel_terminate_source( chs_out[i] );
+        smx_collector_terminate( chs_out[i] );
+    }
+    if( net->profiler != NULL )
+    {
+        smx_channel_terminate_source( net->profiler );
+        smx_collector_terminate( net->profiler );
     }
 }
 
@@ -280,7 +274,7 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
 {
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
-    xmlChar* profiler_port = NULL;
+    xmlChar* profiler = NULL;
     smx_net_t* net = h;
 
     if( h == NULL || chs_in ==  NULL || chs_out == NULL || cnt_in == NULL
@@ -294,19 +288,19 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
 
     if( net != NULL && net->conf != NULL )
     {
-        profiler_port = xmlGetProp( net->conf, ( const xmlChar* )"profiler" );
-        if( profiler_port != NULL )
+        profiler = xmlGetProp( net->conf, ( const xmlChar* )"profiler" );
+        if( profiler != NULL &&
+                ( 0 == strcmp( ( char* )profiler, "off" )
+                  || 0 == strcmp( ( char* )profiler, "0" ) ) )
         {
-            net->profiler = smx_get_channel_by_name( net->out.ports,
-                    net->out.count, ( const char* )profiler_port );
-            if( net->profiler == NULL )
-                SMX_LOG_NET( h, warn, "profiler port '%s' does not exist",
-                        profiler_port );
-            else
-                SMX_LOG_NET( h, notice, "profiler enabled on port '%s'",
-                        profiler_port );
+            smx_channel_terminate_source( net->profiler );
+            smx_collector_terminate( net->profiler );
+            net->profiler = NULL;
         }
     }
+
+    if( net->profiler != NULL )
+        SMX_LOG_NET( h, notice, "profiler enabled" );
 
     if(init( h, &net_state ) == 0)
     {

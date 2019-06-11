@@ -22,12 +22,10 @@ typedef struct net_smx_profiler_s net_smx_profiler_t;/**< ::net_smx_profiler_s *
 struct net_smx_profiler_s
 {
     struct {
-        smx_channel_t** ports;      /**< implicitly connected input channels */
-        int port_cnt;               /**< the number of implicit channels */
         smx_collector_t* collector; /**< ::smx_collector_s */
     } in;                           /**< input channels */
     struct {
-        smx_channel_t* profiler;
+        smx_channel_t* port_profiler;
     } out;                          /**< output channels */
 };
 
@@ -39,21 +37,21 @@ struct net_smx_profiler_s
  *                  the profiler
  * @param net_cnt   the number of nets
  */
-void smx_profiler_connect( smx_net_t* profiler, smx_net_t** nets, int net_cnt );
+void smx_connect_profiler( smx_net_t* profiler, smx_net_t** nets, int net_cnt );
 
 /**
  * Destroy the profiler collector signature
  *
- * @param profiler  pointer to the profiler collector structure
+ * @param profiler  pointer to the profiler collector net
  */
-void smx_net_profiler_destroy( net_smx_profiler_t* profiler );
+void smx_net_profiler_destroy( smx_net_t* profiler );
 
 /**
  * Initialize the profiler collector signature
  *
- * @param profiler  pointer to the profiler collector structure
+ * @param profiler  pointer to the profiler collector net
  */
-void smx_net_profiler_init( net_smx_profiler_t* profiler );
+void smx_net_profiler_init( smx_net_t* profiler );
 
 /**
  * @brief the box implementattion of the profiler collector

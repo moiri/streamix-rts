@@ -192,6 +192,24 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
 }
 
 /*****************************************************************************/
+void smx_channel_terminate_sink( smx_channel_t* ch )
+{
+    zlog_notice( ch->cat, "mark as stale" );
+    pthread_mutex_lock( &ch->sink->ch_mutex );
+    smx_channel_change_write_state( ch, SMX_CHANNEL_END );
+    pthread_mutex_unlock( &ch->sink->ch_mutex );
+}
+
+/*****************************************************************************/
+void smx_channel_terminate_source( smx_channel_t* ch )
+{
+    zlog_notice( ch->cat, "mark as stale" );
+    pthread_mutex_lock( &ch->source->ch_mutex );
+    smx_channel_change_read_state( ch, SMX_CHANNEL_END );
+    pthread_mutex_unlock( &ch->source->ch_mutex );
+}
+
+/*****************************************************************************/
 int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
 {
     bool abort = false;
@@ -255,6 +273,18 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     smx_channel_change_read_state( ch, SMX_CHANNEL_READY );
     pthread_mutex_unlock( &ch->source->ch_mutex );
     return 0;
+}
+
+/*****************************************************************************/
+void smx_collector_terminate( smx_channel_t* ch )
+{
+    if( ch->collector == NULL )
+        return;
+
+    zlog_notice( ch->cat, "mark collector as stale" );
+    pthread_mutex_lock( &ch->collector->col_mutex );
+    smx_channel_change_collector_state( ch, SMX_CHANNEL_END );
+    pthread_mutex_unlock( &ch->collector->col_mutex );
 }
 
 /*****************************************************************************/
