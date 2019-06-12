@@ -277,8 +277,8 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
 
 /*****************************************************************************/
 void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
-        void cleanup( void* ), void* h, smx_channel_t** chs_in, int* cnt_in,
-        smx_channel_t** chs_out, int* cnt_out )
+        void cleanup( void*, void* ), void* h, smx_channel_t** chs_in,
+        int* cnt_in, smx_channel_t** chs_out, int* cnt_out )
 {
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
@@ -326,7 +326,7 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
         SMX_LOG_NET( h, error, "initialisation of net failed" );
     smx_net_terminate( h, chs_in, *cnt_in, chs_out, *cnt_out );
     SMX_LOG_NET( h, notice, "cleanup net" );
-    cleanup( net_state );
+    cleanup( h, net_state );
     SMX_LOG_NET( h, notice, "terminate net" );
     return NULL;
 }

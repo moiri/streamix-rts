@@ -102,8 +102,9 @@ int smx_profiler_init( void* h, void** state );
 /**
  * Cleanup the profiler collector by freeing the state structure.
  *
+ * @param h     pointer to the net handler
  * @param state pointer to the state structure
  */
-void smx_profiler_cleanup( void* state );
+void smx_profiler_cleanup( void* h, void* state );
 
 #endif

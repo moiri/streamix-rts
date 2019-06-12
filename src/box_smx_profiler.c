@@ -178,7 +178,8 @@ int smx_profiler_init( void* h, void** state )
 }
 
 /*****************************************************************************/
-void smx_profiler_cleanup( void* state )
+void smx_profiler_cleanup( void* h, void* state )
 {
+    ( void )( h );
     ( void )( state );
 }

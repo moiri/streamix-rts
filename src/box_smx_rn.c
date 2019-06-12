@@ -89,7 +89,7 @@ int smx_rn( void* h, void* state )
 /*****************************************************************************/
 int smx_rn_init( void* h, void** state )
 {
-    (void)(h);
+    ( void )( h );
     *state = smx_malloc( sizeof( int ) );
     if( *state == NULL )
         return -1;
@@ -99,8 +99,9 @@ int smx_rn_init( void* h, void** state )
 }
 
 /*****************************************************************************/
-void smx_rn_cleanup( void* state )
+void smx_rn_cleanup( void* h, void* state )
 {
+    ( void )( h );
     if( state != NULL )
         free( state );
 }

@@ -80,8 +80,9 @@ int smx_rn_init( void* h, void** state );
 /**
  * Cleanup the routing node by freeing the state variable.
  *
+ * @param h     pointer to the net handler
  * @param state pointer to the state variable
  */
-void smx_rn_cleanup( void* state );
+void smx_rn_cleanup( void* h, void* state );
 
 #endif

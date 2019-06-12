@@ -198,7 +198,7 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
  * @return                  returns NULL
  */
 void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
-        void cleanup( void* ), void* h, smx_channel_t** chs_in, int* cnt_in,
-        smx_channel_t** chs_out, int* cnt_out );
+        void cleanup( void*, void* ), void* h, smx_channel_t** chs_in,
+        int* cnt_in, smx_channel_t** chs_out, int* cnt_out );
 
 #endif
