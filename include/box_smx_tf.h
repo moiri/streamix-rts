@@ -13,6 +13,7 @@
 #define BOX_SMX_TF_H
 
 typedef struct net_smx_tf_s net_smx_tf_t;             /**< ::net_smx_tf_s */
+typedef struct net_smx_tf_state_s net_smx_tf_state_t; /**< ::net_smx_tf_state_s */
 typedef struct smx_timer_s smx_timer_t;               /**< ::smx_timer_s */
 
 /**
@@ -34,20 +35,27 @@ struct smx_timer_s
 {
     int                 fd;         /**< timer file descriptor */
     struct itimerspec   itval;      /**< iteration specifiaction */
-    net_smx_tf_t*       ports;      /**< list of temporal firewalls */
+    net_smx_tf_t*       tfs;        /**< list of temporal firewalls */
     int                 count;      /**< number of port pairs */
+};
+
+/**
+ * The persistent state to be passed to each iteration.
+ */
+struct net_smx_tf_state_s
+{
+    int do_copy;    /**< config argument to indicate whether msgs are copied */
 };
 
 /**
  * @brief grow the list of temporal firewalls and connect channels
  *
- * @param timer     pointer to a timer structure
+ * @param net       pointer to the timer net handler
  * @param ch_in     input channel to the temporal firewall
  * @param ch_out    output channel from the temporal firewall
- * @param id        the id of the timer
  */
-void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
-        smx_channel_t* ch_out, int id );
+void smx_connect_tf( smx_net_t* net, smx_channel_t* ch_in,
+        smx_channel_t* ch_out );
 
 /**
  * @brief create a periodic timer structure
@@ -56,35 +64,37 @@ void smx_tf_connect( smx_timer_t* timer, smx_channel_t* ch_in,
  * @param nsec  time interval in nano seconds
  * @return      pointer to the created timer structure
  */
-smx_timer_t* smx_tf_create( int sec, int nsec);
+smx_timer_t* smx_net_create_tf( int sec, int nsec);
 
 /**
  * @brief destroy a timer structure and the list of temporal firewalls inside
  *
  * @param tt    pointer to the temporal firewall
  */
-void smx_tf_destroy( smx_net_t* tt );
+void smx_net_destroy_tf( smx_net_t* tt );
+
+/**
+ * @brief init a timer structure and the list of temporal firewalls inside
+ *
+ * @param net    pointer to the temporal firewall
+ */
+void smx_net_init_tf( smx_net_t* net );
 
 /**
  * @brief enable periodic tt timer
  *
  * @param h     the net handler
- * @param timer pointer to a timer structure
  */
-void smx_tf_enable( void* h, smx_timer_t* timer );
+void smx_tf_enable( smx_net_t* h );
 
 /**
  * Read all input channels of a temporal firewall and propagate the messages to
  * the corresponding outputs of the temporal firewall.
  *
  * @param h     pointer to the net handler
- * @param tt     a pointer to the timer
- * @param ch_in  a pointer to an array of input channels
- * @param ch_out a pointer to an array of output channels
  * @param copy   1 if messages ought to be duplicated, 0 otherwise
  */
-void smx_tf_propagate_msgs( void* h, smx_timer_t* tt, smx_channel_t** ch_in,
-        smx_channel_t** ch_out, int copy );
+void smx_tf_propagate_msgs( smx_net_t* h, int copy );
 
 /**
  * @brief blocking wait on timer
@@ -93,9 +103,8 @@ void smx_tf_propagate_msgs( void* h, smx_timer_t* tt, smx_channel_t** ch_in,
  * deadline was missed.
  *
  * @param h     the net handler
- * @param timer pointer to a timer structure
  */
-void smx_tf_wait( void* h, smx_timer_t* timer );
+void smx_tf_wait( smx_net_t* h );
 
 /**
  * @brief write to all output channels of a temporal firewall
@@ -111,11 +120,40 @@ void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
         smx_channel_t** );
 
 /**
- * @brief start routine for a timer thread
+ * @brief the box implementattion of the temporal firewall
  *
- * @param h pointer to a timer structure
- * @return  NULL
+ * A temporal firewall peridically reads form producers and writes to consumers.
+ * All inputs and outputs are decoupled in order to prevent blocking.
+ *
+ * @param h     a pointer to the signature
+ * @param state a pointer to the persistent state structure
+ * @return      returns the progress state of the box
  */
-void* start_routine_tf( void* h );
+int smx_tf( void* h, void* state );
+
+/**
+ * Initialises the temporal firewall.
+ *
+ * @param h     pointer to the net handler
+ * @param state pointer to the state structure
+ * @return      0 on success, -1 on failure
+ */
+int smx_tf_init( void* h, void** state );
+
+/**
+ * Cleanup the temporal firewall by freeing the state structure.
+ *
+ * @param h     pointer to the net handler
+ * @param state pointer to the state structure
+ */
+void smx_tf_cleanup( void* h, void* state );
+
+/**
+ * The wrapper function for the start routine. This must be manually defined for
+ * a temporal firewall because TFs are created from edges insted of nodes.
+ *
+ * @param h     pointer to the net handler
+ */
+void* start_routine_smx_tf( void* h );
 
 #endif

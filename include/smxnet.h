@@ -187,18 +187,13 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
 /**
  * @brief the start routine of a thread associated to a box
  *
+ * @param h                 pointer to the net handler
  * @param impl( arg )       pointer to the net implementation function
  * @param init( arg )       pointer to the net intitialisation function
  * @param cleanup( arg )    pointer to the net cleanup function
- * @param h                 pointer to the net handler
- * @param chs_in            list of input channels
- * @param cnt_in            pointer to count of input ports
- * @param chs_out           list of output channels
- * @param cnt_out           pointer to counter of output port
  * @return                  returns NULL
  */
-void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
-        void cleanup( void*, void* ), void* h, smx_channel_t** chs_in,
-        int* cnt_in, smx_channel_t** chs_out, int* cnt_out );
+void* start_routine_net( smx_net_t* h, int impl( void*, void* ),
+        int init( void*, void** ), void cleanup( void*, void* ) );
 
 #endif

@@ -643,8 +643,6 @@ int smx_guard_write( void* h, smx_channel_t* ch )
                 (read returned %d", errno );
         return -1;
     }
-    if( expired > 0 )
-        SMX_LOG_CH( ch, error, "guard timer misses: %lu", expired );
     itval.it_value = ch->guard->iat;
     itval.it_interval.tv_sec = 0;
     itval.it_interval.tv_nsec = 0;

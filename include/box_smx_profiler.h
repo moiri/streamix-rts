@@ -89,9 +89,7 @@ smx_msg_t* smx_net_profiler_read( void* h, smx_collector_t* collector,
 int smx_profiler( void* h, void* state );
 
 /**
- * Initialises the profiler collector. The state structure is allocated with
- * an integer which is used to remember the last port index from which
- * a message was read.
+ * Initialises the profiler collector.
  *
  * @param h     pointer to the net handler
  * @param state pointer to the state structure

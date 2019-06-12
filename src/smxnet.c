@@ -168,7 +168,7 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
         return -1;
     }
 
-    pthread_attr_init(&sched_attr);
+    pthread_attr_init( &sched_attr );
     if( prio > 0 )
     {
         min_fifo = sched_get_priority_min( SCHED_FIFO );
@@ -276,17 +276,18 @@ void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
 }
 
 /*****************************************************************************/
-void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
-        void cleanup( void*, void* ), void* h, smx_channel_t** chs_in,
-        int* cnt_in, smx_channel_t** chs_out, int* cnt_out )
+void* start_routine_net( smx_net_t* h, int impl( void*, void* ),
+        int init( void*, void** ), void cleanup( void*, void* ) )
 {
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
     xmlChar* profiler = NULL;
-    smx_net_t* net = h;
+    smx_channel_t** chs_in = SMX_SIG_PORTS( h, in );
+    smx_channel_t** chs_out = SMX_SIG_PORTS( h, out );
+    int* cnt_in = SMX_SIG_PORT_COUNT( h, in );
+    int* cnt_out = SMX_SIG_PORT_COUNT( h, out );
 
-    if( h == NULL || chs_in ==  NULL || chs_out == NULL || cnt_in == NULL
-            || cnt_out == NULL )
+    if( h == NULL )
     {
         SMX_LOG_MAIN( main, fatal, "unable to start net: not initialised" );
         return NULL;
@@ -294,32 +295,32 @@ void* start_routine_net( int impl( void*, void* ), int init( void*, void** ),
 
     SMX_LOG_NET( h, notice, "init net" );
 
-    if( net != NULL && net->conf != NULL )
+    if( h != NULL && h->conf != NULL && h->profiler != NULL )
     {
-        profiler = xmlGetProp( net->conf, ( const xmlChar* )"profiler" );
+        profiler = xmlGetProp( h->conf, ( const xmlChar* )"profiler" );
         if( profiler != NULL &&
                 ( 0 == strcmp( ( char* )profiler, "off" )
                   || 0 == strcmp( ( char* )profiler, "0" ) ) )
         {
-            smx_channel_terminate_source( net->profiler );
-            smx_collector_terminate( net->profiler );
-            net->profiler = NULL;
+            smx_channel_terminate_source( h->profiler );
+            smx_collector_terminate( h->profiler );
+            h->profiler = NULL;
         }
     }
 
-    if( net->profiler != NULL )
+    if( h->profiler != NULL )
         SMX_LOG_NET( h, notice, "profiler enabled" );
 
-    if(init( h, &net_state ) == 0)
+    if( init( h, &net_state ) == 0)
     {
         SMX_LOG_NET( h, notice, "start net" );
         while( state == SMX_NET_CONTINUE )
         {
             SMX_LOG_NET( h, info, "start net loop" );
-        smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
+            smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
             state = impl( h, net_state );
-            state = smx_net_update_state( h, chs_in, *cnt_in, chs_out, *cnt_out,
-                    state );
+            state = smx_net_update_state( h, chs_in, *cnt_in, chs_out,
+                    *cnt_out, state );
         }
     }
     else
