@@ -13,6 +13,7 @@
 #include "smxutils.h"
 #include "smxnet.h"
 #include "smxlog.h"
+#include "smxprofiler.h"
 
 /*****************************************************************************/
 void smx_connect_profiler( smx_net_t* profiler, smx_net_t** nets, int net_cnt )
@@ -92,9 +93,64 @@ void smx_net_profiler_init( smx_net_t* profiler )
 }
 
 /*****************************************************************************/
+void smx_net_profiler_peak_ts( smx_channel_t* ch, struct timespec* ts )
+{
+    smx_mongo_msg_t* mg_msg = NULL;
+    mg_msg = ch->fifo->head->msg->data;
+    (*ts).tv_sec = mg_msg->ts.tv_sec;
+    (*ts).tv_nsec = mg_msg->ts.tv_nsec;
+}
+
+/*****************************************************************************/
+smx_msg_t* smx_net_profiler_read( void* h, smx_collector_t* collector,
+        smx_channel_t** in, int count_in )
+{
+    int cur_count, i;
+    smx_msg_t* msg = NULL;
+    smx_channel_t* ch = NULL;
+    struct timespec ts;
+    struct timespec ts_oldest;
+    ts_oldest.tv_sec = 0;
+    ts_oldest.tv_nsec = 0;
+
+    cur_count = smx_net_collector_check_avaliable( h, collector );
+
+    if( cur_count > 0 )
+    {
+        for( i = 0; i < count_in; i++ )
+        {
+            if( smx_channel_ready_to_read( in[i] ) > 0 )
+            {
+                smx_net_profiler_peak_ts( in[i], &ts );
+                if( ( ts_oldest.tv_sec == 0 && ts_oldest.tv_nsec == 0 )
+                        || ( ts.tv_sec < ts_oldest.tv_sec
+                            || ( ts.tv_sec == ts_oldest.tv_sec
+                                && ts.tv_nsec < ts_oldest.tv_nsec ) ) )
+                {
+                    ts_oldest.tv_sec = ts.tv_sec;
+                    ts_oldest.tv_nsec = ts.tv_nsec;
+                    ch = in[i];
+                }
+            }
+        }
+        if( ch == NULL )
+        {
+            SMX_LOG_NET( h, error,
+                    "something went wrong: no msg ready in collector (count: %d)",
+                    cur_count );
+            return NULL;
+        }
+        SMX_LOG_NET( h, info, "read from collector (new count: %d)",
+                cur_count - 1 );
+        msg = smx_channel_read( h, ch );
+    }
+    return msg;
+}
+
+/*****************************************************************************/
 int smx_profiler( void* h, void* state )
 {
-    int* last_idx = ( int* )state;
+    ( void )( state );
     smx_msg_t* msg;
     net_smx_profiler_t* profiler = SMX_SIG( h );
     smx_net_t* net = h;
@@ -105,8 +161,8 @@ int smx_profiler( void* h, void* state )
         return SMX_NET_END;
     }
 
-    msg = smx_net_collector_read( h, profiler->in.collector, net->in.ports,
-            net->in.count, last_idx );
+    msg = smx_net_profiler_read( h, profiler->in.collector, net->in.ports,
+            net->in.count );
     if( msg != NULL )
         smx_channel_write( h, profiler->out.port_profiler, msg );
 
@@ -116,18 +172,13 @@ int smx_profiler( void* h, void* state )
 /*****************************************************************************/
 int smx_profiler_init( void* h, void** state )
 {
-    (void)(h);
-    *state = smx_malloc( sizeof( int ) );
-    if( *state == NULL )
-        return -1;
-
-    *( int* )( *state ) = -1;
+    ( void )( h );
+    ( void )( state );
     return 0;
 }
 
 /*****************************************************************************/
 void smx_profiler_cleanup( void* state )
 {
-    if( state != NULL )
-        free( state );
+    ( void )( state );
 }

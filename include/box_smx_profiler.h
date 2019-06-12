@@ -54,17 +54,33 @@ void smx_net_profiler_destroy( smx_net_t* profiler );
 void smx_net_profiler_init( smx_net_t* profiler );
 
 /**
+ * Read the timestamp from available messaes in the profiler collector.
+ *
+ * @param ch    the channel to peak at
+ * @param ts    a pointer to a time structrue which will hold the timestamp of
+ *              the message
+ */
+void smx_net_profiler_peak_ts( smx_channel_t* ch, struct timespec* ts );
+
+/**
+ * Read from a collector of a net.
+ *
+ * @param h         pointer to the net handler
+ * @param collector pointer to the net collector structure
+ * @param in        pointer to the input port array
+ * @param count_in  number of input ports
+ * @return          the message that was read or NULL if no message was read
+ */
+smx_msg_t* smx_net_profiler_read( void* h, smx_collector_t* collector,
+        smx_channel_t** in, int count_in );
+
+/**
  * @brief the box implementattion of the profiler collector
  *
  * A profiling collector reads from any port where data is available and writes
- * it to its single output. The read order is first come first serve with
+ * it to its single output. The read order is oldest message first with
  * peaking wheter data is available. The profiler collector is only blocking on
  * read if no input channel has data available. Writing is blocking.
- *
- * In order to provide fairness the profiling collector remembers the last port
- * index from which a message was read. The next time the net is executed it
- * will search for available messages starting from the last port index +1.
- * This means that the profiler collector is not pure.
  *
  * @param h     a pointer to the signature
  * @param state a pointer to the persistent state structure

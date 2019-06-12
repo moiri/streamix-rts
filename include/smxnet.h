@@ -65,6 +65,16 @@ struct smx_net_s
 #define SMX_NET_GET_NAME( h ) ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->name
 
 /**
+ * Check whether messages are available on the collector and block until a
+ * message is made available or a producer terminates.
+ *
+ * @param h         pointer to the net handler
+ * @param collector pointer to the net collector structure
+ * @return          the number of currently available messages in the collector
+ */
+int smx_net_collector_check_avaliable( void* h, smx_collector_t* collector );
+
+/**
  * Read from a collector of a net.
  *
  * @param h         pointer to the net handler

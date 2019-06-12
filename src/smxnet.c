@@ -15,23 +15,19 @@
 #include "smxprofiler.h"
 
 /*****************************************************************************/
-smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
-        smx_channel_t** in, int count_in, int* last_idx )
+int smx_net_collector_check_avaliable( void* h, smx_collector_t* collector )
 {
-    bool has_msg = false;
-    int cur_count, i, ch_count, ready_cnt;
-    smx_msg_t* msg = NULL;
-    smx_channel_t* ch = NULL;
+    int cur_count;
     pthread_mutex_lock( &collector->col_mutex );
     while( collector->state == SMX_CHANNEL_PENDING )
     {
         SMX_LOG_NET( h, debug, "waiting for message on collector" );
         pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
     }
+    cur_count = collector->count;
     if( collector->count > 0 )
     {
         collector->count--;
-        has_msg = true;
     }
     else
     {
@@ -39,10 +35,21 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
                 SMX_CHANNEL_PENDING );
         collector->state = SMX_CHANNEL_PENDING;
     }
-    cur_count = collector->count;
     pthread_mutex_unlock( &collector->col_mutex );
+    return cur_count;
+}
 
-    if( has_msg )
+/*****************************************************************************/
+smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
+        smx_channel_t** in, int count_in, int* last_idx )
+{
+    int cur_count, i, ch_count, ready_cnt;
+    smx_msg_t* msg = NULL;
+    smx_channel_t* ch = NULL;
+
+    cur_count = smx_net_collector_check_avaliable( h, collector );
+
+    if( cur_count > 0 )
     {
         ch_count = count_in;
         i = *last_idx;
@@ -64,10 +71,11 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
         {
             SMX_LOG_NET( h, error,
                     "something went wrong: no msg ready in collector (count: %d)",
-                    collector->count );
+                    cur_count );
             return NULL;
         }
-        SMX_LOG_NET( h, info, "read from collector (new count: %d)", cur_count );
+        SMX_LOG_NET( h, info, "read from collector (new count: %d)",
+                cur_count - 1 );
         smx_profiler_log_net( h, SMX_PROFILER_ACTION_READ_COLLECTOR );
         msg = smx_channel_read( h, ch );
     }
