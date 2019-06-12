@@ -184,7 +184,7 @@ struct smx_rts_s
 #define SMX_NET_EXTERN( box_name )\
     extern int box_name( void*, void* );\
     extern int box_name ## _init( void*, void** );\
-    extern void box_name ## _cleanup( void* )
+    extern void box_name ## _cleanup( void*, void* )
 
 // FUNCTIONS ------------------------------------------------------------------
 
