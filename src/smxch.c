@@ -166,6 +166,7 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
             msg = smx_fifo_d_read( h, ch, ch->fifo );
             break;
         default:
+            pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, error, "undefined channel type '%d'",
                     ch->type );
             return NULL;
