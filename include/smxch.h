@@ -63,6 +63,7 @@ struct smx_channel_s
     smx_channel_end_t*  sink;       /**< ::smx_channel_end_s */
     smx_channel_end_t*  source;     /**< ::smx_channel_end_s */
     zlog_category_t*    cat;        /**< zlog category of a channel end */
+    pthread_mutex_t     ch_mutex;   /**< mutual exclusion */
 };
 
 /**
@@ -71,7 +72,6 @@ struct smx_channel_s
 struct smx_channel_end_s
 {
     smx_channel_state_t state;    /**< state of the channel end */
-    pthread_mutex_t     ch_mutex; /**< mutual exclusion */
     pthread_cond_t      ch_cv;    /**< conditional variable to trigger producer */
 };
 
@@ -105,7 +105,6 @@ struct smx_fifo_s
     int     copy;                /**< counts number of copy operations */
     int     count;               /**< counts occupied space */
     int     length;              /**< size of the FIFO */
-    pthread_mutex_t fifo_mutex;  /**< mutual exclusion */
 };
 
 /**

@@ -49,7 +49,7 @@ void smx_connect_profiler( smx_net_t* profiler, smx_net_t** nets, int net_cnt )
 
         id = profiler->in.count;
         sprintf( cat_name, "ch_%s_i%d", name, id );
-        smx_channel_create( profiler->in.ports, &profiler->in.count, 1,
+        smx_channel_create( profiler->in.ports, &profiler->in.count, net_cnt,
                 SMX_FIFO, id, name, cat_name );
         nets[i]->profiler = profiler->in.ports[id];
         nets[i]->profiler->collector = sig->in.collector;
@@ -79,12 +79,16 @@ void smx_net_profiler_destroy( smx_net_t* profiler )
 /*****************************************************************************/
 void smx_net_profiler_init( smx_net_t* profiler )
 {
+    pthread_mutexattr_t mutexattr_prioinherit;
     net_smx_profiler_t* sig = profiler->sig;
     sig->in.collector = smx_malloc( sizeof( struct smx_collector_s ) );
     if( sig->in.collector == NULL )
         return;
 
-    pthread_mutex_init( &sig->in.collector->col_mutex, NULL );
+    pthread_mutexattr_init( &mutexattr_prioinherit );
+    pthread_mutexattr_setprotocol( &mutexattr_prioinherit,
+            PTHREAD_PRIO_INHERIT );
+    pthread_mutex_init( &sig->in.collector->col_mutex, &mutexattr_prioinherit );
     pthread_cond_init( &sig->in.collector->col_cv, NULL );
     sig->in.collector->count = 0;
     sig->in.collector->state = SMX_CHANNEL_PENDING;

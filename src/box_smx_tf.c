@@ -133,34 +133,33 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
             if( ch_in[i]->source->state == SMX_CHANNEL_END )
             {
                 // propagate termination signal to consumer
-                pthread_mutex_lock( &ch_out[i]->source->ch_mutex );
+                pthread_mutex_lock( &ch_out[i]->ch_mutex );
                 smx_channel_change_read_state( ch_out[i], SMX_CHANNEL_END );
-                pthread_mutex_unlock( &ch_out[i]->source->ch_mutex );
+                pthread_mutex_unlock( &ch_out[i]->ch_mutex );
             }
             if( ch_out[i]->sink->state == SMX_CHANNEL_END )
             {
                 // propagate termination signal to producer
-                pthread_mutex_lock( &ch_in[i]->sink->ch_mutex );
+                pthread_mutex_lock( &ch_in[i]->ch_mutex );
                 smx_channel_change_write_state( ch_in[i], SMX_CHANNEL_END );
-                pthread_mutex_unlock( &ch_in[i]->sink->ch_mutex );
+                pthread_mutex_unlock( &ch_in[i]->ch_mutex );
             }
             continue;
         }
+
+        // read msgs
+        pthread_mutex_lock( &ch_in[i]->ch_mutex );
         if( copy )
             msg = smx_fifo_d_read( h, ch_in[i], ch_in[i]->fifo );
         else
             msg = smx_fifo_dd_read( h, ch_in[i], ch_in[i]->fifo );
 
         // notify producer that space is available
-        pthread_mutex_lock( &ch_in[i]->sink->ch_mutex );
         smx_channel_change_write_state( ch_in[i], SMX_CHANNEL_READY );
-        pthread_mutex_unlock( &ch_in[i]->sink->ch_mutex );
+        pthread_mutex_unlock( &ch_in[i]->ch_mutex );
 
         if( msg == NULL || ch_in[i]->fifo->copy )
         {
-            pthread_mutex_lock( &ch_in[i]->fifo->fifo_mutex );
-            ch_out[i]->fifo->copy = 0;
-            pthread_mutex_unlock( &ch_in[i]->fifo->fifo_mutex );
             zlog_error( ch_in[i]->cat, "missed deadline to produce" );
         }
         if( msg != NULL )
@@ -189,7 +188,7 @@ void smx_tf_wait( smx_net_t* h )
     if( -1 == poll_res )
         SMX_LOG_NET( h, error, "timerfd poll: %d", errno );
     else if( poll_res > 0 )
-        SMX_LOG_NET( h, error, "deadline missed" );
+        SMX_LOG_NET( h, notice, "deadline missed" );
 
     if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
         SMX_LOG_NET( h, error, "timerfd read: %d", errno );
@@ -253,7 +252,7 @@ int smx_tf_init( void* h, void** state )
                 tf_state->do_copy = 1;
             else if( ( strcmp( ( const char* )copy_str, "off" ) == 0 )
                     || ( strcmp( ( const char* )copy_str, "0" ) == 0 ) )
-                tf_state->do_copy = 1;
+                tf_state->do_copy = 0;
             else
             {
                 SMX_LOG_NET( h, warn,

@@ -121,7 +121,7 @@ struct smx_rts_s
 
 #define SMX_NET_CREATE_TF( id, sec, nsec )\
     smx_net_create( rts->nets, &rts->net_cnt, id, STRINGIFY( smx_tf ),\
-            STRINGIFY( net_nsmx_tf ## _ ## id ),\
+            STRINGIFY( net_smx_tf ## _ ## id ),\
             smx_net_create_tf( sec, nsec ), &rts->conf )
 
 #define SMX_NET_DESTROY( id )\

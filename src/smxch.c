@@ -61,6 +61,7 @@ int smx_channel_create( smx_channel_t** chs, int* ch_cnt, int len,
         smx_channel_type_t type, int id, const char* name,
         const char* cat_name )
 {
+    pthread_mutexattr_t mutexattr_prioinherit;
     chs[id] = NULL;
     if( id >= SMX_MAX_CHS )
     {
@@ -73,6 +74,11 @@ int smx_channel_create( smx_channel_t** chs, int* ch_cnt, int len,
 
     SMX_LOG_MAIN( ch, info, "create channel '%s(%d)' of length %d", name, id,
             len );
+    pthread_mutexattr_init( &mutexattr_prioinherit );
+    pthread_mutexattr_setprotocol( &mutexattr_prioinherit,
+            PTHREAD_PRIO_INHERIT );
+
+    pthread_mutex_init( &ch->ch_mutex, &mutexattr_prioinherit );
     ch->id = id;
     ch->type = type;
     ch->fifo = smx_fifo_create( len );
@@ -103,7 +109,6 @@ smx_channel_end_t* smx_channel_create_end()
     if( end == NULL )
         return NULL;
 
-    pthread_mutex_init( &end->ch_mutex, NULL );
     pthread_cond_init( &end->ch_cv, NULL );
     return end;
 }
@@ -119,6 +124,7 @@ void smx_channel_destroy( smx_channel_t* ch )
     smx_fifo_destroy( ch->fifo );
     smx_channel_destroy_end( ch->sink );
     smx_channel_destroy_end( ch->source );
+    pthread_mutex_destroy( &ch->ch_mutex );
     free( ch );
 }
 
@@ -127,7 +133,6 @@ void smx_channel_destroy_end( smx_channel_end_t* end )
 {
     if( end == NULL )
         return;
-    pthread_mutex_destroy( &end->ch_mutex );
     pthread_cond_destroy( &end->ch_cv );
     free( end );
 }
@@ -145,13 +150,12 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
         return NULL;
     }
 
-    pthread_mutex_lock( &ch->source->ch_mutex);
+    pthread_mutex_lock( &ch->ch_mutex);
     while( ch->source->state == SMX_CHANNEL_PENDING )
     {
         SMX_LOG_CH( ch, debug, "waiting for message" );
-        pthread_cond_wait( &ch->source->ch_cv, &ch->source->ch_mutex );
+        pthread_cond_wait( &ch->source->ch_cv, &ch->ch_mutex );
     }
-    pthread_mutex_unlock( &ch->source->ch_mutex );
     switch( ch->type ) {
         case SMX_FIFO:
         case SMX_D_FIFO:
@@ -167,9 +171,8 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
             return NULL;
     }
     // notify producer that space is available
-    pthread_mutex_lock( &ch->sink->ch_mutex );
     smx_channel_change_write_state( ch, SMX_CHANNEL_READY );
-    pthread_mutex_unlock( &ch->sink->ch_mutex );
+    pthread_mutex_unlock( &ch->ch_mutex );
     return msg;
 }
 
@@ -195,18 +198,18 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
 void smx_channel_terminate_sink( smx_channel_t* ch )
 {
     zlog_debug( ch->cat, "mark as stale" );
-    pthread_mutex_lock( &ch->sink->ch_mutex );
+    pthread_mutex_lock( &ch->ch_mutex );
     smx_channel_change_write_state( ch, SMX_CHANNEL_END );
-    pthread_mutex_unlock( &ch->sink->ch_mutex );
+    pthread_mutex_unlock( &ch->ch_mutex );
 }
 
 /*****************************************************************************/
 void smx_channel_terminate_source( smx_channel_t* ch )
 {
     zlog_debug( ch->cat, "mark as stale" );
-    pthread_mutex_lock( &ch->source->ch_mutex );
+    pthread_mutex_lock( &ch->ch_mutex );
     smx_channel_change_read_state( ch, SMX_CHANNEL_END );
-    pthread_mutex_unlock( &ch->source->ch_mutex );
+    pthread_mutex_unlock( &ch->ch_mutex );
 }
 
 /*****************************************************************************/
@@ -223,17 +226,23 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         return -1;
     }
 
-    pthread_mutex_lock( &ch->sink->ch_mutex );
+    if( msg == NULL )
+    {
+        SMX_LOG_MAIN( main, warn, "write aborted: message is NULL" );
+        return -1;
+    }
+
+    pthread_mutex_lock( &ch->ch_mutex );
     while( ch->sink->state == SMX_CHANNEL_PENDING )
     {
         SMX_LOG_CH( ch, debug, "waiting for free space" );
-        pthread_cond_wait( &ch->sink->ch_cv, &ch->sink->ch_mutex );
+        pthread_cond_wait( &ch->sink->ch_cv, &ch->ch_mutex );
     }
     if( ch->sink->state == SMX_CHANNEL_END ) abort = true;
-    pthread_mutex_unlock( &ch->sink->ch_mutex );
     if( abort )
     {
-        SMX_LOG_CH( ch, notice, "write aborted" );
+        pthread_mutex_unlock( &ch->ch_mutex );
+        SMX_LOG_CH( ch, notice, "write aborted: consumer has termninated" );
         smx_msg_destroy( h, msg, true );
         return -1;
     }
@@ -243,16 +252,25 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         case SMX_FIFO_D:
             if( ch->guard != NULL )
                 smx_guard_write( h, ch );
-            smx_fifo_write( h, ch, ch->fifo, msg );
+            if( smx_fifo_write( h, ch, ch->fifo, msg ) < 0 )
+            {
+                SMX_LOG_CH( ch, error, "write to fifo failed" );
+                smx_msg_destroy( h, msg, true );
+            }
             break;
         case SMX_D_FIFO:
         case SMX_D_FIFO_D:
             if( ch->guard != NULL )
                 // discard message if miat is not reached
-                if( smx_d_guard_write( h, ch, msg ) ) return 0;
+                if( smx_d_guard_write( h, ch, msg ) )
+                {
+                    pthread_mutex_unlock( &ch->ch_mutex );
+                    return 0;
+                }
             smx_d_fifo_write( h, ch, ch->fifo, msg );
             break;
         default:
+            pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, error, "undefined channel type '%d'", ch->type );
             return -1;
     }
@@ -269,9 +287,8 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
                 new_count );
     }
     // notify consumer that messages are available
-    pthread_mutex_lock( &ch->source->ch_mutex );
     smx_channel_change_read_state( ch, SMX_CHANNEL_READY );
-    pthread_mutex_unlock( &ch->source->ch_mutex );
+    pthread_mutex_unlock( &ch->ch_mutex );
     return 0;
 }
 
@@ -363,7 +380,6 @@ smx_fifo_t* smx_fifo_create( int length )
     fifo->tail->prev = fifo->head;
     fifo->tail = fifo->head;
     fifo->backup = NULL;
-    pthread_mutex_init( &fifo->fifo_mutex, NULL );
     fifo->count = 0;
     fifo->overwrite = 0;
     fifo->copy = 0;
@@ -377,7 +393,6 @@ void smx_fifo_destroy( smx_fifo_t* fifo )
     if( fifo == NULL )
         return;
 
-    pthread_mutex_destroy( &fifo->fifo_mutex );
     for( int i=0; i < fifo->length; i++ ) {
         if( fifo->head == NULL )
             continue;
@@ -404,26 +419,24 @@ smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
     if( fifo->count > 0 )
     {
         // messages are available
-        pthread_mutex_lock( &fifo->fifo_mutex );
         msg = fifo->head->msg;
         fifo->head->msg = NULL;
         fifo->head = fifo->head->prev;
         fifo->count--;
+        if( fifo->count == 0 )
+        {
+            smx_channel_change_read_state( ch, SMX_CHANNEL_PENDING );
+        }
         new_count = fifo->count;
-        pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "read from fifo (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
-        if( new_count == 0 )
-        {
-            pthread_mutex_lock( &ch->source->ch_mutex );
-            smx_channel_change_read_state( ch, SMX_CHANNEL_PENDING );
-            pthread_mutex_unlock( &ch->source->ch_mutex );
-        }
     }
     else if( ch->source->state != SMX_CHANNEL_END )
     {
-        SMX_LOG_CH( ch, error, "channel is ready but is empty" );
+        new_count = fifo->count;
+        SMX_LOG_CH( ch, error, "channel is ready but is empty (%d/%d)",
+                new_count, fifo->length );
         return NULL;
     }
 
@@ -442,7 +455,6 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
     if( fifo->count > 0 )
     {
         // messages are available
-        pthread_mutex_lock( &fifo->fifo_mutex );
         msg = fifo->head->msg;
         fifo->head->msg = NULL;
         fifo->head = fifo->head->prev;
@@ -454,8 +466,8 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
             fifo->backup = smx_msg_copy( h, msg );
         }
         fifo->count--;
+        fifo->copy = 0;
         new_count = fifo->count;
-        pthread_mutex_unlock( &fifo->fifo_mutex );
 
         smx_msg_destroy( h, old_backup, true );
         SMX_LOG_CH( ch, info, "read from fifo_d (new count: %d)", new_count );
@@ -465,16 +477,17 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
     {
         if( fifo->backup != NULL )
         {
-            pthread_mutex_lock( &fifo->fifo_mutex );
             msg = smx_msg_copy( h, fifo->backup );
             fifo->copy++;
-            pthread_mutex_unlock( &fifo->fifo_mutex );
+
             SMX_LOG_CH( ch, info, "fifo_d is empty, duplicate backup" );
             smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_DUPLICATE, 0 );
         }
         else
+        {
             SMX_LOG_CH( ch, notice,
                     "nothing to read, fifo and its backup is empty" );
+        }
     }
     return msg;
 }
@@ -490,13 +503,11 @@ smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
     if( fifo->count > 0 )
     {
         // messages are available
-        pthread_mutex_lock( &fifo->fifo_mutex );
         msg = fifo->head->msg;
         fifo->head->msg = NULL;
         fifo->head = fifo->head->prev;
         fifo->count--;
         new_count = fifo->count;
-        pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "read from fifo_dd (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
@@ -514,25 +525,23 @@ int smx_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
 
     if(fifo->count < fifo->length)
     {
-        pthread_mutex_lock( &fifo->fifo_mutex );
         fifo->tail->msg = msg;
         fifo->tail = fifo->tail->prev;
         fifo->count++;
+        if( fifo->count == fifo->length )
+        {
+            smx_channel_change_write_state( ch, SMX_CHANNEL_PENDING );
+        }
         new_count = fifo->count;
-        pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "write to fifo (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE, new_count );
-        if( new_count == fifo->length )
-        {
-            pthread_mutex_lock( &ch->sink->ch_mutex );
-            smx_channel_change_write_state( ch, SMX_CHANNEL_PENDING );
-            pthread_mutex_unlock( &ch->sink->ch_mutex );
-        }
     }
     else
     {
-        SMX_LOG_CH( ch, warn, "channel is ready but has no space" );
+        new_count = fifo->count;
+        SMX_LOG_CH( ch, warn, "channel is ready but has no space (%d/%d)",
+                new_count, fifo->length );
         return -1;
     }
     return 0;
@@ -547,26 +556,23 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
     if( ch == NULL || fifo == NULL || msg == NULL )
         return -1;
 
+    SMX_LOG_CH( ch, debug, "prepare to write to fifo_d" );
     if( fifo->count < fifo->length )
     {
-        pthread_mutex_lock( &fifo->fifo_mutex );
         fifo->tail->msg = msg;
         fifo->tail = fifo->tail->prev;
         fifo->count++;
         new_count = fifo->count;
         fifo->overwrite = 0;
-        pthread_mutex_unlock( &fifo->fifo_mutex );
 
         SMX_LOG_CH( ch, info, "write to fifo_d (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE, new_count );
     }
     else
     {
-        pthread_mutex_lock( &fifo->fifo_mutex );
         msg_tmp = fifo->tail->msg;
         fifo->tail->msg = msg;
         fifo->overwrite++;
-        pthread_mutex_unlock( &fifo->fifo_mutex );
 
         smx_msg_destroy( h, msg_tmp, true );
         SMX_LOG_CH( ch, notice, "overwrite tail of fifo" );

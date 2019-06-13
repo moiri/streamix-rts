@@ -39,11 +39,15 @@ void smx_net_rn_destroy( net_smx_rn_t* cp )
 /*****************************************************************************/
 void smx_net_rn_init( net_smx_rn_t* cp )
 {
+    pthread_mutexattr_t mutexattr_prioinherit;
     cp->in.collector = smx_malloc( sizeof( struct smx_collector_s ) );
     if( cp->in.collector == NULL )
         return;
 
-    pthread_mutex_init( &cp->in.collector->col_mutex, NULL );
+    pthread_mutexattr_init( &mutexattr_prioinherit );
+    pthread_mutexattr_setprotocol( &mutexattr_prioinherit,
+            PTHREAD_PRIO_INHERIT );
+    pthread_mutex_init( &cp->in.collector->col_mutex, &mutexattr_prioinherit );
     pthread_cond_init( &cp->in.collector->col_cv, NULL );
     cp->in.collector->count = 0;
     cp->in.collector->state = SMX_CHANNEL_PENDING;
