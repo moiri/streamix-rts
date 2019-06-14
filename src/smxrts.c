@@ -83,3 +83,9 @@ smx_rts_t* smx_program_init()
 
     return rts;
 }
+
+/*****************************************************************************/
+void smx_program_init_run( smx_rts_t* rts )
+{
+    pthread_barrier_init( &rts->init_done, NULL, rts->net_cnt );
+}

@@ -32,12 +32,13 @@ typedef struct smx_rts_s smx_rts_t;
 
 struct smx_rts_s
 {
-    smx_channel_t* chs[SMX_MAX_CHS];
-    smx_net_t* nets[SMX_MAX_NETS];
-    pthread_t ths[SMX_MAX_NETS];
-    void* conf;
     int ch_cnt;
     int net_cnt;
+    pthread_barrier_t init_done;
+    void* conf;
+    pthread_t ths[SMX_MAX_NETS];
+    smx_channel_t* chs[SMX_MAX_CHS];
+    smx_net_t* nets[SMX_MAX_NETS];
 };
 
 // USER MACROS -----------------------------------------------------------------
@@ -113,7 +114,7 @@ struct smx_rts_s
 
 #define SMX_NET_CREATE( id, net_name, box_name )\
     rts->nets[id] = smx_net_create( &rts->net_cnt, id, #net_name,\
-            STRINGIFY( net_ ## net_name ## _ ## id ), &rts->conf )
+            STRINGIFY( net_ ## net_name ## _ ## id ), &rts->conf, &rts->init_done )
 
 #define SMX_NET_DESTROY( id )\
     smx_net_destroy( rts->nets[id] )
@@ -151,7 +152,8 @@ struct smx_rts_s
 #define SMX_NET_WAIT_END( id )\
     pthread_join( rts->ths[id], NULL )
 
-#define SMX_PROGRAM_INIT_RUN() ;
+#define SMX_PROGRAM_INIT_RUN()\
+    smx_program_init_run( rts )
 
 #define SMX_PROGRAM_CLEANUP()\
     smx_program_cleanup( rts )
@@ -160,7 +162,8 @@ struct smx_rts_s
     smx_rts_t* rts = smx_program_init()
 
 #define START_ROUTINE_NET( h, box_name )\
-    start_routine_net( h, box_name, box_name ## _init, box_name ## _cleanup )
+    start_routine_net( h, box_name, box_name ## _init,\
+            box_name ## _cleanup )
 
 #define SMX_NET_EXTERN( box_name )\
     extern int box_name( void*, void* );\
@@ -187,7 +190,8 @@ void smx_program_cleanup( smx_rts_t* rts );
 smx_rts_t* smx_program_init();
 
 /**
- * Initialize the profiler if enabled.
+ * Initialize the synchronisation barrier to make sure all nets finish
+ * intialisation befor staring the main loop.
  *
  * @param rts a pointer to the RTS structure which holds the network information.
  */

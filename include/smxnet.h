@@ -32,6 +32,7 @@ enum smx_thread_state_e
 struct smx_net_s
 {
     unsigned int        id;         /**< a unique net id */
+    pthread_barrier_t*  init_done;  /**< pointer to the init sync barrier */
     zlog_category_t*    cat;        /**< the log category */
     smx_channel_t*      profiler;   /**< a pointer to the profiler channel */
     smx_net_sig_t*      sig;        /**< the net port signature */
@@ -110,10 +111,11 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
  * @param name      the name of the net
  * @param cat_name  the name of the zlog category
  * @param conf      a pointer to the net configuration structure
+ * @param init_done a pointer to the init sync barrier
  * @return          a pointer to the ctreated net or NULL
  */
 smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
-        const char* cat_name, void** conf );
+        const char* cat_name, void** conf, pthread_barrier_t* init_done );
 
 /**
  * Destroy a net

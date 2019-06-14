@@ -84,7 +84,7 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
 
 /*****************************************************************************/
 smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
-        const char* cat_name, void** conf )
+        const char* cat_name, void** conf, pthread_barrier_t* init_done )
 {
     if( id >= SMX_MAX_NETS )
     {
@@ -111,6 +111,7 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->sig->out.len = 0;
 
     net->id = id;
+    net->init_done = init_done;
     net->cat = zlog_get_category( cat_name );
     net->conf = NULL;
     net->profiler = NULL;
@@ -309,6 +310,7 @@ void smx_net_terminate( smx_net_t* h )
 void* start_routine_net( smx_net_t* h, int impl( void*, void* ),
         int init( void*, void** ), void cleanup( void*, void* ) )
 {
+    int init_res;
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
     xmlChar* profiler = NULL;
@@ -337,7 +339,10 @@ void* start_routine_net( smx_net_t* h, int impl( void*, void* ),
     if( h->profiler != NULL )
         SMX_LOG_NET( h, notice, "profiler enabled" );
 
-    if( init( h, &net_state ) == 0)
+    init_res = init( h, &net_state );
+    pthread_barrier_wait( h->init_done );
+
+    if( init_res == 0)
     {
         SMX_LOG_NET( h, notice, "start net" );
         while( state == SMX_NET_CONTINUE )
