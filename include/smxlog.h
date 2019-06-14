@@ -32,7 +32,7 @@
  *
  */
 #define SMX_LOG_MAIN( cat, level, format, ... )\
-    SMX_LOG_INTERN( level, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ );\
+    SMX_LOG_INTERN( level, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ )
 
 /**
  *

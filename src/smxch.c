@@ -120,7 +120,7 @@ void smx_channel_destroy( smx_channel_t* ch )
     if( ch == NULL )
         return;
     SMX_LOG_MAIN( ch, debug, "destroy channel '%s(%d)' (msg count: %d)",
-            ch->name, ch->id, ch->fifo->count )
+            ch->name, ch->id, ch->fifo->count );
     smx_guard_destroy( ch->guard );
     smx_fifo_destroy( ch->fifo );
     smx_channel_destroy_end( ch->sink );

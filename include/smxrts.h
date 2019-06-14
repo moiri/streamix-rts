@@ -162,8 +162,7 @@ struct smx_rts_s
     smx_rts_t* rts = smx_program_init()
 
 #define START_ROUTINE_NET( h, box_name )\
-    start_routine_net( h, box_name, box_name ## _init,\
-            box_name ## _cleanup )
+    start_routine_net( h, box_name, box_name ## _init, box_name ## _cleanup )
 
 #define SMX_NET_EXTERN( box_name )\
     extern int box_name( void*, void* );\
