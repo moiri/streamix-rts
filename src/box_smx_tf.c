@@ -65,21 +65,20 @@ smx_timer_t* smx_net_create_tf( int sec, int nsec )
 }
 
 /*****************************************************************************/
-void smx_net_destroy_tf( smx_net_t* tt )
+void smx_net_destroy_tf( smx_net_t* net )
 {
-    if( tt == NULL )
+    if( net == NULL )
         return;
 
-    smx_timer_t* sig = tt->attr;
-    net_smx_tf_t* tf = sig->tfs;
+    smx_timer_t* tt = net->attr;
+    net_smx_tf_t* tf = tt->tfs;
     net_smx_tf_t* tf_tmp;
     while( tf != NULL ) {
         tf_tmp = tf;
         tf = tf->next;
         free( tf_tmp );
     }
-    close( sig->fd );
-    free( sig );
+    close( tt->fd );
     free( tt );
 }
 

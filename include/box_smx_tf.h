@@ -69,9 +69,9 @@ smx_timer_t* smx_net_create_tf( int sec, int nsec);
 /**
  * @brief destroy a timer structure and the list of temporal firewalls inside
  *
- * @param tt    pointer to the temporal firewall
+ * @param net    pointer to the temporal firewall
  */
-void smx_net_destroy_tf( smx_net_t* tt );
+void smx_net_destroy_tf( smx_net_t* net );
 
 /**
  * Allocate net ports and assign connected tf ports to the net ports
