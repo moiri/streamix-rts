@@ -37,11 +37,11 @@ smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
     msg->id = msg_count++;
     SMX_LOG_MAIN( msg, info, "create message '%lu' in '%s(%d)'", msg->id,
             SMX_NET_GET_NAME( h ), SMX_NET_GET_ID( h ) );
+    msg->is_profiler = is_profiler;
     if( !is_profiler )
         smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_CREATE );
     msg->data = data;
     msg->size = size;
-    msg->is_profiler = is_profiler;
     if( copy == NULL ) msg->copy = smx_msg_data_copy;
     else msg->copy = copy;
     if( destroy == NULL ) msg->destroy = smx_msg_data_destroy;

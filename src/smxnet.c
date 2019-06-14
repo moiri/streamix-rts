@@ -83,31 +83,39 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
 }
 
 /*****************************************************************************/
-int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
-        const char* name, const char* cat_name, void* sig, void** conf )
+smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
+        const char* cat_name, void** conf )
 {
-    nets[id] = NULL;
-    // sig is allocated in the macro, hence, the NULL check is done here
-    if( sig == NULL )
-        return -1;
-
     if( id >= SMX_MAX_NETS )
     {
         SMX_LOG_MAIN( main, fatal, "net count exeeds maximum %d", id );
-        return -1;
+        return NULL;
     }
 
     xmlNodePtr cur = NULL;
     smx_net_t* net = smx_malloc( sizeof( struct smx_net_s ) );
     if( net == NULL )
-        return -1;
+        return NULL;
+
+    net->sig = smx_malloc( sizeof( struct smx_net_sig_s ) );
+    if( net->sig == NULL )
+    {
+        free( net );
+        return NULL;
+    }
+    net->sig->in.ports = NULL;
+    net->sig->in.count = 0;
+    net->sig->in.len = 0;
+    net->sig->out.ports = NULL;
+    net->sig->out.count = 0;
+    net->sig->out.len = 0;
 
     net->id = id;
     net->cat = zlog_get_category( cat_name );
-    net->sig = sig;
     net->conf = NULL;
     net->profiler = NULL;
     net->name = name;
+    net->attr = NULL;
 
     cur = xmlDocGetRootElement( (xmlDocPtr)*conf );
     cur = cur->xmlChildrenNode;
@@ -121,36 +129,44 @@ int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
         cur = cur->next;
     }
 
-    nets[id] = net;
     (*net_cnt)++;
     SMX_LOG_MAIN( net, info, "create net instance %s(%d)", name, id );
-    return 0;
+    return net;
 }
 
 /*****************************************************************************/
-void smx_net_destroy( void* in, void* out, void* sig, void* h )
+void smx_net_destroy( smx_net_t* h )
 {
-    if( in != NULL )
-        free( in );
-    if( out != NULL )
-        free( out );
-    if( sig != NULL )
-        free( sig );
     if( h != NULL )
+    {
+        if( h->sig != NULL )
+        {
+            if( h->sig->in.ports != NULL )
+                free( h->sig->in.ports );
+            if( h->sig->out.ports != NULL )
+                free( h->sig->out.ports );
+            free( h->sig );
+        }
         free( h );
+    }
 }
 
 /*****************************************************************************/
-void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
-        int* out_cnt, smx_channel_t*** out_ports, int out_degree )
+void smx_net_init( smx_net_t* h, int indegree, int outdegree )
 {
-    if( in_cnt == NULL || in_ports == NULL || out_cnt == NULL || out_ports == NULL )
+    int i;
+    if( h == NULL || h->sig == NULL )
         return;
 
-    *in_cnt = 0;
-    *out_cnt = 0;
-    *in_ports = smx_malloc( sizeof( smx_channel_t* ) * in_degree );
-    *out_ports = smx_malloc( sizeof( smx_channel_t* ) * out_degree );
+    h->sig->in.len = indegree;
+    h->sig->in.ports = smx_malloc( sizeof( smx_channel_t* ) * indegree );
+    for( i = 0; i < indegree; i++ )
+        h->sig->in.ports[i] = NULL;
+
+    h->sig->out.len = outdegree;
+    h->sig->out.ports = smx_malloc( sizeof( smx_channel_t* ) * outdegree );
+    for( i = 0; i < indegree; i++ )
+        h->sig->in.ports[i] = NULL;
 }
 
 /*****************************************************************************/
@@ -198,18 +214,22 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
 }
 
 /*****************************************************************************/
-int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
-        smx_channel_t** chs_out, int len_out, int state )
+int smx_net_update_state( smx_net_t* h, int state )
 {
-    int i;
-    int done_cnt_in = 0;
-    int done_cnt_out = 0;
-    int trigger_cnt = 0;
-    if( chs_in == NULL || chs_out == NULL )
+    if( h->sig == NULL || h->sig->in.ports == NULL || h->sig->out.ports == NULL )
     {
         SMX_LOG_MAIN( main, fatal, "net channels not initialised" );
         return SMX_NET_END;
     }
+
+    int i;
+    int done_cnt_in = 0;
+    int done_cnt_out = 0;
+    int trigger_cnt = 0;
+    int len_in = h->sig->in.count;
+    int len_out = h->sig->out.count;
+    smx_channel_t** chs_in = h->sig->in.ports;
+    smx_channel_t** chs_out = h->sig->out.ports;
 
     // if state is forced by box implementation return forced state
     if( state != SMX_NET_RETURN ) return state;
@@ -217,6 +237,7 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
     // check if a triggering input is still producing
     for( i=0; i<len_in; i++ )
     {
+        if( chs_in[i] == NULL ) continue;
         if( ( chs_in[i]->type == SMX_FIFO )
                 || ( chs_in[i]->type == SMX_D_FIFO ) )
         {
@@ -230,6 +251,7 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
     // check if consumer is available
     for( i=0; i<len_out; i++ )
     {
+        if( chs_out[i] == NULL ) continue;
         if( chs_out[i]->sink->state == SMX_CHANNEL_END )
             done_cnt_out++;
     }
@@ -252,26 +274,34 @@ int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
 }
 
 /*****************************************************************************/
-void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
-        smx_channel_t** chs_out, int len_out )
+void smx_net_terminate( smx_net_t* h )
 {
-    int i;
-    smx_net_t* net = h;
-    if( chs_in == NULL || chs_out == NULL )
+    if( h->sig == NULL || h->sig->in.ports == NULL || h->sig->out.ports == NULL )
+    {
+        SMX_LOG_MAIN( main, fatal, "net channels not initialised" );
         return;
+    }
+
+    int i;
+    int len_in = h->sig->in.count;
+    int len_out = h->sig->out.count;
+    smx_channel_t** chs_in = h->sig->in.ports;
+    smx_channel_t** chs_out = h->sig->out.ports;
 
     SMX_LOG_NET( h, notice, "send termination notice to neighbours" );
     for( i=0; i < len_in; i++ ) {
+        if( chs_in[i] == NULL ) continue;
         smx_channel_terminate_sink( chs_in[i] );
     }
     for( i=0; i < len_out; i++ ) {
+        if( chs_out[i] == NULL ) continue;
         smx_channel_terminate_source( chs_out[i] );
         smx_collector_terminate( chs_out[i] );
     }
-    if( net->profiler != NULL )
+    if( h->profiler != NULL )
     {
-        smx_channel_terminate_source( net->profiler );
-        smx_collector_terminate( net->profiler );
+        smx_channel_terminate_source( h->profiler );
+        smx_collector_terminate( h->profiler );
     }
 }
 
@@ -282,10 +312,6 @@ void* start_routine_net( smx_net_t* h, int impl( void*, void* ),
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
     xmlChar* profiler = NULL;
-    smx_channel_t** chs_in = SMX_SIG_PORTS( h, in );
-    smx_channel_t** chs_out = SMX_SIG_PORTS( h, out );
-    int* cnt_in = SMX_SIG_PORT_COUNT( h, in );
-    int* cnt_out = SMX_SIG_PORT_COUNT( h, out );
 
     if( h == NULL )
     {
@@ -319,13 +345,12 @@ void* start_routine_net( smx_net_t* h, int impl( void*, void* ),
             SMX_LOG_NET( h, info, "start net loop" );
             smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
             state = impl( h, net_state );
-            state = smx_net_update_state( h, chs_in, *cnt_in, chs_out,
-                    *cnt_out, state );
+            state = smx_net_update_state( h, state );
         }
     }
     else
         SMX_LOG_NET( h, error, "initialisation of net failed" );
-    smx_net_terminate( h, chs_in, *cnt_in, chs_out, *cnt_out );
+    smx_net_terminate( h );
     SMX_LOG_NET( h, notice, "cleanup net" );
     cleanup( h, net_state );
     SMX_LOG_NET( h, notice, "terminate net" );

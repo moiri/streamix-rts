@@ -22,35 +22,27 @@ void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn )
                 "unable to connect routing node: not initialised %s", elem );
         return;
     }
-    ch->collector = ( ( net_smx_rn_t* )SMX_SIG( rn ) )->in.collector;
+    ch->collector = rn->attr;
 }
 
 /*****************************************************************************/
-void smx_net_rn_destroy( net_smx_rn_t* cp )
+void smx_net_destroy_rn( smx_net_t* rn )
 {
-    if( cp == NULL )
+    if( rn == NULL )
         return;
-
-    pthread_mutex_destroy( &cp->in.collector->col_mutex );
-    pthread_cond_destroy( &cp->in.collector->col_cv );
-    free( cp->in.collector );
+    smx_collector_destroy( rn->attr );
 }
 
 /*****************************************************************************/
-void smx_net_rn_init( net_smx_rn_t* cp )
+void smx_net_init_rn( smx_net_t* rn )
 {
-    pthread_mutexattr_t mutexattr_prioinherit;
-    cp->in.collector = smx_malloc( sizeof( struct smx_collector_s ) );
-    if( cp->in.collector == NULL )
+    if( rn == NULL )
+    {
+        SMX_LOG_MAIN( main, fatal,
+                "unable to init routing node: not initialised" );
         return;
-
-    pthread_mutexattr_init( &mutexattr_prioinherit );
-    pthread_mutexattr_setprotocol( &mutexattr_prioinherit,
-            PTHREAD_PRIO_INHERIT );
-    pthread_mutex_init( &cp->in.collector->col_mutex, &mutexattr_prioinherit );
-    pthread_cond_init( &cp->in.collector->col_cv, NULL );
-    cp->in.collector->count = 0;
-    cp->in.collector->state = SMX_CHANNEL_PENDING;
+    }
+    rn->attr = smx_collector_create();
 }
 
 /*****************************************************************************/
@@ -58,21 +50,15 @@ int smx_rn( void* h, void* state )
 {
     int* last_idx = ( int* )state;
     int i;
-    net_smx_rn_t* rn = SMX_SIG( h );
-    if( rn == NULL )
-    {
-        SMX_LOG_MAIN( main, fatal, "unable to run smx_rn: not initialised" );
-        return SMX_NET_END;
-    }
+    smx_net_t* net = h;
 
     smx_msg_t* msg;
     smx_msg_t* msg_copy;
-    smx_net_t* net = h;
-    int count_in = net->in.count;
-    int count_out = net->out.count;
-    smx_channel_t** chs_in = net->in.ports;
-    smx_channel_t** chs_out = net->out.ports;
-    smx_collector_t* collector = rn->in.collector;
+    int count_in = net->sig->in.len;
+    int count_out = net->sig->out.len;
+    smx_channel_t** chs_in = net->sig->in.ports;
+    smx_channel_t** chs_out = net->sig->out.ports;
+    smx_collector_t* collector = net->attr;
 
     msg = smx_net_collector_read( h, collector, chs_in, count_in, last_idx );
     if(msg != NULL)

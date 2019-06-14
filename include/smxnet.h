@@ -14,6 +14,7 @@
 #define SMX_MAX_NETS 1000
 
 typedef struct smx_net_s smx_net_t;                   /**< ::smx_net_s */
+typedef struct smx_net_sig_s smx_net_sig_t;           /**< ::smx_net_sig_s */
 
 /**
  * @brief Constants to indicate wheter a thread should terminate or continue
@@ -30,19 +31,29 @@ enum smx_thread_state_e
  */
 struct smx_net_s
 {
+    unsigned int        id;         /**< a unique net id */
     zlog_category_t*    cat;        /**< the log category */
     smx_channel_t*      profiler;   /**< a pointer to the profiler channel */
-    void*               sig;        /**< the net port signature */
+    smx_net_sig_t*      sig;        /**< the net port signature */
+    void*               attr;       /**< custom attributes of special nets */
     void*               conf;       /**< pointer to the XML configuration */
     const char*         name;       /**< the name of the net */
-    unsigned int        id;         /**< a unique net id */
+};
+
+/**
+ * The signature of a net
+ */
+struct smx_net_sig_s
+{
     struct {
+        int count;                  /**< the number of connected input ports */
+        int len;                    /**< the number of input ports */
         smx_channel_t** ports;      /**< an array of channel pointers */
-        int count;                  /**< the number of input ports */
     } in;                           /**< input channels */
     struct {
+        int count;                  /**< the number of connected output ports */
+        int len;                    /**< the number of output ports */
         smx_channel_t** ports;      /**< an array of channel pointers */
-        int count;                  /**< the number of output ports */
     } out;                          /**< output channels */
 };
 
@@ -93,28 +104,23 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
  *  - assigning the net-specifix XML configuartion
  *  - assigning the net signature
  *
- * @param nets      the target array where the new net will be stored
  * @param net_cnt   pointer to the net counter (is increased by one after net
  *                  creation)
  * @param id        a unique net identifier
  * @param name      the name of the net
  * @param cat_name  the name of the zlog category
- * @param sig       a pointer to the net signature
  * @param conf      a pointer to the net configuration structure
- * @return          0 on success, -1 on failure
+ * @return          a pointer to the ctreated net or NULL
  */
-int smx_net_create( smx_net_t** nets, int* net_cnt, unsigned int id,
-        const char* name, const char* cat_name, void* sig, void** conf );
+smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
+        const char* cat_name, void** conf );
 
 /**
  * Destroy a net
  *
- * @param in    a pointer to the input port structure
- * @param out   a pointer to the output port structure
- * @param sig   a pointer to the net signature
- * @param net   a pointer to the net handler
+ * @param h         pointer to the net handler
  */
-void smx_net_destroy( void* in, void* out, void* sig, void* h );
+void smx_net_destroy( smx_net_t* h );
 
 /**
  * Initialise a net
@@ -126,8 +132,7 @@ void smx_net_destroy( void* in, void* out, void* sig, void* h );
  * @param out_ports     pointer to the output ports array
  * @param out_degree    number of output ports
  */
-void smx_net_init( int* in_cnt, smx_channel_t*** in_ports, int in_degree,
-        int* out_cnt, smx_channel_t*** out_ports, int out_degree );
+void smx_net_init( smx_net_t* net, int indegree, int outdegree );
 
 /**
  * @brief create pthred of net
@@ -155,10 +160,6 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
  * the thread execution.
  *
  * @param h         pointer to the net handler
- * @param chs_in    a list of input channels
- * @param len_in    number of input channels
- * @param chs_out   a list of output channels
- * @param len_out   number of output channels
  * @param state     state set by the box implementation. If set to
  *                  SMX_NET_CONTINUE, the box will not terminate. If set to
  *                  SMX_NET_END, the box will terminate. If set to
@@ -168,21 +169,15 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
  *                  producer alive. SMX_BOX_TERINATE if all triggering
  *                  prodicers are terminated.
  */
-int smx_net_update_state( void* h, smx_channel_t** chs_in, int len_in,
-        smx_channel_t** chs_out, int len_out, int state );
+int smx_net_update_state( smx_net_t* h, int state );
 
 /**
  * @brief Set all channel states to end and send termination signal to all
  * output channels.
  *
  * @param h         pointer to the net handler
- * @param chs_in    a list of input channels
- * @param len_in    number of input channels
- * @param chs_out   a list of output channels
- * @param len_out   number of output channels
  */
-void smx_net_terminate( void* h, smx_channel_t** chs_in, int len_in,
-        smx_channel_t** chs_out, int len_out );
+void smx_net_terminate( smx_net_t* h );
 
 /**
  * @brief the start routine of a thread associated to a box

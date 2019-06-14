@@ -14,20 +14,20 @@
 #ifndef BOX_SMX_PROFILER_H
 #define BOX_SMX_PROFILER_H
 
-typedef struct net_smx_profiler_s net_smx_profiler_t;/**< ::net_smx_profiler_s */
-
 /**
  * The signature of the profiler port collecter
  */
-struct net_smx_profiler_s
+enum net_smx_profiler_out_e
 {
-    struct {
-        smx_collector_t* collector; /**< ::smx_collector_s */
-    } in;                           /**< input channels */
-    struct {
-        smx_channel_t* port_profiler;
-    } out;                          /**< output channels */
+    SMX_PORT_IDX_smx_profiler_out_profiler
 };
+
+/**
+ * Destroy the profiler collector signature
+ *
+ * @param profiler  pointer to the profiler collector net
+ */
+void smx_net_destroy_profiler( smx_net_t* profiler );
 
 /**
  * Connect the profiler collector to all nets and the profiler backend
@@ -37,21 +37,15 @@ struct net_smx_profiler_s
  *                  the profiler
  * @param net_cnt   the number of nets
  */
-void smx_connect_profiler( smx_net_t* profiler, smx_net_t** nets, int net_cnt );
-
-/**
- * Destroy the profiler collector signature
- *
- * @param profiler  pointer to the profiler collector net
- */
-void smx_net_profiler_destroy( smx_net_t* profiler );
+void smx_net_finalize_profiler( smx_net_t* profiler, smx_net_t** nets,
+        int net_cnt );
 
 /**
  * Initialize the profiler collector signature
  *
  * @param profiler  pointer to the profiler collector net
  */
-void smx_net_profiler_init( smx_net_t* profiler );
+void smx_net_init_profiler( smx_net_t* profiler );
 
 /**
  * Read the timestamp from available messaes in the profiler collector.

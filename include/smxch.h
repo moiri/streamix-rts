@@ -162,7 +162,6 @@ void smx_channel_change_write_state( smx_channel_t* ch,
 /**
  * @brief Create Streamix channel
  *
- * @param chs       the target array where the channel will be stored
  * @param ch_cnt    pointer to the channel counter (is increased by one after
  *                  channel creation)
  * @param len       length of a FIFO
@@ -170,9 +169,9 @@ void smx_channel_change_write_state( smx_channel_t* ch,
  * @param id        unique identifier of the channel
  * @param name      name of the channel
  * @param cat_name  name of the channel zlog category
- * @return          0 on success, -1 otherwise
+ * @return          a pointer to the created channel or NULL
  */
-int smx_channel_create( smx_channel_t** chs, int* ch_cnt, int len,
+smx_channel_t* smx_channel_create( int* ch_cnt, int len,
         smx_channel_type_t type, int id, const char* name,
         const char* cat_name );
 
@@ -248,6 +247,20 @@ void smx_channel_terminate_source( smx_channel_t* ch );
 int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg );
 
 /**
+ * Create a collector structure and initialize it.
+ *
+ * @return a pointer to the created collector strcuture or NULL.
+ */
+smx_collector_t* smx_collector_create();
+
+/**
+ * Destroy and deinit a collector structure.
+ *
+ * @param collector a pointer to the collector structure to be destroyed.
+ */
+void smx_collector_destroy( smx_collector_t* collector );
+
+/**
  * Send the termination signal to the collector
  *
  * @param ch    pointer to the channel
@@ -260,24 +273,13 @@ void smx_collector_terminate( smx_channel_t* ch );
  *
  * @param dest        a pointer to the destination
  * @param src         a pointer to the source
- */
-void smx_connect( smx_channel_t** dest, smx_channel_t* src );
-
-/**
- * Connect a channel to a net by index.
- *
- * @param dest        a pointer to the destination
- * @param idx         a pointer to the destination index of the port array
- * @param src         a pointer to the source
- * @param dest_id     the id of the destination
- * @param src_id      the id of the source
- * @param dest_name   a string literal of the destination name
- * @param src_name    a string literal of the source name
+ * @param net_id      the id of the net
+ * @param net_name    the name of the net
  * @param mode        the direction of the connection
+ * @param count       pointer to th econnected port counter
  */
-void smx_connect_arr( smx_channel_t** dest, int* idx, smx_channel_t* src,
-        int dest_id, int src_id, const char* dest_name, const char* src_name,
-        const char* mode );
+void smx_connect( smx_channel_t** dest, smx_channel_t* src, int net_id,
+        const char* net_name, const char* mode, int* count );
 
 /**
  * Connect a guard to a channel

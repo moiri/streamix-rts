@@ -13,28 +13,64 @@
 #define SMX_MODE_in     "->"
 #define SMX_MODE_out    "<-"
 
+#define SMX_NO_SIG( h )\
+    ( SMX_SIG( h ) == NULL )
+
+#define SMX_NO_SIG_PORT( h, box_name, port_name, mode )\
+    SMX_SIG_PORT_LEN_NC( h, mode ) <= SMX_SIG_PORT_IDX( box_name, port_name, mode )
+
 #define SMX_SIG( h )\
-    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->sig )
+    ( ( h == NULL ) ? NULL : SMX_SIG_NC( h ) )
+
+#define SMX_SIG_NC( h )\
+    ( ( smx_net_sig_t* )( ( smx_net_t* )h )->sig )
 
 #define SMX_SIG_CAT( h )\
-    ( h == NULL ) ? zlog_get_category( "undef" ) : ( ( smx_net_t* )h )->cat
+    ( h == NULL ) ? zlog_get_category( "undef" ) : SMX_SIG_CAT_NC( h )
+
+#define SMX_SIG_CAT_NC( h )\
+    ( ( smx_net_t* )h )->cat
 
 #define SMX_SIG_PORT( h, box_name, port_name, mode )\
-    ( SMX_SIG( h ) == NULL ) ? NULL : ( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
-            ->mode.port_ ## port_name
+    ( ( SMX_NO_SIG( h ) || SMX_NO_SIG_PORT( h, box_name, port_name, mode ) )\
+        ? NULL : SMX_SIG_PORT_NC( h, box_name, port_name, mode ) )
 
-#define SMX_SIG_PORT_PTR( h, box_name, port_name, mode )\
-    ( SMX_SIG( h ) == NULL ) ? NULL : &( ( net_ ## box_name ## _t* )SMX_SIG( h ) )\
-            ->mode.port_ ## port_name
+#define SMX_SIG_PORT_ARR( h, box_name, port_name, mode )\
+    ( SMX_NO_SIG( h ) ? NULL : SMX_SIG_PORT_ARR_NC( h, mode ) )
+
+#define SMX_SIG_PORT_ARR_NC( h, mode )\
+    SMX_SIG_PORTS_NC( h, mode )[SMX_SIG_PORT_COUNT_NC( h, mode )]
+
+#define SMX_SIG_PORT_ARR_PTR( h, mode )\
+    ( SMX_NO_SIG( h ) ? NULL : &SMX_SIG_PORT_ARR_NC( h, mode ) )
+
+#define SMX_SIG_PORT_LEN( h, mode )\
+    ( SMX_NO_SIG( h ) ? NULL : &SMX_SIG_PORT_LEN_NC( h, mode ) )
+
+#define SMX_SIG_PORT_LEN_NC( h, mode )\
+    SMX_SIG_NC( h )->mode.len
 
 #define SMX_SIG_PORT_COUNT( h, mode )\
-    ( h == NULL ) ? NULL : &( ( smx_net_t* )h )->mode.count
+    ( SMX_NO_SIG( h ) ? NULL : &SMX_SIG_PORT_COUNT_NC( h, mode ) )
+
+#define SMX_SIG_PORT_COUNT_NC( h, mode )\
+    SMX_SIG_NC( h )->mode.count
+
+#define SMX_SIG_PORT_IDX( box_name, port_name, mode )\
+    SMX_PORT_IDX_ ## box_name ## _ ## mode ## _ ## port_name
+
+#define SMX_SIG_PORT_NC( h, box_name, port_name, mode )\
+    SMX_SIG_PORTS_NC( h, mode )[SMX_SIG_PORT_IDX( box_name, port_name, mode )]
+
+#define SMX_SIG_PORT_PTR( h, box_name, port_name, mode )\
+    ( ( SMX_NO_SIG( h ) || SMX_NO_SIG_PORT( h, box_name, port_name, mode ) )\
+        ? NULL : &SMX_SIG_PORT_NC( h, box_name, port_name, mode ) )
 
 #define SMX_SIG_PORTS( h, mode )\
-    ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->mode.ports
+    ( SMX_NO_SIG( h ) ? NULL : SMX_SIG_PORTS_NC( h, mode ) )
 
-#define SMX_SIG_PORTS_PTR( h, mode )\
-    ( h == NULL ) ? NULL : &( ( smx_net_t* )h )->mode.ports
+#define SMX_SIG_PORTS_NC( h, mode )\
+    ( ( smx_channel_t** )SMX_SIG_NC( h )->mode.ports )
 
 #define STRINGIFY(x) #x
 

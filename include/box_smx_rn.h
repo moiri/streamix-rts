@@ -11,20 +11,6 @@
 #ifndef BOX_SMX_RN_H
 #define BOX_SMX_RN_H
 
-typedef struct net_smx_rn_s net_smx_rn_t;             /**< ::net_smx_rn_s */
-
-/**
- * @brief The signature of a copy synchronizer
- */
-struct net_smx_rn_s
-{
-    struct {
-        smx_collector_t* collector; /**< ::smx_collector_s */
-    } in;                           /**< input channels */
-    struct {
-    } out;                          /**< output channels */
-};
-
 /**
  * Connect a routing node to a channel
  *
@@ -38,14 +24,14 @@ void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn );
  *
  * @param cp    pointer to the cp sync structure
  */
-void smx_net_rn_destroy( net_smx_rn_t* cp );
+void smx_net_destroy_rn( smx_net_t* rn );
 
 /**
  * @brief Initialize copy synchronizer structure
  *
  * @param cp    pointer to the copy sync structure
  */
-void smx_net_rn_init( net_smx_rn_t* cp );
+void smx_net_init_rn( smx_net_t* rn );
 
 /**
  * @brief the box implementattion of a routing node (former known as copy sync)

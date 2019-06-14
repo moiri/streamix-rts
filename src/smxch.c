@@ -57,20 +57,19 @@ void smx_channel_change_write_state( smx_channel_t* ch,
 }
 
 /*****************************************************************************/
-int smx_channel_create( smx_channel_t** chs, int* ch_cnt, int len,
+smx_channel_t* smx_channel_create( int* ch_cnt, int len,
         smx_channel_type_t type, int id, const char* name,
         const char* cat_name )
 {
     pthread_mutexattr_t mutexattr_prioinherit;
-    chs[id] = NULL;
     if( id >= SMX_MAX_CHS )
     {
         SMX_LOG_MAIN( main, fatal, "channel count exeeds maximum %d", id );
-        return -1;
+        return NULL;
     }
     smx_channel_t* ch = smx_malloc( sizeof( struct smx_channel_s ) );
     if( ch == NULL )
-        return -1;
+        return NULL;
 
     SMX_LOG_MAIN( ch, info, "create channel '%s(%d)' of length %d", name, id,
             len );
@@ -96,10 +95,12 @@ int smx_channel_create( smx_channel_t** chs, int* ch_cnt, int len,
         ch->source->state = SMX_CHANNEL_UNINITIALISED;
     }
     if( ch->sink == NULL || ch->source == NULL )
-        return -1;
-    chs[id] = ch;
+    {
+        smx_channel_destroy( ch );
+        return NULL;
+    }
     (*ch_cnt)++;
-    return 0;
+    return ch;
 }
 
 /*****************************************************************************/
@@ -180,6 +181,9 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
 /*****************************************************************************/
 int smx_channel_ready_to_read( smx_channel_t* ch )
 {
+    if( ch == NULL )
+        return -1;
+
     switch( ch->type ) {
         case SMX_FIFO:
         case SMX_D_FIFO:
@@ -294,6 +298,35 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
 }
 
 /*****************************************************************************/
+smx_collector_t* smx_collector_create()
+{
+    pthread_mutexattr_t mutexattr_prioinherit;
+    smx_collector_t* collector = smx_malloc( sizeof( struct smx_collector_s ) );
+    if( collector == NULL )
+        return NULL;
+
+    pthread_mutexattr_init( &mutexattr_prioinherit );
+    pthread_mutexattr_setprotocol( &mutexattr_prioinherit,
+            PTHREAD_PRIO_INHERIT );
+    pthread_mutex_init( &collector->col_mutex, &mutexattr_prioinherit );
+    pthread_cond_init( &collector->col_cv, NULL );
+    collector->count = 0;
+    collector->state = SMX_CHANNEL_PENDING;
+    return collector;
+}
+
+/*****************************************************************************/
+void smx_collector_destroy( smx_collector_t* collector )
+{
+    if( collector == NULL )
+        return;
+
+    pthread_mutex_destroy( &collector->col_mutex );
+    pthread_cond_destroy( &collector->col_cv );
+    free( collector );
+}
+
+/*****************************************************************************/
 void smx_collector_terminate( smx_channel_t* ch )
 {
     if( ch->collector == NULL )
@@ -306,7 +339,8 @@ void smx_collector_terminate( smx_channel_t* ch )
 }
 
 /*****************************************************************************/
-void smx_connect( smx_channel_t** dest, smx_channel_t* src )
+void smx_connect( smx_channel_t** dest, smx_channel_t* src, int net_id,
+        const char* net_name, const char* mode, int* count )
 {
     const char* elem;
     if( dest ==  NULL || src == NULL )
@@ -316,27 +350,10 @@ void smx_connect( smx_channel_t** dest, smx_channel_t* src )
                 "unable to connect channels: not initialised, %s", elem );
         return;
     }
+    SMX_LOG_MAIN( ch, info, "connect '%s(%d)%s%s(%d)'", src->name, src->id,
+            mode, net_name, net_id );
     *dest = src;
-}
-
-/*****************************************************************************/
-void smx_connect_arr( smx_channel_t** dest, int* idx, smx_channel_t* src,
-        int dest_id, int src_id, const char* dest_name, const char* src_name,
-        const char* mode )
-{
-    const char* elem;
-    if( dest ==  NULL || idx == NULL || src == NULL )
-    {
-        elem = ( idx == NULL || dest == NULL ) ? "dest" : "src";
-        SMX_LOG_MAIN( main, fatal,
-                "unable to connect channels: not initialised, %s", elem );
-        return;
-    }
-    SMX_LOG_MAIN( ch, info, "connect '%s(%d)%s%s(%d)'", src_name, src_id, mode,
-            dest_name, dest_id );
-
-    dest[*idx] = src;
-    (*idx)++;
+    ( *count )++;
 }
 
 /*****************************************************************************/

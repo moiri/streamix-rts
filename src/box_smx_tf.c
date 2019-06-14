@@ -23,7 +23,7 @@
 void smx_connect_tf( smx_net_t* net, smx_channel_t* ch_in,
         smx_channel_t* ch_out )
 {
-    smx_timer_t* timer = SMX_SIG( net );
+    smx_timer_t* timer = net->attr;
     if( net == NULL || timer == NULL )
     {
         SMX_LOG_MAIN( main, fatal,
@@ -65,30 +65,12 @@ smx_timer_t* smx_net_create_tf( int sec, int nsec )
 }
 
 /*****************************************************************************/
-void smx_net_init_tf( smx_net_t* net )
-{
-    int i = 0;
-    smx_timer_t* tt = SMX_SIG( net );
-    net_smx_tf_t* tf = tt->tfs;
-    net->in.ports = smx_malloc( sizeof( struct smx_channel_s ) * tt->count );
-    net->in.count = tt->count;
-    net->out.ports = smx_malloc( sizeof( struct smx_channel_s ) * tt->count );
-    net->out.count = tt->count;
-    for( i = 0; i < tt->count; i++ )
-    {
-        net->in.ports[i] = tf->in;
-        net->out.ports[i] = tf->out;
-        tf = tf->next;
-    }
-}
-
-/*****************************************************************************/
 void smx_net_destroy_tf( smx_net_t* tt )
 {
     if( tt == NULL )
         return;
 
-    smx_timer_t* sig = SMX_SIG( tt );
+    smx_timer_t* sig = tt->attr;
     net_smx_tf_t* tf = sig->tfs;
     net_smx_tf_t* tf_tmp;
     while( tf != NULL ) {
@@ -102,9 +84,33 @@ void smx_net_destroy_tf( smx_net_t* tt )
 }
 
 /*****************************************************************************/
+void smx_net_finalize_tf( smx_net_t* net )
+{
+    int i;
+    smx_timer_t* tt = net->attr;
+    net_smx_tf_t* tf = tt->tfs;
+    net->sig->in.ports = smx_malloc( sizeof( struct smx_channel_s ) * tt->count );
+    net->sig->in.count = net->sig->in.len = tt->count;
+    net->sig->out.ports = smx_malloc( sizeof( struct smx_channel_s ) * tt->count );
+    net->sig->out.count = net->sig->out.len = tt->count;
+    for( i = 0; i < tt->count; i++ )
+    {
+        net->sig->in.ports[i] = tf->in;
+        net->sig->out.ports[i] = tf->out;
+        tf = tf->next;
+    }
+}
+
+/*****************************************************************************/
+void smx_net_init_tf( smx_net_t* net, int sec, int nsec )
+{
+    net->attr = smx_net_create_tf( sec, nsec );
+}
+
+/*****************************************************************************/
 void smx_tf_enable( smx_net_t* h )
 {
-    smx_timer_t* timer = SMX_SIG( h );
+    smx_timer_t* timer = h->attr;
     if( h == NULL || timer == NULL )
         return;
 
@@ -116,9 +122,9 @@ void smx_tf_enable( smx_net_t* h )
 void smx_tf_propagate_msgs( smx_net_t* h, int copy )
 {
     int i;
-    smx_timer_t* tt = SMX_SIG( h );
-    smx_channel_t** ch_in = SMX_SIG_PORTS( h, in );
-    smx_channel_t** ch_out = SMX_SIG_PORTS( h, out );
+    smx_timer_t* tt = h->attr;
+    smx_channel_t** ch_in = h->sig->in.ports;
+    smx_channel_t** ch_out = h->sig->out.ports;
     smx_msg_t* msg;
     if( ch_in == NULL || ch_out == NULL )
         return;
@@ -177,7 +183,7 @@ void smx_tf_wait( smx_net_t* h )
     uint64_t expired;
     struct pollfd pfd;
     int poll_res;
-    smx_timer_t* timer = SMX_SIG( h );
+    smx_timer_t* timer = h->attr;
     if( h == NULL || timer == NULL )
         return;
 
@@ -228,7 +234,7 @@ void smx_tf_cleanup( void* h, void* state )
 /*****************************************************************************/
 int smx_tf_init( void* h, void** state )
 {
-    smx_timer_t* tt = SMX_SIG( h );
+    smx_timer_t* tt = ( ( smx_net_t*)h )->attr;
     xmlNodePtr cur = SMX_NET_GET_CONF( h );
     xmlChar* copy_str = NULL;
     net_smx_tf_state_t* tf_state = NULL;
