@@ -158,10 +158,15 @@ int smx_tf_init( void* h, void** state );
 void smx_tf_cleanup( void* h, void* state );
 
 /**
- * The wrapper function for the start routine. This must be manually defined for
- * a temporal firewall because TFs are created from edges insted of nodes.
+ * This function is predefined and must not be changed. It will be passed to the
+ * net thread upon creation and will be executed as soon as the thread is
+ * started. This function calls a macro which is define in the RTS and handles
+ * the initialisation, the main loop of the net and the cleanup.
  *
- * @param h     pointer to the net handler
+ * @param h
+ *  A pointer to the net handler.
+ * @return
+ *  This function always returns NULL.
  */
 void* start_routine_smx_tf( void* h );
 

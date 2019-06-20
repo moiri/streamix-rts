@@ -6,8 +6,8 @@ LOC_SRC_DIR = src
 LOC_OBJ_DIR = obj
 LOC_LIB_DIR = lib
 
-TGT_INCLUDE = /usr/local/include/libsmx
-TGT_LIB = /usr/local/lib/libsmx
+TGT_INCLUDE = /opt/smx/include
+TGT_LIB = /opt/smx/lib
 
 STATLIB = $(LOC_LIB_DIR)/lib$(PROJECT).a
 DYNLIB = $(LOC_LIB_DIR)/lib$(PROJECT).so

@@ -215,6 +215,94 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
 }
 
 /*****************************************************************************/
+void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
+        int init( void*, void** ), void cleanup( void*, void* ) )
+{
+    int init_res;
+    int state = SMX_NET_CONTINUE;
+    void* net_state = NULL;
+    xmlChar* profiler = NULL;
+
+    if( h == NULL )
+    {
+        SMX_LOG_MAIN( main, fatal, "unable to start net: not initialised" );
+        return NULL;
+    }
+
+    SMX_LOG_NET( h, notice, "init net" );
+
+    if( h != NULL && h->conf != NULL && h->profiler != NULL )
+    {
+        profiler = xmlGetProp( h->conf, ( const xmlChar* )"profiler" );
+        if( profiler != NULL &&
+                ( 0 == strcmp( ( char* )profiler, "off" )
+                  || 0 == strcmp( ( char* )profiler, "0" ) ) )
+        {
+            smx_channel_terminate_source( h->profiler );
+            smx_collector_terminate( h->profiler );
+            h->profiler = NULL;
+        }
+    }
+
+    if( h->profiler != NULL )
+        SMX_LOG_NET( h, notice, "profiler enabled" );
+
+    init_res = init( h, &net_state );
+    pthread_barrier_wait( h->init_done );
+
+    if( init_res == 0)
+    {
+        SMX_LOG_NET( h, notice, "start net" );
+        while( state == SMX_NET_CONTINUE )
+        {
+            SMX_LOG_NET( h, info, "start net loop" );
+            smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
+            state = impl( h, net_state );
+            state = smx_net_update_state( h, state );
+        }
+    }
+    else
+        SMX_LOG_NET( h, error, "initialisation of net failed" );
+    smx_net_terminate( h );
+    SMX_LOG_NET( h, notice, "cleanup net" );
+    cleanup( h, net_state );
+    SMX_LOG_NET( h, notice, "terminate net" );
+    return NULL;
+}
+
+/*****************************************************************************/
+void smx_net_terminate( smx_net_t* h )
+{
+    if( h->sig == NULL || h->sig->in.ports == NULL || h->sig->out.ports == NULL )
+    {
+        SMX_LOG_MAIN( main, fatal, "net channels not initialised" );
+        return;
+    }
+
+    int i;
+    int len_in = h->sig->in.count;
+    int len_out = h->sig->out.count;
+    smx_channel_t** chs_in = h->sig->in.ports;
+    smx_channel_t** chs_out = h->sig->out.ports;
+
+    SMX_LOG_NET( h, notice, "send termination notice to neighbours" );
+    for( i=0; i < len_in; i++ ) {
+        if( chs_in[i] == NULL ) continue;
+        smx_channel_terminate_sink( chs_in[i] );
+    }
+    for( i=0; i < len_out; i++ ) {
+        if( chs_out[i] == NULL ) continue;
+        smx_channel_terminate_source( chs_out[i] );
+        smx_collector_terminate( chs_out[i] );
+    }
+    if( h->profiler != NULL )
+    {
+        smx_channel_terminate_source( h->profiler );
+        smx_collector_terminate( h->profiler );
+    }
+}
+
+/*****************************************************************************/
 int smx_net_update_state( smx_net_t* h, int state )
 {
     if( h->sig == NULL || h->sig->in.ports == NULL || h->sig->out.ports == NULL )
@@ -272,92 +360,4 @@ int smx_net_update_state( smx_net_t* h, int state )
     }
 
     return SMX_NET_CONTINUE;
-}
-
-/*****************************************************************************/
-void smx_net_terminate( smx_net_t* h )
-{
-    if( h->sig == NULL || h->sig->in.ports == NULL || h->sig->out.ports == NULL )
-    {
-        SMX_LOG_MAIN( main, fatal, "net channels not initialised" );
-        return;
-    }
-
-    int i;
-    int len_in = h->sig->in.count;
-    int len_out = h->sig->out.count;
-    smx_channel_t** chs_in = h->sig->in.ports;
-    smx_channel_t** chs_out = h->sig->out.ports;
-
-    SMX_LOG_NET( h, notice, "send termination notice to neighbours" );
-    for( i=0; i < len_in; i++ ) {
-        if( chs_in[i] == NULL ) continue;
-        smx_channel_terminate_sink( chs_in[i] );
-    }
-    for( i=0; i < len_out; i++ ) {
-        if( chs_out[i] == NULL ) continue;
-        smx_channel_terminate_source( chs_out[i] );
-        smx_collector_terminate( chs_out[i] );
-    }
-    if( h->profiler != NULL )
-    {
-        smx_channel_terminate_source( h->profiler );
-        smx_collector_terminate( h->profiler );
-    }
-}
-
-/*****************************************************************************/
-void* start_routine_net( smx_net_t* h, int impl( void*, void* ),
-        int init( void*, void** ), void cleanup( void*, void* ) )
-{
-    int init_res;
-    int state = SMX_NET_CONTINUE;
-    void* net_state = NULL;
-    xmlChar* profiler = NULL;
-
-    if( h == NULL )
-    {
-        SMX_LOG_MAIN( main, fatal, "unable to start net: not initialised" );
-        return NULL;
-    }
-
-    SMX_LOG_NET( h, notice, "init net" );
-
-    if( h != NULL && h->conf != NULL && h->profiler != NULL )
-    {
-        profiler = xmlGetProp( h->conf, ( const xmlChar* )"profiler" );
-        if( profiler != NULL &&
-                ( 0 == strcmp( ( char* )profiler, "off" )
-                  || 0 == strcmp( ( char* )profiler, "0" ) ) )
-        {
-            smx_channel_terminate_source( h->profiler );
-            smx_collector_terminate( h->profiler );
-            h->profiler = NULL;
-        }
-    }
-
-    if( h->profiler != NULL )
-        SMX_LOG_NET( h, notice, "profiler enabled" );
-
-    init_res = init( h, &net_state );
-    pthread_barrier_wait( h->init_done );
-
-    if( init_res == 0)
-    {
-        SMX_LOG_NET( h, notice, "start net" );
-        while( state == SMX_NET_CONTINUE )
-        {
-            SMX_LOG_NET( h, info, "start net loop" );
-            smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
-            state = impl( h, net_state );
-            state = smx_net_update_state( h, state );
-        }
-    }
-    else
-        SMX_LOG_NET( h, error, "initialisation of net failed" );
-    smx_net_terminate( h );
-    SMX_LOG_NET( h, notice, "cleanup net" );
-    cleanup( h, net_state );
-    SMX_LOG_NET( h, notice, "terminate net" );
-    return NULL;
 }

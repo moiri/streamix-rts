@@ -95,3 +95,9 @@ void smx_rn_cleanup( void* h, void* state )
     if( state != NULL )
         free( state );
 }
+
+/*****************************************************************************/
+void* start_routine_smx_rn( void* h )
+{
+    return smx_net_start_routine( h, smx_rn, smx_rn_init, smx_rn_cleanup );
+}

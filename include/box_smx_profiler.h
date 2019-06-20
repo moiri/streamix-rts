@@ -99,4 +99,17 @@ int smx_profiler_init( void* h, void** state );
  */
 void smx_profiler_cleanup( void* h, void* state );
 
+/**
+ * This function is predefined and must not be changed. It will be passed to the
+ * net thread upon creation and will be executed as soon as the thread is
+ * started. This function calls a macro which is define in the RTS and handles
+ * the initialisation, the main loop of the net and the cleanup.
+ *
+ * @param h
+ *  A pointer to the net handler.
+ * @return
+ *  This function always returns NULL.
+ */
+void* start_routine_smx_profiler( void* h );
+
 #endif

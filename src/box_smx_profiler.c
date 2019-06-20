@@ -179,3 +179,10 @@ void smx_profiler_cleanup( void* h, void* state )
     ( void )( h );
     ( void )( state );
 }
+
+/*****************************************************************************/
+void* start_routine_smx_profiler( void* h )
+{
+    return smx_net_start_routine( h, smx_profiler, smx_profiler_init,
+            smx_profiler_cleanup );
+}

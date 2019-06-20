@@ -151,6 +151,26 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
         int prio );
 
 /**
+ * @brief the start routine of a thread associated to a box
+ *
+ * @param h                 pointer to the net handler
+ * @param impl( arg )       pointer to the net implementation function
+ * @param init( arg )       pointer to the net intitialisation function
+ * @param cleanup( arg )    pointer to the net cleanup function
+ * @return                  returns NULL
+ */
+void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
+        int init( void*, void** ), void cleanup( void*, void* ) );
+
+/**
+ * @brief Set all channel states to end and send termination signal to all
+ * output channels.
+ *
+ * @param h         pointer to the net handler
+ */
+void smx_net_terminate( smx_net_t* h );
+
+/**
  * @brief Update the state of the box
  *
  * Update the state of the box to indicate wheter computaion needs to scontinue
@@ -172,25 +192,5 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
  *                  prodicers are terminated.
  */
 int smx_net_update_state( smx_net_t* h, int state );
-
-/**
- * @brief Set all channel states to end and send termination signal to all
- * output channels.
- *
- * @param h         pointer to the net handler
- */
-void smx_net_terminate( smx_net_t* h );
-
-/**
- * @brief the start routine of a thread associated to a box
- *
- * @param h                 pointer to the net handler
- * @param impl( arg )       pointer to the net implementation function
- * @param init( arg )       pointer to the net intitialisation function
- * @param cleanup( arg )    pointer to the net cleanup function
- * @return                  returns NULL
- */
-void* start_routine_net( smx_net_t* h, int impl( void*, void* ),
-        int init( void*, void** ), void cleanup( void*, void* ) );
 
 #endif

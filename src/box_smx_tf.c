@@ -281,5 +281,5 @@ int smx_tf_init( void* h, void** state )
 /*****************************************************************************/
 void* start_routine_smx_tf( void* h )
 {
-    return start_routine_net( h, smx_tf, smx_tf_init, smx_tf_cleanup );
+    return smx_net_start_routine( h, smx_tf, smx_tf_init, smx_tf_cleanup );
 }
