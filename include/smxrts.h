@@ -155,12 +155,6 @@ struct smx_rts_s
 #define SMX_PROGRAM_INIT_RUN()\
     smx_program_init_run( rts )
 
-#define SMX_PROGRAM_CLEANUP()\
-    smx_program_cleanup( rts )
-
-#define SMX_PROGRAM_INIT()\
-    smx_rts_t* rts = smx_program_init()
-
 #define START_ROUTINE_NET( h, box_name )\
     smx_net_start_routine( h, box_name, box_name ## _init, box_name ## _cleanup )
 
@@ -184,9 +178,10 @@ void smx_program_cleanup( smx_rts_t* rts );
  * Initialize the rts structure, read the configuration files, and initialize
  * the log.
  *
+ * @param config    the path of the config file to be loaded
  * @return a pointer to the RTS structure which holds the network information.
  */
-smx_rts_t* smx_program_init();
+smx_rts_t* smx_program_init( const char* config );
 
 /**
  * Initialize the synchronisation barrier to make sure all nets finish

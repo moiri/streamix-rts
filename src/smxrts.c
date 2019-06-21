@@ -10,7 +10,6 @@
 #include "smxrts.h"
 #include "smxlog.h"
 
-#define XML_PATH        "app.xml"
 #define XML_APP         "app"
 #define XML_LOG         "log"
 
@@ -26,7 +25,7 @@ void smx_program_cleanup( smx_rts_t* rts )
 }
 
 /*****************************************************************************/
-smx_rts_t* smx_program_init()
+smx_rts_t* smx_program_init( const char* config )
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
@@ -36,11 +35,12 @@ smx_rts_t* smx_program_init()
     xmlInitParser();
 
     /*parse the file and get the DOM */
-    doc = xmlParseFile( XML_PATH );
+    doc = xmlParseFile( config );
 
     if( doc == NULL )
     {
-        printf( "error: could not parse the app config file '%s'\n", XML_PATH );
+        printf( "error: could not parse the app config file '%s'\n",
+                config );
         exit( 0 );
     }
 
