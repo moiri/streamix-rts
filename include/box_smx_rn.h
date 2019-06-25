@@ -19,21 +19,21 @@
  * Connect a routing node to a channel
  *
  * @param ch    the target channel
- * @param guard the rn to be connected
+ * @param rn    a pointer to the net handler
  */
 void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn );
 
 /**
  * @brief Destroy copy sync structure
  *
- * @param cp    pointer to the cp sync structure
+ * @param rn   a pointer to the net handler
  */
 void smx_net_destroy_rn( smx_net_t* rn );
 
 /**
  * @brief Initialize copy synchronizer structure
  *
- * @param cp    pointer to the copy sync structure
+ * @param rn   a pointer to the net handler
  */
 void smx_net_init_rn( smx_net_t* rn );
 
@@ -52,8 +52,9 @@ void smx_net_init_rn( smx_net_t* rn );
  * search for available messages starting from the last port index +1. This
  * means that a routing node is not pure.
  *
- * @param handler   a pointer to the signature
- * @return          returns the state of the box
+ * @param h     a pointer to the net handler
+ * @param state a pointer to the persistent state structure
+ * @return        returns the state of the box
  */
 int smx_rn( void* h, void* state );
 

@@ -120,19 +120,6 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy );
 void smx_tf_wait( smx_net_t* h );
 
 /**
- * @brief write to all output channels of a temporal firewall
- *
- * @param msg       a pointer to the message array. The array has a length that
- *                  matches the number of output channels of the temporal
- *                  firewall
- * @param tt        a pointer to the timer
- * @param ch_in     a pointer to an array of input channels
- * @param ch_out    a pointer to an array of output channels
- */
-void smx_tf_write_outputs( smx_msg_t**, smx_timer_t*, smx_channel_t**,
-        smx_channel_t** );
-
-/**
  * @brief the box implementattion of the temporal firewall
  *
  * A temporal firewall peridically reads form producers and writes to consumers.

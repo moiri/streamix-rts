@@ -131,14 +131,11 @@ void smx_net_destroy( smx_net_t* h );
 /**
  * Initialise a net
  *
- * @param in_cnt        pointer to the input counter
- * @param in_ports      pointer to the input ports array
- * @param in_degree     number of input ports
- * @param out_cnt       pointer to the output counter
- * @param out_ports     pointer to the output ports array
- * @param out_degree    number of output ports
+ * @param h            pointer to the net handler
+ * @param indegree     number of input ports
+ * @param outdegree    number of output ports
  */
-void smx_net_init( smx_net_t* net, int indegree, int outdegree );
+void smx_net_init( smx_net_t* h, int indegree, int outdegree );
 
 /**
  * @brief create pthred of net
