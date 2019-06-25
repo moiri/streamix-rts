@@ -15,16 +15,15 @@ with `make unsafe`.
 Requires
  - [`zlog`](https://github.com/HardySimpson/zlog)
     is added as a git submodule and can be used to compile from source.
+
+    **Important Note:** Do not statically link `libzlog`, otherwise the
+    resulting software must be published under
+    [LGPL-v2.1](https://choosealicense.com/licenses/lgpl-2.1/).
+
  - [`libxml2`](http://www.xmlsoft.org/)
 
     ```
     sudo apt install libxml2-dev
-    ```
-
- - [`uthash`](https://github.com/troydhanson/uthash)
-
-    ```
-    sudo apt install uthash-dev
     ```
 
  - [`pthread`](https://computing.llnl.gov/tutorials/pthreads/)
@@ -33,17 +32,9 @@ Requires
     sudo apt install libpthread-stubs0-dev
     ```
 
- - [`libmongoc`](http://mongoc.org/libmongoc/current/index.html)
-
-    ```
-    sudo apt install libmongoc-dev
-    ```
-
- - [`libbson`](http://mongoc.org/libbson/current/)
-
-    ```
-    sudo apt install libbson-dev
-    ```
+    **Important Note:** Do not statically link `libpthread`, otherwise the
+    resulting software must be published under
+    [LGPL-v2.1](https://choosealicense.com/licenses/lgpl-2.1/).
 
 ## Examples
 Some example can be found in the [root repository of Streamix](https://github.com/moiri/streamix).
