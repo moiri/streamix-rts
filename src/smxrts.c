@@ -20,10 +20,14 @@
 /*****************************************************************************/
 void smx_program_cleanup( smx_rts_t* rts )
 {
+    double elapsed_wall;
     xmlFreeDoc( rts->conf );
     xmlCleanupParser();
+    clock_gettime( CLOCK_MONOTONIC, &rts->end_wall );
+    elapsed_wall = ( rts->end_wall.tv_sec - rts->start_wall.tv_sec );
+    elapsed_wall += ( rts->end_wall.tv_nsec - rts->start_wall.tv_nsec) / 1000000000.0;
     free( rts );
-    SMX_LOG_MAIN( main, notice, "end main thread" );
+    SMX_LOG_MAIN( main, notice, "end main thread (wall time: %f)", elapsed_wall );
     smx_log_cleanup();
     exit( EXIT_SUCCESS );
 }
@@ -82,6 +86,11 @@ smx_rts_t* smx_program_init( const char* config )
     rts->conf = doc;
     rts->ch_cnt = 0;
     rts->net_cnt = 0;
+    rts->start_wall.tv_sec = 0;
+    rts->start_wall.tv_nsec = 0;
+    rts->end_wall.tv_sec = 0;
+    rts->end_wall.tv_nsec = 0;
+    clock_gettime( CLOCK_MONOTONIC, &rts->start_wall );
 
     SMX_LOG_MAIN( main, notice, "start thread main" );
 

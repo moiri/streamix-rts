@@ -107,6 +107,10 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
         free( net );
         return NULL;
     }
+    net->start_wall.tv_sec = 0;
+    net->start_wall.tv_nsec = 0;
+    net->end_wall.tv_sec = 0;
+    net->end_wall.tv_nsec = 0;
     net->count = 0;
     net->sig->in.ports = NULL;
     net->sig->in.count = 0;
@@ -223,6 +227,7 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
 void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         int init( void*, void** ), void cleanup( void*, void* ) )
 {
+    double elapsed_wall;
     int init_res;
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
@@ -255,6 +260,7 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     init_res = init( h, &net_state );
     pthread_barrier_wait( h->init_done );
 
+    /* clock_gettime( CLOCK_MONOTONIC, &h->start_wall ); */
     if( init_res == 0)
     {
         SMX_LOG_NET( h, notice, "start net" );
@@ -269,10 +275,14 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     }
     else
         SMX_LOG_NET( h, error, "initialisation of net failed" );
+    clock_gettime( CLOCK_MONOTONIC, &h->end_wall );
     smx_net_terminate( h );
     SMX_LOG_NET( h, notice, "cleanup net" );
     cleanup( h, net_state );
-    SMX_LOG_NET( h, notice, "terminate net (loop count: %ld)", h->count );
+    elapsed_wall = ( h->end_wall.tv_sec - h->start_wall.tv_sec );
+    elapsed_wall += ( h->end_wall.tv_nsec - h->start_wall.tv_nsec) / 1000000000.0;
+    SMX_LOG_NET( h, notice, "terminate net (loop count: %ld, loop rate: %d, wall time: %f)",
+            h->count, (int)(h->count/elapsed_wall), elapsed_wall );
     xmlFree( profiler );
     return NULL;
 }

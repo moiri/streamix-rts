@@ -43,6 +43,8 @@ struct smx_rts_s
     pthread_t ths[SMX_MAX_NETS];
     smx_channel_t* chs[SMX_MAX_CHS];
     smx_net_t* nets[SMX_MAX_NETS];
+    struct timespec start_wall;
+    struct timespec end_wall;
 };
 
 // USER MACROS -----------------------------------------------------------------
