@@ -58,11 +58,28 @@ struct smx_mongo_msg_s
 };
 
 /**
+ * The copy handler passed to the smx message structure
+ *
+ * @param data  a pointer to the message payload.
+ * @param size  the size of the payload structure (shallow).
+ * @return a pointer to the copied payload.
+ */
+void* smx_mongo_msg_copy( void* data, size_t size );
+
+/**
+ * Wrapper to create a message that can be passed to a smx_mongo net.
+ *
+ * @param net   a pointer to the net handler.
+ * @param data  a pointer to the data payload.
+ */
+void* smx_mongo_msg_create( smx_net_t* net, smx_mongo_msg_t* data );
+
+/**
  * The desrtuction handler passed to the smx message structure
  *
  * @param data  a pointer to the message payload.
  */
-void smx_profiler_destroy_msg( void* data );
+void smx_mongo_msg_destroy( void* data );
 
 /**
  * A variadic function wich allows to log profiler events.

@@ -114,6 +114,7 @@ smx_channel_end_t* smx_channel_create_end()
     if( end == NULL )
         return NULL;
 
+    end->count = 0;
     pthread_cond_init( &end->ch_cv, NULL );
     return end;
 }
@@ -195,6 +196,27 @@ int smx_channel_ready_to_read( smx_channel_t* ch )
         case SMX_D_FIFO_D:
         case SMX_FIFO_D:
             return 1;
+        default:
+            SMX_LOG_CH( ch, error, "undefined channel type '%d'",
+                    ch->type );
+            return -1;
+    }
+    return 0;
+}
+
+/*****************************************************************************/
+int smx_channel_ready_to_write( smx_channel_t* ch )
+{
+    if( ch == NULL )
+        return -1;
+
+    switch( ch->type ) {
+        case SMX_D_FIFO:
+        case SMX_D_FIFO_D:
+            return 1;
+        case SMX_FIFO_D:
+        case SMX_FIFO:
+            return ch->fifo->length - ch->fifo->count;
         default:
             SMX_LOG_CH( ch, error, "undefined channel type '%d'",
                     ch->type );

@@ -77,6 +77,7 @@ struct smx_channel_end_s
 {
     smx_channel_state_t state;    /**< state of the channel end */
     pthread_cond_t      ch_cv;    /**< conditional variable to trigger producer */
+    unsigned long       count;    /**< access counter */
 };
 
 /**
@@ -221,6 +222,14 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch );
  * @return      number of available messages in channel or -1 on failure
  */
 int smx_channel_ready_to_read( smx_channel_t* ch );
+
+/**
+ * @brief Returns the number of available space in a channel
+ *
+ * @param ch    pointer to the channel
+ * @return      number of available space in a channel or -1 on failure
+ */
+int smx_channel_ready_to_write( smx_channel_t* ch );
 
 /**
  * Send the termination signal to a channel sink

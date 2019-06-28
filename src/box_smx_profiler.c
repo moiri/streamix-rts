@@ -164,7 +164,11 @@ int smx_profiler( void* h, void* state )
     msg = smx_net_profiler_read( h, net->attr, net->sig->in.ports,
             net->sig->in.len );
     if( msg != NULL )
+    {
+        if( smx_channel_ready_to_write(net->sig->out.ports[0]) == 0 )
+            SMX_LOG_NET( h, warn, "profiler queue is full" );
         smx_channel_write( h, net->sig->out.ports[0], msg );
+    }
 
     return SMX_NET_RETURN;
 }

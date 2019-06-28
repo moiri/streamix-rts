@@ -170,12 +170,18 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
         if( msg == NULL || ch_in[i]->fifo->copy )
         {
             zlog_error( ch_in[i]->cat, "missed deadline to produce" );
+            smx_profiler_log_ch( h, ch_in[i], NULL,
+                    SMX_PROFILER_ACTION_DL_MISS, 0 );
         }
         if( msg != NULL )
         {
             smx_channel_write( h, ch_out[i], msg );
             if( ch_out[i]->fifo->overwrite )
+            {
                 zlog_error( ch_out[i]->cat, "missed deadline to consume" );
+                smx_profiler_log_ch( h, ch_out[i], NULL,
+                        SMX_PROFILER_ACTION_DL_MISS, 0 );
+            }
         }
     }
 }

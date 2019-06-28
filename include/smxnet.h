@@ -36,6 +36,7 @@ enum smx_thread_state_e
 struct smx_net_s
 {
     unsigned int        id;         /**< a unique net id */
+    unsigned long       count;      /**< loop counter */
     pthread_barrier_t*  init_done;  /**< pointer to the init sync barrier */
     zlog_category_t*    cat;        /**< the log category */
     smx_channel_t*      profiler;   /**< a pointer to the profiler channel */

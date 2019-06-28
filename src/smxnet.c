@@ -107,6 +107,7 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
         free( net );
         return NULL;
     }
+    net->count = 0;
     net->sig->in.ports = NULL;
     net->sig->in.count = 0;
     net->sig->in.len = 0;
@@ -260,6 +261,7 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         while( state == SMX_NET_CONTINUE )
         {
             SMX_LOG_NET( h, info, "start net loop" );
+            h->count++;
             smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
             state = impl( h, net_state );
             state = smx_net_update_state( h, state );
@@ -270,7 +272,8 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     smx_net_terminate( h );
     SMX_LOG_NET( h, notice, "cleanup net" );
     cleanup( h, net_state );
-    SMX_LOG_NET( h, notice, "terminate net" );
+    SMX_LOG_NET( h, notice, "terminate net (loop count: %ld)", h->count );
+    xmlFree( profiler );
     return NULL;
 }
 
