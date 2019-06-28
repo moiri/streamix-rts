@@ -260,7 +260,7 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     init_res = init( h, &net_state );
     pthread_barrier_wait( h->init_done );
 
-    /* clock_gettime( CLOCK_MONOTONIC, &h->start_wall ); */
+    clock_gettime( CLOCK_MONOTONIC, &h->start_wall );
     if( init_res == 0)
     {
         SMX_LOG_NET( h, notice, "start net" );
