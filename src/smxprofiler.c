@@ -35,7 +35,7 @@ void* smx_mongo_msg_copy( void* data, size_t size )
     smx_mongo_msg_t* mg = data;
     smx_mongo_msg_t* data_copy = smx_malloc( size );
     data_copy->ts = mg->ts;
-    data_copy->j_data = smx_malloc( strlen( mg->j_data ) );
+    data_copy->j_data = smx_malloc( strlen( mg->j_data ) + 1 );
     strcpy( data_copy->j_data, mg->j_data );
     return data_copy;
 }
