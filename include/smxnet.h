@@ -71,17 +71,17 @@ struct smx_net_sig_s
 /**
  *
  */
-#define SMX_NET_GET_ID( h ) ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->id
+#define SMX_NET_GET_ID( h ) ( ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->id )
 
 /**
  *
  */
-#define SMX_NET_GET_CONF( h ) ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf
+#define SMX_NET_GET_CONF( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf )
 
 /**
  *
  */
-#define SMX_NET_GET_NAME( h ) ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->name
+#define SMX_NET_GET_NAME( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->name )
 
 /**
  * Check whether messages are available on the collector and block until a
