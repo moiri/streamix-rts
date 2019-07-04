@@ -49,6 +49,7 @@ $(DYNLIB): $(OBJECTS)
 
 # compile project
 $(LOC_OBJ_DIR)/%.o: $(LOC_SRC_DIR)/%.c
+	mkdir -p $(LOC_OBJ_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES_DIR) $(LINK_FILE) -c $< -o $@
 
 .PHONY: clean install uninstall doc
@@ -69,9 +70,8 @@ uninstall:
 	rm $(TGT_LIB)/$(LIBNAME).so
 
 clean:
-	rm -f $(LOC_OBJ_DIR)/*
-	rm -f $(LOC_LIB_DIR)/$(LIBNAME).a
-	rm -f $(LOC_LIB_DIR)/$(LIBNAME).so
+	rm -rf $(LOC_OBJ_DIR)
+	rm -rf $(LOC_LIB_DIR)
 
 doc:
 	doxygen .doxygen
