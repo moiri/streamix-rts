@@ -39,6 +39,14 @@ smx_rts_t* smx_program_init( const char* config )
     xmlNodePtr cur = NULL;
     xmlChar* conf = NULL;
 
+
+    int rc = smx_log_init();
+
+    if( rc ) {
+        fprintf( stderr, "error: failed to initialise zlog, aborting\n" );
+        exit( 0 );
+    }
+
     /* required for thread safety */
     xmlInitParser();
 
@@ -47,7 +55,7 @@ smx_rts_t* smx_program_init( const char* config )
 
     if( doc == NULL )
     {
-        printf( "error: could not parse the app config file '%s'\n",
+        SMX_LOG_MAIN( main, error, "could not parse the app config file '%s'",
                 config );
         exit( 0 );
     }
@@ -55,24 +63,29 @@ smx_rts_t* smx_program_init( const char* config )
     cur = xmlDocGetRootElement( doc );
     if( cur == NULL || xmlStrcmp(cur->name, ( const xmlChar* )XML_APP ) )
     {
-        printf( "error: app config root node name is '%s' instead of '%s'\n",
+        SMX_LOG_MAIN( main, error,
+                "app config root node name is '%s' instead of '%s'",
                 cur->name, XML_APP );
         exit( 0 );
     }
     conf = xmlGetProp( cur, ( const xmlChar* )XML_LOG );
 
     if( conf == NULL )
+        SMX_LOG_MAIN( main, warn, "no log configuration found in app config" );
+    else
     {
-        printf( "error: no log configuration found in app config\n" );
-        exit( 0 );
+        SMX_LOG_MAIN( main, notice,
+                "switching to app specific zlog config file '%s'", conf );
+        rc = zlog_reload( (const char*)conf );
+        if( rc ) {
+            SMX_LOG_MAIN( main, error, "zlog reload failed with conf: '%s'\n",
+                    conf );
+            exit( 0 );
+        }
     }
 
-    int rc = smx_log_init( (const char*)conf );
-
-    if( rc ) {
-        printf( "error: zlog init failed with conf: '%s'\n", conf );
-        exit( 0 );
-    }
+    SMX_LOG_MAIN( main, notice, "using libxml2 version: %s",
+            LIBXML_DOTTED_VERSION );
 
     xmlFree( conf );
 
