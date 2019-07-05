@@ -1,7 +1,11 @@
 SHELL := /bin/bash
 
 PROJECT = smxrts
-MAJ_VERSION = 0.1
+VMAJ := $(if $(VMAJ),$(VMAJ),0)
+VMIN := $(if $(VMIN),$(VMIN),1)
+VREV := $(if $(VREV),$(VREV),0)
+
+VERSION_LIB = $(VMAJ).$(VMIN)
 
 LOC_INC_DIR = include
 LOC_SRC_DIR = src
@@ -9,6 +13,8 @@ LOC_OBJ_DIR = obj
 LOC_LIB_DIR = lib
 
 LIBNAME = lib$(PROJECT)
+SONAME = $(LIBNAME)-$(VMAJ).$(VMIN).so.$(VREV)
+ANAME = $(LIBNAME)-$(VMAJ).$(VMIN).a
 
 TGT_INCLUDE = /opt/smx/include
 TGT_LIB = /opt/smx/lib
@@ -25,6 +31,12 @@ INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I/usr/include/libxml2 \
 			   -I./uthash/src \
 			   -I.
+
+LINK_DIR = -L/usr/local/lib
+
+LINK_FILE = -lpthread \
+	-lxml2 \
+	-lzlog
 
 CFLAGS = -Wall -fPIC
 DEBUG_FLAGS = -g -O0
@@ -45,27 +57,27 @@ $(STATLIB): $(OBJECTS)
 	ar -cq $@ $^
 
 $(DYNLIB): $(OBJECTS)
-	$(CC) -shared $^ -o $@
+	$(CC) -shared -Wl,-soname,$(SONAME) $^ -o $@ $(LINK_DIR) $(LINK_FILE)
 
 # compile project
 $(LOC_OBJ_DIR)/%.o: $(LOC_SRC_DIR)/%.c
 	mkdir -p $(LOC_OBJ_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES_DIR) $(LINK_FILE) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES_DIR) -c $< -o $@ $(LINK_DIR) $(LINK_FILE)
 
 .PHONY: clean install uninstall doc
 
 install:
 	mkdir -p $(TGT_LIB) $(TGT_INCLUDE)
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
-	cp -a $(LOC_LIB_DIR)/$(LIBNAME).a $(TGT_LIB)/$(LIBNAME).a.$(MAJ_VERSION)
-	cp -a $(LOC_LIB_DIR)/$(LIBNAME).so $(TGT_LIB)/$(LIBNAME).so.$(MAJ_VERSION)
-	ln -sf $(LIBNAME).so.$(MAJ_VERSION) $(TGT_LIB)/$(LIBNAME).so
-	ln -sf $(LIBNAME).a.$(MAJ_VERSION) $(TGT_LIB)/$(LIBNAME).a
+	cp -a $(LOC_LIB_DIR)/$(LIBNAME).a $(TGT_LIB)/$(ANAME)
+	cp -a $(LOC_LIB_DIR)/$(LIBNAME).so $(TGT_LIB)/$(SONAME)
+	ln -sf $(SONAME) $(TGT_LIB)/$(LIBNAME).so
+	ln -sf $(ANAME) $(TGT_LIB)/$(LIBNAME).a
 
 uninstall:
 	rm $(addprefix $(TGT_INCLUDE)/,$(notdir $(wildcard $(INCLUDES))))
-	rm $(TGT_LIB)/$(LIBNAME).a.$(MAJ_VERSION)
-	rm $(TGT_LIB)/$(LIBNAME).so.$(MAJ_VERSION)
+	rm $(TGT_LIB)/$(ANAME)
+	rm $(TGT_LIB)/$(SONAME)
 	rm $(TGT_LIB)/$(LIBNAME).a
 	rm $(TGT_LIB)/$(LIBNAME).so
 
