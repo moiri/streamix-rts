@@ -15,33 +15,6 @@
 #include "smxutils.h"
 #include "lttng_tp.h"
 
-/*****************************************************************************/
-void* smx_mongo_msg_copy( void* data, size_t size )
-{
-    smx_mongo_msg_t* mg = data;
-    smx_mongo_msg_t* data_copy = smx_malloc( size );
-    data_copy->ts = mg->ts;
-    data_copy->j_data = smx_malloc( strlen( mg->j_data ) + 1 );
-    strcpy( data_copy->j_data, mg->j_data );
-    return data_copy;
-}
-
-/*****************************************************************************/
-void* smx_mongo_msg_create( smx_net_t* net, smx_mongo_msg_t* data )
-{
-    return smx_msg_create( net, data, sizeof( struct smx_mongo_msg_s ),
-            smx_mongo_msg_copy, smx_mongo_msg_destroy, NULL, 0 );
-}
-
-/*****************************************************************************/
-void smx_mongo_msg_destroy( void* data )
-{
-    smx_mongo_msg_t* mg = data;
-    if( mg->j_data != NULL )
-        free( mg->j_data );
-    free( data );
-}
-
 #define tracepoint_ch(action)\
     tracepoint(tpf_lttng_smx, action, ch->id, net->id, ch->name, msg_id, val)
 

@@ -15,19 +15,8 @@
 #ifndef SMXPROFILER_H
 #define SMXPROFILER_H
 
-typedef enum smx_profiler_type_e smx_profiler_type_t;
 typedef enum smx_profiler_action_e smx_profiler_action_t;
 typedef struct smx_mongo_msg_s smx_mongo_msg_t;
-
-/**
- * The different profiler message types
- */
-enum smx_profiler_type_e
-{
-    SMX_PROFILER_TYPE_CH,   /**< The smx_channel message type. */
-    SMX_PROFILER_TYPE_MSG,  /**< The smx_message message type. */
-    SMX_PROFILER_TYPE_NET   /**< The smx_net message type */
-};
 
 /**
  * The different actions a profiler can log.
@@ -47,39 +36,6 @@ enum smx_profiler_action_e
     SMX_PROFILER_ACTION_DUPLICATE,      /**< duplicate a message ina channel. */
     SMX_PROFILER_ACTION_DL_MISS         /**< missed a deadline. */
 };
-
-/**
- * The expected mongo db message structure
- */
-struct smx_mongo_msg_s
-{
-    struct timespec ts; /**< the timestamp of the data item */
-    char* j_data;       /**< a valid json string holding the data */
-};
-
-/**
- * The copy handler passed to the smx message structure
- *
- * @param data  a pointer to the message payload.
- * @param size  the size of the payload structure (shallow).
- * @return a pointer to the copied payload.
- */
-void* smx_mongo_msg_copy( void* data, size_t size );
-
-/**
- * Wrapper to create a message that can be passed to a smx_mongo net.
- *
- * @param net   a pointer to the net handler.
- * @param data  a pointer to the data payload.
- */
-void* smx_mongo_msg_create( smx_net_t* net, smx_mongo_msg_t* data );
-
-/**
- * The desrtuction handler passed to the smx message structure
- *
- * @param data  a pointer to the message payload.
- */
-void smx_mongo_msg_destroy( void* data );
 
 /**
  * The function to log profiler messages related to a channel.
