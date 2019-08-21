@@ -12,7 +12,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <zlog.h>
-#include "box_smx_profiler.h"
 #include "box_smx_rn.h"
 #include "box_smx_tf.h"
 #include "smxch.h"
@@ -125,26 +124,17 @@ struct smx_rts_s
 #define SMX_NET_DESTROY( id )\
     smx_net_destroy( rts->nets[id] )
 
-#define SMX_NET_DESTROY_PROFILER( id )\
-    smx_net_destroy_profiler( rts->nets[id] )
-
 #define SMX_NET_DESTROY_RN( id )\
     smx_net_destroy_rn( rts->nets[id] );\
 
 #define SMX_NET_DESTROY_TF( id )\
     smx_net_destroy_tf( rts->nets[id] );\
 
-#define SMX_NET_FINALIZE_PROFILER( net_id )\
-    smx_net_finalize_profiler( rts->nets[net_id], rts->nets, rts->net_cnt )
-
 #define SMX_NET_FINALIZE_TF( net_id )\
     smx_net_finalize_tf( rts->nets[net_id] )
 
 #define SMX_NET_INIT( id, indegree, outdegree )\
     smx_net_init( rts->nets[id], indegree, outdegree )
-
-#define SMX_NET_INIT_PROFILER( id )\
-    smx_net_init_profiler( rts->nets[id] )
 
 #define SMX_NET_INIT_RN( id )\
     smx_net_init_rn( rts->nets[id] )

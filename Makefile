@@ -36,7 +36,9 @@ LINK_DIR = -L/usr/local/lib
 
 LINK_FILE = -lpthread \
 	-lxml2 \
-	-lzlog
+	-lzlog \
+	-llttng-ust \
+	-ldl
 
 CFLAGS = -Wall -fPIC
 DEBUG_FLAGS = -g -O0

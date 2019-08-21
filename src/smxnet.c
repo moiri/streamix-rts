@@ -123,7 +123,7 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->init_done = init_done;
     net->cat = zlog_get_category( cat_name );
     net->conf = NULL;
-    net->profiler = NULL;
+    net->has_profiler = false;
     net->name = name;
     net->attr = NULL;
 
@@ -241,20 +241,18 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
 
     SMX_LOG_NET( h, notice, "init net" );
 
-    if( h != NULL && h->conf != NULL && h->profiler != NULL )
+    if( h != NULL && h->conf != NULL )
     {
         profiler = xmlGetProp( h->conf, ( const xmlChar* )"profiler" );
         if( profiler != NULL &&
-                ( 0 == strcmp( ( char* )profiler, "off" )
-                  || 0 == strcmp( ( char* )profiler, "0" ) ) )
+                ( 0 == strcmp( ( char* )profiler, "on" )
+                  || 0 == strcmp( ( char* )profiler, "1" ) ) )
         {
-            smx_channel_terminate_source( h->profiler );
-            smx_collector_terminate( h->profiler );
-            h->profiler = NULL;
+            h->has_profiler = true;
         }
     }
 
-    if( h->profiler != NULL )
+    if( h->has_profiler )
         SMX_LOG_NET( h, notice, "profiler enabled" );
 
     init_res = init( h, &net_state );
@@ -311,11 +309,6 @@ void smx_net_terminate( smx_net_t* h )
         if( chs_out[i] == NULL ) continue;
         smx_channel_terminate_source( chs_out[i] );
         smx_collector_terminate( chs_out[i] );
-    }
-    if( h->profiler != NULL )
-    {
-        smx_channel_terminate_source( h->profiler );
-        smx_collector_terminate( h->profiler );
     }
 }
 

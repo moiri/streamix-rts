@@ -82,14 +82,6 @@ void* smx_mongo_msg_create( smx_net_t* net, smx_mongo_msg_t* data );
 void smx_mongo_msg_destroy( void* data );
 
 /**
- * A variadic function wich allows to log profiler events.
- *
- * @param net       a pointer to the net handler which logs the event.
- * @param format    the format of the message.
- */
-void smx_profiler_log( smx_net_t* net, const char* format, ... );
-
-/**
  * The function to log profiler messages related to a channel.
  *
  * @param net       a pointer to the net handler which logs the event.

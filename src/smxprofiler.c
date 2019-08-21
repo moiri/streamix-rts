@@ -13,21 +13,7 @@
 #include <time.h>
 #include "smxprofiler.h"
 #include "smxutils.h"
-
-/**
- * [type, id_net, name_net, action]
- */
-#define JSON_PROFILER_NET   "[%d,%d,\"%s\",%d]"
-
-/**
- * [type, id_ch, id_net, name_ch, id_msg, action, count]
- */
-#define JSON_PROFILER_CH    "[%d,%d,%d,\"%s\",%d,%d,%d]"
-
-/**
- * [type, id_msg, name_net, action]
- */
-#define JSON_PROFILER_MSG   "[%d,%d,\"%s\",%d]"
+#include "lttng_tp.h"
 
 /*****************************************************************************/
 void* smx_mongo_msg_copy( void* data, size_t size )
@@ -56,39 +42,57 @@ void smx_mongo_msg_destroy( void* data )
     free( data );
 }
 
-/*****************************************************************************/
-void smx_profiler_log( smx_net_t* net, const char* format, ... )
-{
-    va_list arg_ptr;
-    smx_mongo_msg_t* data = smx_malloc( sizeof( struct smx_mongo_msg_s ) );
-    data->j_data = smx_malloc( 2000 );
-
-    clock_gettime( CLOCK_REALTIME, &data->ts );
-
-    va_start( arg_ptr, format );
-    vsprintf( data->j_data, format, arg_ptr );
-    va_end( arg_ptr );
-
-    smx_msg_t* msg = smx_msg_create( net, data, sizeof( data ), NULL,
-            smx_mongo_msg_destroy, NULL, 1 );
-    smx_channel_write( net, net->profiler, msg );
-}
+#define tracepoint_ch(action)\
+    tracepoint(tpf_lttng_smx, action, ch->id, net->id, ch->name, msg_id, val)
 
 /*****************************************************************************/
 void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
         smx_profiler_action_t action, int val )
 {
-    if( ( net == NULL ) || ( net->profiler == NULL ) || ( ch == NULL )
-            || ( msg != NULL && msg->is_profiler ) )
+    if( net == NULL || !net->has_profiler || ch == NULL )
         return;
-    if( action == SMX_PROFILER_ACTION_READ )
-        ch->sink->count++;
-    if( action == SMX_PROFILER_ACTION_WRITE )
-        ch->source->count++;
     int msg_id = ( msg == NULL ) ? -1 : msg->id;
-    smx_profiler_log( net, JSON_PROFILER_CH, SMX_PROFILER_TYPE_CH,
-            ch->id, net->id, ch->name, msg_id, action, val );
+    switch(action)
+    {
+        case SMX_PROFILER_ACTION_CREATE:
+            tracepoint_ch(ch_create);
+            break;
+        case SMX_PROFILER_ACTION_DESTROY:
+            tracepoint_ch(ch_destroy);
+            break;
+        case SMX_PROFILER_ACTION_READ:
+            ch->sink->count++;
+            tracepoint_ch(ch_read);
+            break;
+        case SMX_PROFILER_ACTION_READ_COLLECTOR:
+            tracepoint_ch(ch_read_collector);
+            break;
+        case SMX_PROFILER_ACTION_WRITE:
+            ch->source->count++;
+            tracepoint_ch(ch_write);
+            break;
+        case SMX_PROFILER_ACTION_WRITE_COLLECTOR:
+            tracepoint_ch(ch_write_collector);
+            break;
+        case SMX_PROFILER_ACTION_OVERWRITE:
+            tracepoint_ch(ch_overwrite);
+            break;
+        case SMX_PROFILER_ACTION_DISMISS:
+            tracepoint_ch(ch_dismiss);
+            break;
+        case SMX_PROFILER_ACTION_DUPLICATE:
+            tracepoint_ch(ch_duplicate);
+            break;
+        case SMX_PROFILER_ACTION_DL_MISS:
+            tracepoint_ch(ch_dl_miss);
+            break;
+        default:
+            break;
+    }
 }
+
+#define tracepoint_msg(action)\
+    tracepoint(tpf_lttng_smx, action, msg->id, net->name)
 
 /*****************************************************************************/
 void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
@@ -97,18 +101,44 @@ void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
 #ifndef SMX_PROFILER_MSG
     return;
 #endif
-    if( ( net == NULL ) || ( net->profiler == NULL ) || msg == NULL
-            || msg->is_profiler )
+    if( net == NULL || !net->has_profiler || msg == NULL )
         return;
-    smx_profiler_log( net, JSON_PROFILER_MSG, SMX_PROFILER_TYPE_MSG, msg->id,
-            net->name, action );
+    switch(action)
+    {
+        case SMX_PROFILER_ACTION_CREATE:
+            tracepoint_msg(msg_create);
+            break;
+        case SMX_PROFILER_ACTION_COPY:
+            tracepoint_msg(msg_copy);
+            break;
+        case SMX_PROFILER_ACTION_DESTROY:
+            tracepoint_msg(msg_destroy);
+            break;
+        default:
+            break;
+    }
 }
+
+#define tracepoint_net(action)\
+    tracepoint(tpf_lttng_smx, action, net->id, net->name)
 
 /*****************************************************************************/
 void smx_profiler_log_net( smx_net_t* net, smx_profiler_action_t action )
 {
-    if( ( net == NULL ) || ( net->profiler == NULL ) )
+    if( net == NULL || !net->has_profiler )
         return;
-    smx_profiler_log( net, JSON_PROFILER_NET, SMX_PROFILER_TYPE_NET, net->id,
-            net->name, action );
+    switch(action)
+    {
+        case SMX_PROFILER_ACTION_CREATE:
+            tracepoint_net(net_create);
+            break;
+        case SMX_PROFILER_ACTION_DESTROY:
+            tracepoint_net(net_destroy);
+            break;
+        case SMX_PROFILER_ACTION_START:
+            tracepoint_net(net_start);
+            break;
+        default:
+            break;
+    }
 }

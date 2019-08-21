@@ -9,6 +9,7 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+#include <stdbool.h>
 #include "smxch.h"
 #include "smxlog.h"
 
@@ -35,17 +36,17 @@ enum smx_thread_state_e
  */
 struct smx_net_s
 {
-    unsigned int        id;         /**< a unique net id */
-    unsigned long       count;      /**< loop counter */
-    pthread_barrier_t*  init_done;  /**< pointer to the init sync barrier */
-    zlog_category_t*    cat;        /**< the log category */
-    smx_channel_t*      profiler;   /**< a pointer to the profiler channel */
-    smx_net_sig_t*      sig;        /**< the net port signature */
-    void*               attr;       /**< custom attributes of special nets */
-    void*               conf;       /**< pointer to the XML configuration */
-    const char*         name;       /**< the name of the net */
-    struct timespec     start_wall; /**< start time of a net (after init) */
-    struct timespec     end_wall;   /**< end time of a net (befoer cleanup) */
+    unsigned int        id;           /**< a unique net id */
+    unsigned long       count;        /**< loop counter */
+    pthread_barrier_t*  init_done;    /**< pointer to the init sync barrier */
+    zlog_category_t*    cat;          /**< the log category */
+    bool                has_profiler; /**< is profiler is enabled? */
+    smx_net_sig_t*      sig;          /**< the net port signature */
+    void*               attr;         /**< custom attributes of special nets */
+    void*               conf;         /**< pointer to the XML configuration */
+    const char*         name;         /**< the name of the net */
+    struct timespec     start_wall;   /**< start time of a net (after init) */
+    struct timespec     end_wall;     /**< end time of a net (befoer cleanup) */
 };
 
 /**
