@@ -77,7 +77,7 @@ void* smx_data_tsmem_unpack( void* data );
  * @param size
  *  The size of the allocated data chunk.
  */
-void* smx_msg_tsmem_create( smx_net_t* net, struct timespec ts, void* data,
+smx_msg_t* smx_msg_tsmem_create( smx_net_t* net, struct timespec ts, void* data,
         size_t size );
 
 /**
@@ -91,7 +91,7 @@ void* smx_msg_tsmem_create( smx_net_t* net, struct timespec ts, void* data,
  * @param size
  *  The size of the allocated data chunk.
  */
-void* smx_msg_tsmem_create_ts( smx_net_t* net, void* data, size_t size );
+smx_msg_t* smx_msg_tsmem_create_ts( smx_net_t* net, void* data, size_t size );
 
 /**
  * This is a helper function to easily create a time-stamped message containing
@@ -104,7 +104,7 @@ void* smx_msg_tsmem_create_ts( smx_net_t* net, void* data, size_t size );
  * @param data
  *  The allocated data string.
  */
-void* smx_msg_tsstr_create( smx_net_t* net, struct timespec ts, char* data );
+smx_msg_t* smx_msg_tsstr_create( smx_net_t* net, struct timespec ts, char* data );
 
 /**
  * This is a helper function to easily create a time-stamped message containing
@@ -115,6 +115,6 @@ void* smx_msg_tsstr_create( smx_net_t* net, struct timespec ts, char* data );
  * @param data
  *  The allocated data string.
  */
-void* smx_msg_tsstr_create_ts( smx_net_t* net, char* data );
+smx_msg_t* smx_msg_tsstr_create_ts( smx_net_t* net, char* data );
 
 #endif

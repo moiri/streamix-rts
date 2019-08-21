@@ -14,6 +14,7 @@
 #include <zlog.h>
 #include "box_smx_rn.h"
 #include "box_smx_tf.h"
+#include "msg_tsmem.h"
 #include "smxch.h"
 #include "smxlog.h"
 #include "smxmsg.h"
