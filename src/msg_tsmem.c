@@ -59,11 +59,11 @@ smx_msg_t* smx_msg_tsmem_create_ts( smx_net_t* net, void* data, size_t size )
 /*****************************************************************************/
 smx_msg_t* smx_msg_tsstr_create( smx_net_t* net, struct timespec ts, char* data )
 {
-    return smx_msg_tsmem_create( net, ts, data, strlen( data ) );
+    return smx_msg_tsmem_create( net, ts, data, strlen( data ) + 1 );
 }
 
 /*****************************************************************************/
 smx_msg_t* smx_msg_tsstr_create_ts( smx_net_t* net, char* data )
 {
-    return smx_msg_tsmem_create_ts( net, data, strlen( data ) );
+    return smx_msg_tsmem_create_ts( net, data, strlen( data ) + 1 );
 }

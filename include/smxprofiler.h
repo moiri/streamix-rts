@@ -16,7 +16,6 @@
 #define SMXPROFILER_H
 
 typedef enum smx_profiler_action_e smx_profiler_action_t;
-typedef struct smx_mongo_msg_s smx_mongo_msg_t;
 
 /**
  * The different actions a profiler can log.
