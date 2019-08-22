@@ -88,7 +88,8 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
 
 /*****************************************************************************/
 smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
-        const char* cat_name, void** conf, pthread_barrier_t* init_done )
+        const char* cat_name, void** conf, pthread_barrier_t* init_done,
+        int prio )
 {
     if( id >= SMX_MAX_NETS )
     {
@@ -120,6 +121,7 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->sig->out.len = 0;
 
     net->id = id;
+    net->priority = prio;
     net->init_done = init_done;
     net->cat = zlog_get_category( cat_name );
     net->conf = NULL;
@@ -180,9 +182,9 @@ void smx_net_init( smx_net_t* h, int indegree, int outdegree )
 }
 
 /*****************************************************************************/
-int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
-        int prio )
+int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h )
 {
+    smx_net_t* net = h;
     pthread_attr_t sched_attr;
     struct sched_param fifo_param;
     pthread_t thread;
@@ -195,11 +197,11 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
     }
 
     pthread_attr_init( &sched_attr );
-    if( prio > 0 )
+    if( net->priority > 0 )
     {
         min_fifo = sched_get_priority_min( SCHED_FIFO );
         max_fifo = sched_get_priority_max( SCHED_FIFO );
-        fifo_param.sched_priority = min_fifo + prio;
+        fifo_param.sched_priority = min_fifo + net->priority;
         if( fifo_param.sched_priority > max_fifo )
         {
             SMX_LOG_NET( h, warn, "cannot use therad priority of %d, falling back\

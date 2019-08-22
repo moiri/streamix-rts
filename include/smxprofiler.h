@@ -32,7 +32,7 @@ enum smx_profiler_action_e
     SMX_PROFILER_ACTION_WRITE_COLLECTOR,/**< write to a collector. */
     SMX_PROFILER_ACTION_OVERWRITE,      /**< overwrite a message in a channel. */
     SMX_PROFILER_ACTION_DISMISS,        /**< dismiss a message in a channel. */
-    SMX_PROFILER_ACTION_DUPLICATE,      /**< duplicate a message ina channel. */
+    SMX_PROFILER_ACTION_DUPLICATE,      /**< duplicate a message in a channel. */
     SMX_PROFILER_ACTION_DL_MISS         /**< missed a deadline. */
 };
 

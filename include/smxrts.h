@@ -118,9 +118,10 @@ struct smx_rts_s
 #define SMX_CONNECT_TF( net_id, ch_in_id, ch_out_id, ch_name )\
     smx_connect_tf( rts->nets[net_id], rts->chs[ch_in_id], rts->chs[ch_out_id] )
 
-#define SMX_NET_CREATE( id, net_name, box_name )\
+#define SMX_NET_CREATE( id, net_name, box_name, prio )\
     rts->nets[id] = smx_net_create( &rts->net_cnt, id, #net_name,\
-            STRINGIFY( net_ ## net_name ## _ ## id ), &rts->conf, &rts->init_done )
+            STRINGIFY( net_ ## net_name ## _ ## id ), &rts->conf,\
+            &rts->init_done, prio )
 
 #define SMX_NET_DESTROY( id )\
     smx_net_destroy( rts->nets[id] )
@@ -143,8 +144,8 @@ struct smx_rts_s
 #define SMX_NET_INIT_TF( id, sec, nsec )\
     smx_net_init_tf( rts->nets[id], sec, nsec )
 
-#define SMX_NET_RUN( id, box_name, prio )\
-    smx_net_run( rts->ths, id, start_routine_ ## box_name, rts->nets[id], prio )
+#define SMX_NET_RUN( id, box_name )\
+    smx_net_run( rts->ths, id, start_routine_ ## box_name, rts->nets[id] )
 
 #define SMX_NET_WAIT_END( id )\
     pthread_join( rts->ths[id], NULL )

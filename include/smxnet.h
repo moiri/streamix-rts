@@ -36,11 +36,13 @@ enum smx_thread_state_e
  */
 struct smx_net_s
 {
+    bool                has_profiler; /**< is profiler enabled? */
+    /** the thread priority of the net. 0 means ET, >0 means TT */
+    int                 priority;
     unsigned int        id;           /**< a unique net id */
     unsigned long       count;        /**< loop counter */
     pthread_barrier_t*  init_done;    /**< pointer to the init sync barrier */
     zlog_category_t*    cat;          /**< the log category */
-    bool                has_profiler; /**< is profiler is enabled? */
     smx_net_sig_t*      sig;          /**< the net port signature */
     void*               attr;         /**< custom attributes of special nets */
     void*               conf;         /**< pointer to the XML configuration */
@@ -120,10 +122,12 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
  * @param cat_name  the name of the zlog category
  * @param conf      a pointer to the net configuration structure
  * @param init_done a pointer to the init sync barrier
+ * @param prio      the RT thread priority (0 means no rt thread)
  * @return          a pointer to the ctreated net or NULL
  */
 smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
-        const char* cat_name, void** conf, pthread_barrier_t* init_done );
+        const char* cat_name, void** conf, pthread_barrier_t* init_done,
+        int prio );
 
 /**
  * Destroy a net
@@ -149,11 +153,9 @@ void smx_net_init( smx_net_t* h, int indegree, int outdegree );
  *                          target array
  * @param box_impl( arg )   function pointer to the box implementation
  * @param h                 pointer to the net handler
- * @param prio              the RT thread priority (0 means no rt thread)
  * @return                  0 on success, -1 on failure
  */
-int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h,
-        int prio );
+int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h );
 
 /**
  * @brief the start routine of a thread associated to a box
