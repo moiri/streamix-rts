@@ -493,6 +493,8 @@ smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         ch->source->err = SMX_CHANNEL_ERR_NO_DATA;
         return NULL;
     }
+    else
+        ch->source->err = SMX_CHANNEL_ERR_NO_TARGET;
 
     return msg;
 }
@@ -571,8 +573,10 @@ smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         SMX_LOG_CH( ch, info, "read from fifo_dd (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
     }
-    else
+    else if( ch->source->state != SMX_CHANNEL_END )
         ch->source->err = SMX_CHANNEL_ERR_DL_MISS;
+    else
+        ch->source->err = SMX_CHANNEL_ERR_NO_TARGET;
     return msg;
 }
 
