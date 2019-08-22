@@ -115,6 +115,7 @@ smx_channel_end_t* smx_channel_create_end()
         return NULL;
 
     end->count = 0;
+    end->err = SMX_CHANNEL_ERR_NONE;
     pthread_cond_init( &end->ch_cv, NULL );
     return end;
 }
@@ -153,6 +154,7 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
     if( ch->source ==  NULL )
     {
         SMX_LOG_MAIN( main, fatal, "channel not initialised" );
+        ch->source->err = SMX_CHANNEL_ERR_UNINITIALISED;
         return NULL;
     }
 
@@ -175,6 +177,7 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
             pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, error, "undefined channel type '%d'",
                     ch->type );
+            ch->source->err = SMX_CHANNEL_ERR_UNINITIALISED;
             return NULL;
     }
     // notify producer that space is available
@@ -254,12 +257,14 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     if( ch->sink == NULL )
     {
         SMX_LOG_MAIN( main, fatal, "channel not initialised" );
+        ch->sink->err = SMX_CHANNEL_ERR_UNINITIALISED;
         return -1;
     }
 
     if( msg == NULL )
     {
         SMX_LOG_MAIN( main, warn, "write aborted: message is NULL" );
+        ch->sink->err = SMX_CHANNEL_ERR_NO_DATA;
         return -1;
     }
 
@@ -275,6 +280,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         pthread_mutex_unlock( &ch->ch_mutex );
         SMX_LOG_CH( ch, notice, "write aborted: consumer has termninated" );
         smx_msg_destroy( h, msg, true );
+        ch->sink->err = SMX_CHANNEL_ERR_NO_TARGET;
         return -1;
     }
     switch( ch->type )
@@ -303,6 +309,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         default:
             pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, error, "undefined channel type '%d'", ch->type );
+            ch->sink->err = SMX_CHANNEL_ERR_UNINITIALISED;
             return -1;
     }
     if( ch->collector != NULL && ch->fifo->overwrite == 0 )
@@ -460,6 +467,8 @@ smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
     if( ch == NULL || fifo == NULL )
         return NULL;
 
+    ch->source->err = SMX_CHANNEL_ERR_NONE;
+
     if( fifo->count > 0 )
     {
         // messages are available
@@ -481,6 +490,7 @@ smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         new_count = fifo->count;
         SMX_LOG_CH( ch, error, "channel is ready but is empty (%d/%d)",
                 new_count, fifo->length );
+        ch->source->err = SMX_CHANNEL_ERR_NO_DATA;
         return NULL;
     }
 
@@ -495,6 +505,8 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
     smx_msg_t* old_backup = NULL;
     if( ch == NULL || fifo == NULL )
         return NULL;
+
+    ch->source->err = SMX_CHANNEL_ERR_NONE;
 
     if( fifo->count > 0 )
     {
@@ -531,6 +543,7 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         {
             SMX_LOG_CH( ch, notice,
                     "nothing to read, fifo and its backup is empty" );
+            ch->source->err = SMX_CHANNEL_ERR_NO_DATA;
         }
     }
     return msg;
@@ -544,6 +557,8 @@ smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
     if( ch == NULL || fifo == NULL )
         return NULL;
 
+    ch->source->err = SMX_CHANNEL_ERR_NONE;
+
     if( fifo->count > 0 )
     {
         // messages are available
@@ -556,6 +571,8 @@ smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         SMX_LOG_CH( ch, info, "read from fifo_dd (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
     }
+    else
+        ch->source->err = SMX_CHANNEL_ERR_DL_MISS;
     return msg;
 }
 
@@ -586,6 +603,7 @@ int smx_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         new_count = fifo->count;
         SMX_LOG_CH( ch, warn, "channel is ready but has no space (%d/%d)",
                 new_count, fifo->length );
+        ch->sink->err = SMX_CHANNEL_ERR_NO_SPACE;
         return -1;
     }
     return 0;
@@ -635,6 +653,24 @@ smx_channel_t* smx_get_channel_by_name( smx_channel_t** ports, int count,
         if( 0 == strcmp( ports[i]->name, name ) )
             return ports[i];
     return NULL;
+}
+
+/*****************************************************************************/
+smx_channel_err_t smx_get_read_error( smx_channel_t* ch )
+{
+    if( ch == NULL || ch->source == NULL || ch->fifo == NULL )
+        return SMX_CHANNEL_ERR_UNINITIALISED;
+
+    return ch->source->err;
+}
+
+/*****************************************************************************/
+smx_channel_err_t smx_get_write_error( smx_channel_t* ch )
+{
+    if( ch == NULL || ch->sink == NULL || ch->fifo == NULL )
+        return SMX_CHANNEL_ERR_UNINITIALISED;
+
+    return ch->sink->err;
 }
 
 /*****************************************************************************/

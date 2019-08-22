@@ -60,6 +60,12 @@ struct smx_rts_s
 #define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
     smx_channel_write( h, SMX_SIG_PORT( h, box_name, ch_name, out ), data )
 
+#define SMX_GET_READ_ERROR( h, box_name, ch_name )\
+    smx_get_read_err( SMX_SIG_PORT( h, box_name, ch_name, in ) )
+
+#define SMX_GET_WRITE_ERROR( h, box_name, ch_name )\
+    smx_get_write_error( SMX_SIG_PORT( h, box_name, ch_name, out ) )
+
 /**
  *
  */

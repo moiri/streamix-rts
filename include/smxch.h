@@ -20,12 +20,26 @@
 
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
 typedef struct smx_channel_end_s smx_channel_end_t;   /**< ::smx_channel_end_s */
+typedef enum smx_channel_err_e smx_channel_err_t;     /**< #smx_channel_err_e */
 typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
 typedef enum smx_channel_state_e smx_channel_state_t; /**< #smx_channel_state_e */
 typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
 typedef struct smx_fifo_s smx_fifo_t;                 /**< ::smx_fifo_s */
 typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
 typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
+
+/**
+ * The error state of a channel end
+ */
+enum smx_channel_err_e
+{
+    SMX_CHANNEL_ERR_NONE,          /**< no error */
+    SMX_CHANNEL_ERR_UNINITIALISED, /**< the channel was never initialised */
+    SMX_CHANNEL_ERR_NO_DATA,       /**< unexpectedly, the channel has no data */
+    SMX_CHANNEL_ERR_NO_SPACE,      /**< unexpectedly, the channel has no space */
+    SMX_CHANNEL_ERR_DL_MISS,       /**< connecting net missed its deadline */
+    SMX_CHANNEL_ERR_NO_TARGET      /**< connecting net has terminated */
+};
 
 /**
  * @brief Streamix channel (buffer) types
@@ -76,6 +90,7 @@ struct smx_channel_s
 struct smx_channel_end_s
 {
     smx_channel_state_t state;    /**< state of the channel end */
+    smx_channel_err_t   err;      /**< error on the channel end */
     pthread_cond_t      ch_cv;    /**< conditional variable to trigger producer */
     unsigned long       count;    /**< access counter */
 };
@@ -393,6 +408,26 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
  */
 smx_channel_t* smx_get_channel_by_name( smx_channel_t** ports, int count,
         const char* name );
+
+/**
+ * Get the read error on a channel.
+ *
+ * @param ch
+ *  Pointer to the channel
+ * @return
+ *  The error value indicationg the problem
+ */
+smx_channel_err_t smx_get_read_error( smx_channel_t* ch );
+
+/**
+ * Get the write error on a channel.
+ *
+ * @param ch
+ *  Pointer to the channel
+ * @return
+ *  The error value indicationg the problem
+ */
+smx_channel_err_t smx_get_write_error( smx_channel_t* ch );
 
 /**
  * @brief create timed guard structure and initialise timer
