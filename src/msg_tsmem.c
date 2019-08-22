@@ -16,7 +16,7 @@ void* smx_data_tsmem_copy( void* data, size_t size )
     smx_data_tsmem_t* data_copy = smx_malloc( size );
     data_copy->ts = mg->ts;
     data_copy->size = mg->size;
-    data_copy->data = smx_malloc( mg->size );
+    data_copy->data = smx_malloc( mg->size + 1 );
     memcpy( data_copy->data, mg->data, mg->size );
     return data_copy;
 }
@@ -44,7 +44,7 @@ smx_msg_t* smx_msg_tsmem_create( smx_net_t* net, struct timespec ts, void* data,
     msg_data->ts = ts;
     msg_data->data = data;
     msg_data->size = size;
-    return smx_msg_create( net, data, sizeof( struct smx_data_tsmem_s ),
+    return smx_msg_create( net, msg_data, sizeof( struct smx_data_tsmem_s ),
             smx_data_tsmem_copy, smx_data_tsmem_destroy, smx_data_tsmem_unpack );
 }
 
