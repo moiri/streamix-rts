@@ -9,14 +9,15 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+#include <errno.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <stdbool.h>
 #include <string.h>
-#include <errno.h>
+#include "smxch.h"
 #include "smxnet.h"
-#include "smxutils.h"
 #include "smxprofiler.h"
+#include "smxutils.h"
 
 /*****************************************************************************/
 int smx_net_collector_check_avaliable( void* h, smx_collector_t* collector )

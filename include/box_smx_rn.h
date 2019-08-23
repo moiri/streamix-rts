@@ -9,8 +9,7 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-#include "smxch.h"
-#include "smxnet.h"
+#include "smxtypes.h"
 
 #ifndef BOX_SMX_RN_H
 #define BOX_SMX_RN_H

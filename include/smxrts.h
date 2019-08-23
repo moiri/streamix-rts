@@ -20,6 +20,7 @@
 #include "smxmsg.h"
 #include "smxnet.h"
 #include "smxprofiler.h"
+#include "smxtypes.h"
 #include "smxutils.h"
 
 #ifndef SMXRTS_H
@@ -105,13 +106,14 @@ struct smx_rts_s
     smx_channel_destroy( rts->chs[id] )
 
 #define SMX_CONNECT( net_id, ch_id, box_name, ch_name, mode )\
-    smx_connect( SMX_SIG_PORT_PTR( rts->nets[net_id], box_name, ch_name, mode ),\
-            rts->chs[ch_id], net_id, rts->nets[net_id]->name, SMX_MODE_ ## mode,\
+    smx_connect_ ## mode(\
+            SMX_SIG_PORT_PTR( rts->nets[net_id], box_name, ch_name, mode ),\
+            rts->chs[ch_id], rts->nets[net_id], SMX_MODE_ ## mode,\
             SMX_SIG_PORT_COUNT( rts->nets[net_id], mode ) )
 
 #define SMX_CONNECT_ARR( net_id, ch_id, mode )\
-    smx_connect( SMX_SIG_PORT_ARR_PTR( rts->nets[net_id], mode ),\
-            rts->chs[ch_id], net_id, rts->nets[net_id]->name, SMX_MODE_ ## mode,\
+    smx_connect_ ## mode( SMX_SIG_PORT_ARR_PTR( rts->nets[net_id], mode ),\
+            rts->chs[ch_id], rts->nets[net_id], SMX_MODE_ ## mode,\
             SMX_SIG_PORT_COUNT( rts->nets[net_id], mode ) )
 
 #define SMX_CONNECT_GUARD( id, iats, iatns )\

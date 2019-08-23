@@ -6,10 +6,11 @@
  */
 
 #include <string.h>
-#include "smxmsg.h"
-#include "smxutils.h"
 #include "smxlog.h"
+#include "smxmsg.h"
+#include "smxnet.h"
 #include "smxprofiler.h"
+#include "smxutils.h"
 
 /*****************************************************************************/
 smx_msg_t* smx_msg_copy( void* h, smx_msg_t* msg )

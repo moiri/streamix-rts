@@ -6,8 +6,9 @@
  */
 
 #include <string.h>
-#include "smxutils.h"
 #include "msg_tsmem.h"
+#include "smxmsg.h"
+#include "smxutils.h"
 
 /*****************************************************************************/
 void* smx_data_tsmem_copy( void* data, size_t size )

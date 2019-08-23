@@ -10,63 +10,13 @@
  */
 
 #include <stdbool.h>
-#include "smxch.h"
+#include "smxtypes.h"
 #include "smxlog.h"
 
 #ifndef SMXNET_H
 #define SMXNET_H
 
 #define SMX_MAX_NETS 1000
-
-typedef struct smx_net_s smx_net_t;                   /**< ::smx_net_s */
-typedef struct smx_net_sig_s smx_net_sig_t;           /**< ::smx_net_sig_s */
-
-/**
- * @brief Constants to indicate wheter a thread should terminate or continue
- */
-enum smx_thread_state_e
-{
-    SMX_NET_RETURN = 0,     /**< decide automatically wheather to end or go on */
-    SMX_NET_CONTINUE,       /**< continue to call the box implementation fct */
-    SMX_NET_END             /**< end thread */
-};
-
-/**
- * Common fields of a streamix net.
- */
-struct smx_net_s
-{
-    bool                has_profiler; /**< is profiler enabled? */
-    /** the thread priority of the net. 0 means ET, >0 means TT */
-    int                 priority;
-    unsigned int        id;           /**< a unique net id */
-    unsigned long       count;        /**< loop counter */
-    pthread_barrier_t*  init_done;    /**< pointer to the init sync barrier */
-    zlog_category_t*    cat;          /**< the log category */
-    smx_net_sig_t*      sig;          /**< the net port signature */
-    void*               attr;         /**< custom attributes of special nets */
-    void*               conf;         /**< pointer to the XML configuration */
-    const char*         name;         /**< the name of the net */
-    struct timespec     start_wall;   /**< start time of a net (after init) */
-    struct timespec     end_wall;     /**< end time of a net (befoer cleanup) */
-};
-
-/**
- * The signature of a net
- */
-struct smx_net_sig_s
-{
-    struct {
-        int count;                  /**< the number of connected input ports */
-        int len;                    /**< the number of input ports */
-        smx_channel_t** ports;      /**< an array of channel pointers */
-    } in;                           /**< input channels */
-    struct {
-        int count;                  /**< the number of connected output ports */
-        int len;                    /**< the number of output ports */
-        smx_channel_t** ports;      /**< an array of channel pointers */
-    } out;                          /**< output channels */
-};
 
 #define SMX_LOG_NET( net, level, format, ... )\
     SMX_LOG_INTERN( level, SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )

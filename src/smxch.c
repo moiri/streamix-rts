@@ -16,6 +16,7 @@
 #include <sys/timerfd.h>
 #include <unistd.h>
 #include "smxch.h"
+#include "smxmsg.h"
 #include "smxutils.h"
 #include "smxlog.h"
 #include "smxprofiler.h"
@@ -116,6 +117,7 @@ smx_channel_end_t* smx_channel_create_end()
 
     end->count = 0;
     end->err = SMX_CHANNEL_ERR_NONE;
+    end->net = NULL;
     pthread_cond_init( &end->ch_cv, NULL );
     return end;
 }
@@ -401,6 +403,22 @@ void smx_connect_guard( smx_channel_t* ch, smx_guard_t* guard )
         return;
     }
     ch->guard = guard;
+}
+
+/*****************************************************************************/
+void smx_connect_in( smx_channel_t** dest, smx_channel_t* src, smx_net_t* net,
+        const char* mode, int* count )
+{
+    src->source->net = net;
+    smx_connect( dest, src, net->id, net->name, mode, count );
+}
+
+/*****************************************************************************/
+void smx_connect_out( smx_channel_t** dest, smx_channel_t* src, smx_net_t* net,
+        const char* mode, int* count )
+{
+    src->sink->net = net;
+    smx_connect( dest, src, net->id, net->name, mode, count );
 }
 
 /*****************************************************************************/

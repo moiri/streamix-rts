@@ -12,8 +12,10 @@
 #include <stdbool.h>
 #include "box_smx_rn.h"
 #include "smxutils.h"
-#include "smxnet.h"
+#include "smxch.h"
 #include "smxlog.h"
+#include "smxnet.h"
+#include "smxmsg.h"
 
 /*****************************************************************************/
 void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn )

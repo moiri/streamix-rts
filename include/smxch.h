@@ -9,142 +9,12 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-#include <pthread.h>
-#include <zlog.h>
-#include "smxmsg.h"
+#include "smxtypes.h"
 
 #ifndef SMXCH_H
 #define SMXCH_H
 
 #define SMX_MAX_CHS 10000
-
-typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
-typedef struct smx_channel_end_s smx_channel_end_t;   /**< ::smx_channel_end_s */
-typedef enum smx_channel_err_e smx_channel_err_t;     /**< #smx_channel_err_e */
-typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
-typedef enum smx_channel_state_e smx_channel_state_t; /**< #smx_channel_state_e */
-typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
-typedef struct smx_fifo_s smx_fifo_t;                 /**< ::smx_fifo_s */
-typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
-typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
-
-/**
- * The error state of a channel end
- */
-enum smx_channel_err_e
-{
-    SMX_CHANNEL_ERR_NONE,          /**< no error */
-    SMX_CHANNEL_ERR_UNINITIALISED, /**< the channel was never initialised */
-    SMX_CHANNEL_ERR_NO_DATA,       /**< unexpectedly, the channel has no data */
-    SMX_CHANNEL_ERR_NO_SPACE,      /**< unexpectedly, the channel has no space */
-    SMX_CHANNEL_ERR_DL_MISS,       /**< connecting net missed its deadline */
-    SMX_CHANNEL_ERR_NO_TARGET      /**< connecting net has terminated */
-};
-
-/**
- * @brief Streamix channel (buffer) types
- */
-enum smx_channel_type_e
-{
-    SMX_FIFO,           /**< a simple FIFO */
-    SMX_FIFO_D,         /**< a FIFO with decoupled output */
-    SMX_D_FIFO,         /**< a FIFO with decoupled input */
-    SMX_D_FIFO_D        /**< a FIFO with decoupled input and output */
-};
-
-/**
- * @brief Channel state
- *
- * This allows to indicate wheter a producer connected to the channel has
- * terminated and wheter data is available to read. The second point is
- * important in combination with copy synchronizers.
- */
-enum smx_channel_state_e
-{
-    SMX_CHANNEL_UNINITIALISED, /**< decoupled channel was never written to */
-    SMX_CHANNEL_PENDING,       /**< channel is waiting for a signal */
-    SMX_CHANNEL_READY,         /**< channel is ready to read from */
-    SMX_CHANNEL_END            /**< net connected to channel end has terminated */
-};
-
-/**
- * @brief A generic Streamix channel
- */
-struct smx_channel_s
-{
-    int                 id;         /**< the id of the channel */
-    smx_channel_type_t  type;       /**< type of the channel */
-    const char*         name;       /**< name of the channel */
-    smx_fifo_t*         fifo;       /**< ::smx_fifo_s */
-    smx_guard_t*        guard;      /**< ::smx_guard_s */
-    smx_collector_t*    collector;  /**< ::smx_collector_s, collect signals */
-    smx_channel_end_t*  sink;       /**< ::smx_channel_end_s */
-    smx_channel_end_t*  source;     /**< ::smx_channel_end_s */
-    zlog_category_t*    cat;        /**< zlog category of a channel end */
-    pthread_mutex_t     ch_mutex;   /**< mutual exclusion */
-};
-
-/**
- * The end of a channel
- */
-struct smx_channel_end_s
-{
-    smx_channel_state_t state;    /**< state of the channel end */
-    smx_channel_err_t   err;      /**< error on the channel end */
-    pthread_cond_t      ch_cv;    /**< conditional variable to trigger producer */
-    unsigned long       count;    /**< access counter */
-};
-
-/**
- * @brief Collect channel counts
- *
- * This is used to nondeterministically merge channels with a copy synchronyzer
- * that has multiple inputs.
- */
-struct smx_collector_s
-{
-    pthread_mutex_t     col_mutex;  /**< mutual exclusion */
-    pthread_cond_t      col_cv;     /**< conditional variable to trigger box */
-    int                 count;      /**< collection of channel counts */
-    smx_channel_state_t state;      /**< state of the channel */
-};
-
-/**
- * @brief Streamix fifo structure
- *
- * The fifo structure is blocking on write if all buffers are occupied and
- * blocking on read if all buffer spaces are empty. The blocking pattern
- * can be changed by decoupling either the input, the output or both.
- */
-struct smx_fifo_s
-{
-    smx_fifo_item_t*  head;      /**< pointer to the heda of the FIFO */
-    smx_fifo_item_t*  tail;      /**< pointer to the tail of the FIFO */
-    smx_msg_t*        backup;    /**< ::smx_msg_s, msg space for decoupling */
-    int     overwrite;           /**< counts number of overwrite operations */
-    int     copy;                /**< counts number of copy operations */
-    int     count;               /**< counts occupied space */
-    int     length;              /**< size of the FIFO */
-};
-
-/**
- * @brief A single FIFO item of a circular double-linked-list
- */
-struct smx_fifo_item_s
-{
-    smx_msg_t*       msg;        /**< ::smx_msg_s */
-    smx_fifo_item_t* next;       /**< pointer to the next item */
-    smx_fifo_item_t* prev;       /**< pointer to the previous item */
-};
-
-/**
- * @brief timed guard to limit communication rate
- */
-struct smx_guard_s
-{
-    int             fd;     /**< file descriptor pointing to timer */
-    struct timespec iat;    /**< minumum inter-arrival-time */
-};
 
 #define SMX_LOG_CH( ch, level, format, ... )\
     SMX_LOG_INTERN( level, ch->cat, format,  ##__VA_ARGS__ )
@@ -316,6 +186,30 @@ void smx_connect( smx_channel_t** dest, smx_channel_t* src, int net_id,
  * @param guard the guard to be connected
  */
 void smx_connect_guard( smx_channel_t* ch, smx_guard_t* guard );
+
+/**
+ * Connect a channel to an input of a net.
+ *
+ * @param dest        a pointer to the destination
+ * @param src         a pointer to the source
+ * @param net         a pointer to the net
+ * @param mode        the direction of the connection
+ * @param count       pointer to th econnected port counter
+ */
+void smx_connect_in( smx_channel_t** dest, smx_channel_t* src, smx_net_t* net,
+        const char* mode, int* count );
+
+/**
+ * Connect a channel to an output of a net.
+ *
+ * @param dest        a pointer to the destination
+ * @param src         a pointer to the source
+ * @param net         a pointer to the net
+ * @param mode        the direction of the connection
+ * @param count       pointer to th econnected port counter
+ */
+void smx_connect_out( smx_channel_t** dest, smx_channel_t* src, smx_net_t* net,
+        const char* mode, int* count );
 
 /**
  * @brief Create Streamix FIFO channel

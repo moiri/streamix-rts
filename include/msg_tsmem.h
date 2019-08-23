@@ -12,23 +12,10 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "smxnet.h"
+#include "smxtypes.h"
 
 #ifndef MSG_TSMEM_H
 #define MSG_TSMEM_H
-
-/** ::smx_data_tsmem_s */
-typedef struct smx_data_tsmem_s smx_data_tsmem_t;
-
-/**
- * A message data structure that allows to store a time-stamped data chunk.
- */
-struct smx_data_tsmem_s
-{
-    struct timespec ts; /**< the timestamp of the data item */
-    void* data;         /**< the chunk of data */
-    size_t size;        /**< the size of the data chunk */
-};
 
 /**
  * The custom copy function to perform a copy of the tsmem message data.

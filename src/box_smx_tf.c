@@ -19,9 +19,12 @@
 #include <sys/timerfd.h>
 #include <unistd.h>
 #include "box_smx_tf.h"
-#include "smxutils.h"
+#include "smxch.h"
 #include "smxlog.h"
+#include "smxnet.h"
+#include "smxmsg.h"
 #include "smxprofiler.h"
+#include "smxutils.h"
 
 /*****************************************************************************/
 void smx_connect_tf( smx_net_t* net, smx_channel_t* ch_in,
@@ -43,7 +46,9 @@ void smx_connect_tf( smx_net_t* net, smx_channel_t* ch_in,
     if( tf == NULL )
         return;
     tf->in = ch_in;
+    tf->in->source->net = net;
     tf->out = ch_out;
+    tf->out->sink->net = net;
     tf->next = timer->tfs;
     timer->tfs = tf;
     timer->count++;
@@ -129,6 +134,8 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
     smx_channel_t** ch_in = h->sig->in.ports;
     smx_channel_t** ch_out = h->sig->out.ports;
     smx_msg_t* msg;
+    smx_net_t* producer;
+    smx_net_t* consumer;
     if( ch_in == NULL || ch_out == NULL )
         return;
 
@@ -167,20 +174,73 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
         smx_channel_change_write_state( ch_in[i], SMX_CHANNEL_READY );
         pthread_mutex_unlock( &ch_in[i]->ch_mutex );
 
-        if( msg == NULL || ch_in[i]->fifo->copy )
+        // the net that is connected to the sink of the input channel is the
+        // producer
+        producer = ch_in[i]->sink->net;
+        if( producer->priority > 0)
         {
-            zlog_error( ch_in[i]->cat, "missed deadline to produce" );
-            smx_profiler_log_ch( h, ch_in[i], NULL,
-                    SMX_PROFILER_ACTION_DL_MISS, 0 );
+            if( msg == NULL )
+            {
+                zlog_error( ch_in[i]->cat,
+                        "rt net '%s(%d)' missed deadline to produce: no message"
+                        " produced", producer->name, producer->id );
+                smx_profiler_log_ch( h, ch_in[i], NULL,
+                        SMX_PROFILER_ACTION_DL_MISS_SRC, 0 );
+            }
+            if( ch_in[i]->fifo->copy )
+            {
+                zlog_warn( ch_in[i]->cat,
+                        "rt net '%s(%d)' missed deadline to produce: previous"
+                        " message duplicated", producer->name, producer->id );
+                smx_profiler_log_ch( h, ch_in[i], NULL,
+                        SMX_PROFILER_ACTION_DL_MISS_SRC_CP, 0 );
+            }
         }
+        else
+        {
+            if( msg == NULL )
+            {
+                zlog_notice( ch_in[i]->cat,
+                        "non-rt net '%s(%d)' missed tt interval to produce:"
+                        " no message produced", producer->name, producer->id );
+                smx_profiler_log_ch( h, ch_in[i], NULL,
+                        SMX_PROFILER_ACTION_TT_MISS_SRC, 0 );
+            }
+            if( ch_in[i]->fifo->copy )
+            {
+                zlog_notice( ch_in[i]->cat,
+                        "non-rt net '%s(%d)' missed tt interval to produce:"
+                        " previous message duplicated", producer->name,
+                        producer->id );
+                smx_profiler_log_ch( h, ch_in[i], NULL,
+                        SMX_PROFILER_ACTION_TT_MISS_SRC_CP, 0 );
+            }
+        }
+
         if( msg != NULL )
         {
             smx_channel_write( h, ch_out[i], msg );
             if( ch_out[i]->fifo->overwrite )
             {
-                zlog_error( ch_out[i]->cat, "missed deadline to consume" );
-                smx_profiler_log_ch( h, ch_out[i], NULL,
-                        SMX_PROFILER_ACTION_DL_MISS, 0 );
+                // the net that is connected to the source of the output channel
+                // is the consumer
+                consumer = ch_out[i]->source->net;
+                if( consumer->priority > 0)
+                {
+                    zlog_error( ch_out[i]->cat,
+                            "rt net '%s(%d)' missed deadline to consume",
+                            consumer->name, consumer->id );
+                    smx_profiler_log_ch( h, ch_out[i], NULL,
+                            SMX_PROFILER_ACTION_DL_MISS_SINK, 0 );
+                }
+                else
+                {
+                    zlog_notice( ch_out[i]->cat,
+                            "non-rt '%s(%d)' net missed tt interval to consume",
+                            consumer->name, consumer->id );
+                    smx_profiler_log_ch( h, ch_out[i], NULL,
+                            SMX_PROFILER_ACTION_TT_MISS_SINK, 0 );
+                }
             }
         }
     }
@@ -203,7 +263,7 @@ void smx_tf_wait( smx_net_t* h )
     if( -1 == poll_res )
         SMX_LOG_NET( h, error, "timerfd poll: %d", errno );
     else if( poll_res > 0 )
-        SMX_LOG_NET( h, notice, "deadline missed" );
+        SMX_LOG_NET( h, notice, "no wait time, tf timer interval missed: %d", poll_res );
 
     if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
         SMX_LOG_NET( h, error, "timerfd read: %d", errno );

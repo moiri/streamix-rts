@@ -12,7 +12,6 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include "smxrts.h"
-#include "smxlog.h"
 
 #define XML_APP         "app"
 #define XML_LOG         "log"

@@ -10,27 +10,10 @@
  */
 
 #include <stdlib.h>
+#include "smxtypes.h"
 
 #ifndef SMXMSG_H
 #define SMXMSG_H
-
-typedef struct smx_msg_s smx_msg_t;                   /**< ::smx_msg_s */
-
-/**
- * @brief A Streamix port structure
- *
- * The structure contains handlers that can be used to manipulate data.
- * This handler is provided by the box implementation.
- */
-struct smx_msg_s
-{
-    unsigned long id;               /**< the unique message id */
-    void* data;                     /**< pointer to the data */
-    int   size;                     /**< size of the data */
-    void* (*copy)( void*, size_t ); /**< pointer to a fct making a deep copy */
-    void  (*destroy)( void* );      /**< pointer to a fct that frees data */
-    void* (*unpack)( void* );       /**< pointer to a fct that unpacks data */
-};
 
 /**
  * @brief make a deep copy of a message

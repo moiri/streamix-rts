@@ -191,7 +191,72 @@ TRACEPOINT_EVENT_INSTANCE(
 TRACEPOINT_EVENT_INSTANCE(
     tpf_lttng_smx,
     smx_ch,
-    ch_dl_miss,
+    ch_dl_miss_src,
+    TP_ARGS(
+        int, id_ch,
+        int, id_net,
+        const char*, name_ch,
+        int, id_msg,
+        int, count
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    tpf_lttng_smx,
+    smx_ch,
+    ch_dl_miss_src_cp,
+    TP_ARGS(
+        int, id_ch,
+        int, id_net,
+        const char*, name_ch,
+        int, id_msg,
+        int, count
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    tpf_lttng_smx,
+    smx_ch,
+    ch_dl_miss_sink,
+    TP_ARGS(
+        int, id_ch,
+        int, id_net,
+        const char*, name_ch,
+        int, id_msg,
+        int, count
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    tpf_lttng_smx,
+    smx_ch,
+    ch_tt_miss_src,
+    TP_ARGS(
+        int, id_ch,
+        int, id_net,
+        const char*, name_ch,
+        int, id_msg,
+        int, count
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    tpf_lttng_smx,
+    smx_ch,
+    ch_tt_miss_src_cp,
+    TP_ARGS(
+        int, id_ch,
+        int, id_net,
+        const char*, name_ch,
+        int, id_msg,
+        int, count
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    tpf_lttng_smx,
+    smx_ch,
+    ch_tt_miss_sink,
     TP_ARGS(
         int, id_ch,
         int, id_net,

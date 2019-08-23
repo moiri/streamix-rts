@@ -11,8 +11,8 @@
 
 #include <errno.h>
 #include <string.h>
-#include "smxutils.h"
 #include "smxlog.h"
+#include "smxutils.h"
 
 /*****************************************************************************/
 void* smx_malloc( size_t size )

@@ -56,8 +56,23 @@ void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
         case SMX_PROFILER_ACTION_DUPLICATE:
             tracepoint_ch(ch_duplicate);
             break;
-        case SMX_PROFILER_ACTION_DL_MISS:
-            tracepoint_ch(ch_dl_miss);
+        case SMX_PROFILER_ACTION_DL_MISS_SRC:
+            tracepoint_ch(ch_dl_miss_src);
+            break;
+        case SMX_PROFILER_ACTION_DL_MISS_SRC_CP:
+            tracepoint_ch(ch_dl_miss_src_cp);
+            break;
+        case SMX_PROFILER_ACTION_DL_MISS_SINK:
+            tracepoint_ch(ch_dl_miss_sink);
+            break;
+        case SMX_PROFILER_ACTION_TT_MISS_SRC:
+            tracepoint_ch(ch_tt_miss_src);
+            break;
+        case SMX_PROFILER_ACTION_TT_MISS_SRC_CP:
+            tracepoint_ch(ch_tt_miss_src_cp);
+            break;
+        case SMX_PROFILER_ACTION_TT_MISS_SINK:
+            tracepoint_ch(ch_tt_miss_sink);
             break;
         default:
             break;
