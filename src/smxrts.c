@@ -12,6 +12,9 @@
 #include <bson.h>
 #include "smxrts.h"
 
+#define LIBZLOG_VERSION "1.2.14"
+#define LIBPTHREAD_STUBS_VERSION "0.4-1"
+
 /*****************************************************************************/
 void smx_program_cleanup( smx_rts_t* rts )
 {
@@ -109,6 +112,10 @@ smx_rts_t* smx_program_init( const char* config )
     rts->end_wall.tv_nsec = 0;
     rts->conf = doc;
     clock_gettime( CLOCK_MONOTONIC, &rts->start_wall );
+
+    SMX_LOG_MAIN( main, info, "using libbson version: %s", bson_get_version() );
+    SMX_LOG_MAIN( main, info, "using libzlog version: %s", LIBZLOG_VERSION );
+    SMX_LOG_MAIN( main, info, "using libphtread stubs version: %s", LIBPTHREAD_STUBS_VERSION );
 
     SMX_LOG_MAIN( main, notice, "start thread main" );
 
