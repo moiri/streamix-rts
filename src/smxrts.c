@@ -9,19 +9,14 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+#include <bson.h>
 #include "smxrts.h"
-
-#define XML_APP         "app"
-#define XML_LOG         "log"
 
 /*****************************************************************************/
 void smx_program_cleanup( smx_rts_t* rts )
 {
     double elapsed_wall;
-    xmlFreeDoc( rts->conf );
-    xmlCleanupParser();
+    bson_destroy( rts->conf );
     clock_gettime( CLOCK_MONOTONIC, &rts->end_wall );
     elapsed_wall = ( rts->end_wall.tv_sec - rts->start_wall.tv_sec );
     elapsed_wall += ( rts->end_wall.tv_nsec - rts->start_wall.tv_nsec) / 1000000000.0;
@@ -34,10 +29,12 @@ void smx_program_cleanup( smx_rts_t* rts )
 /*****************************************************************************/
 smx_rts_t* smx_program_init( const char* config )
 {
-    xmlDocPtr doc = NULL;
-    xmlNodePtr cur = NULL;
-    xmlChar* conf = NULL;
-
+    bson_json_reader_t *reader;
+    bson_error_t error;
+    bson_t* doc = bson_new();
+    bson_iter_t iter;
+    uint32_t len;
+    const char* conf;
 
     int rc = smx_log_init();
 
@@ -46,47 +43,56 @@ smx_rts_t* smx_program_init( const char* config )
         exit( 0 );
     }
 
-    /* required for thread safety */
-    xmlInitParser();
-
-    /*parse the file and get the DOM */
-    doc = xmlParseFile( config );
-
-    if( doc == NULL )
+    reader = bson_json_reader_new_from_file( config, &error );
+    if( reader == NULL )
     {
-        SMX_LOG_MAIN( main, error, "could not parse the app config file '%s'",
-                config );
+        SMX_LOG_MAIN( main, error, "failed to open '%s': %s", config,
+                error.message );
         exit( 0 );
     }
 
-    cur = xmlDocGetRootElement( doc );
-    if( cur == NULL || xmlStrcmp(cur->name, ( const xmlChar* )XML_APP ) )
+    rc = bson_json_reader_read( reader, doc, &error );
+    if( rc < 0 )
     {
         SMX_LOG_MAIN( main, error,
-                "app config root node name is '%s' instead of '%s'",
-                cur->name, XML_APP );
+                "could not parse the app config file '%s': %s",
+                config, error.message );
         exit( 0 );
     }
-    conf = xmlGetProp( cur, ( const xmlChar* )XML_LOG );
 
-    if( conf == NULL )
-        SMX_LOG_MAIN( main, warn, "no log configuration found in app config" );
-    else
+    bson_json_reader_destroy( reader );
+    if( bson_iter_init_find( &iter, doc, "_log" ) )
     {
-        SMX_LOG_MAIN( main, notice,
-                "switching to app specific zlog config file '%s'", conf );
-        rc = zlog_reload( (const char*)conf );
+        conf = bson_iter_utf8( &iter, &len );
+        rc = zlog_reload( conf );
         if( rc ) {
             SMX_LOG_MAIN( main, error, "zlog reload failed with conf: '%s'\n",
                     conf );
             exit( 0 );
         }
+        else
+            SMX_LOG_MAIN( main, notice,
+                    "switched to app specific zlog config file '%s'", conf );
+    }
+    else
+        SMX_LOG_MAIN( main, warn,
+                "no log configuration found in app config, missing mandatory ket '_log'" );
+
+    if( !( bson_iter_init_find( &iter, doc, "_nets" )
+            && BSON_ITER_HOLDS_DOCUMENT( &iter ) ) )
+    {
+        SMX_LOG_MAIN( main, error, "missing mandatory key '_nets' in app config" );
+        exit( 0 );
     }
 
-    SMX_LOG_MAIN( main, notice, "using libxml2 version: %s",
-            LIBXML_DOTTED_VERSION );
-
-    xmlFree( conf );
+    if( bson_iter_init_find( &iter, doc, "_name" ) )
+        SMX_LOG_MAIN( main, notice, "initializing app '%s'",
+                bson_iter_utf8( &iter, &len ) );
+    else
+    {
+        SMX_LOG_MAIN( main, error, "missing mandatory key '_name' in app config" );
+        exit( 0 );
+    }
 
     smx_rts_t* rts = smx_malloc( sizeof( struct smx_rts_s ) );
     if( rts == NULL )
@@ -95,13 +101,13 @@ smx_rts_t* smx_program_init( const char* config )
         exit( 0 );
     }
 
-    rts->conf = doc;
     rts->ch_cnt = 0;
     rts->net_cnt = 0;
     rts->start_wall.tv_sec = 0;
     rts->start_wall.tv_nsec = 0;
     rts->end_wall.tv_sec = 0;
     rts->end_wall.tv_nsec = 0;
+    rts->conf = doc;
     clock_gettime( CLOCK_MONOTONIC, &rts->start_wall );
 
     SMX_LOG_MAIN( main, notice, "start thread main" );

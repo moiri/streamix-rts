@@ -230,6 +230,7 @@ struct smx_net_s
     void*               attr;         /**< custom attributes of special nets */
     void*               conf;         /**< pointer to the XML configuration */
     const char*         name;         /**< the name of the net */
+    const char*         impl;         /**< the name of the box implementation */
     struct timespec     start_wall;   /**< start time of a net (after init) */
     struct timespec     end_wall;     /**< end time of a net (befoer cleanup) */
 };

@@ -11,8 +11,6 @@
  */
 
 #include <errno.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
 #include <poll.h>
 #include <stdint.h>
 #include <string.h>
@@ -20,6 +18,7 @@
 #include <unistd.h>
 #include "box_smx_tf.h"
 #include "smxch.h"
+#include "smxconfig.h"
 #include "smxlog.h"
 #include "smxnet.h"
 #include "smxmsg.h"
@@ -304,8 +303,6 @@ void smx_tf_cleanup( void* h, void* state )
 int smx_tf_init( void* h, void** state )
 {
     smx_timer_t* tt = ( ( smx_net_t*)h )->attr;
-    xmlNodePtr cur = SMX_NET_GET_CONF( h );
-    xmlChar* copy_str = NULL;
     net_smx_tf_state_t* tf_state = NULL;
 
     if( h == NULL || tt ==  NULL )
@@ -315,32 +312,9 @@ int smx_tf_init( void* h, void** state )
     }
 
     tf_state = smx_malloc( sizeof( struct net_smx_tf_state_s ) );
-    tf_state->do_copy = 0;
+    tf_state->do_copy = smx_config_get_bool( SMX_NET_GET_CONF( h ), "copy" );
+    SMX_LOG_NET( h, notice, "setting proprty 'copy' to '%d'", tf_state->do_copy );
 
-    if( cur != NULL )
-    {
-        copy_str = xmlGetProp(cur, (const xmlChar*)"copy");
-        if( copy_str != NULL )
-        {
-            if( ( strcmp( ( const char* )copy_str, "on" ) == 0 )
-                    || ( strcmp( ( const char* )copy_str, "1" ) == 0 ) )
-                tf_state->do_copy = 1;
-            else if( ( strcmp( ( const char* )copy_str, "off" ) == 0 )
-                    || ( strcmp( ( const char* )copy_str, "0" ) == 0 ) )
-                tf_state->do_copy = 0;
-            else
-            {
-                SMX_LOG_NET( h, warn,
-                        "value of property 'copy' is invalid (%s), using 'off'",
-                        copy_str );
-            }
-            xmlFree( copy_str );
-        }
-        else
-        {
-            SMX_LOG_NET( h, notice, "property 'copy' is not set, using 'off'" );
-        }
-    }
 
     SMX_LOG_NET( h, notice, "start net" );
     smx_tf_enable( h );

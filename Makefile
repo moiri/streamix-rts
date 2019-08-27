@@ -28,14 +28,14 @@ OBJECTS := $(patsubst $(LOC_SRC_DIR)/%.c, $(LOC_OBJ_DIR)/%.o, $(SOURCES))
 INCLUDES = $(LOC_INC_DIR)/*.h
 
 INCLUDES_DIR = -I$(LOC_INC_DIR) \
-			   -I/usr/include/libxml2 \
+			   -I/usr/include/libbson-1.0 \
 			   -I./uthash/src \
 			   -I.
 
 LINK_DIR = -L/usr/local/lib
 
 LINK_FILE = -lpthread \
-	-lxml2 \
+	-lbson \
 	-lzlog \
 	-llttng-ust \
 	-ldl

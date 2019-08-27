@@ -16,6 +16,7 @@
 #include "box_smx_tf.h"
 #include "msg_tsmem.h"
 #include "smxch.h"
+#include "smxconfig.h"
 #include "smxlog.h"
 #include "smxmsg.h"
 #include "smxnet.h"
@@ -127,8 +128,8 @@ struct smx_rts_s
     smx_connect_tf( rts->nets[net_id], rts->chs[ch_in_id], rts->chs[ch_out_id] )
 
 #define SMX_NET_CREATE( id, net_name, box_name, prio )\
-    rts->nets[id] = smx_net_create( &rts->net_cnt, id, #net_name,\
-            STRINGIFY( net_ ## net_name ## _ ## id ), &rts->conf,\
+    rts->nets[id] = smx_net_create( &rts->net_cnt, id, #net_name, #box_name,\
+            STRINGIFY( net_ ## net_name ## _ ## id ), rts->conf,\
             &rts->init_done, prio )
 
 #define SMX_NET_DESTROY( id )\

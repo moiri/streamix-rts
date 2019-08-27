@@ -9,6 +9,7 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+#include <bson.h>
 #include <stdbool.h>
 #include "smxtypes.h"
 #include "smxlog.h"
@@ -69,6 +70,7 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
  *                  creation)
  * @param id        a unique net identifier
  * @param name      the name of the net
+ * @param impl      the name of the box implementation
  * @param cat_name  the name of the zlog category
  * @param conf      a pointer to the net configuration structure
  * @param init_done a pointer to the init sync barrier
@@ -76,8 +78,8 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
  * @return          a pointer to the ctreated net or NULL
  */
 smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
-        const char* cat_name, void** conf, pthread_barrier_t* init_done,
-        int prio );
+        const char* impl, const char* cat_name, void* conf,
+        pthread_barrier_t* init_done, int prio );
 
 /**
  * Destroy a net
@@ -85,6 +87,77 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
  * @param h         pointer to the net handler
  */
 void smx_net_destroy( smx_net_t* h );
+
+/**
+ * Get the appropriate json configuration for the current net.
+ *
+ * The function hiearchically searches for a confic that is specific for
+ *  1. this net id
+ *  2. this net name
+ *  3. the box implementation of this net
+ *  4. all nets
+ *
+ *  If a hit is found, the function returns te config and does not continue
+ *  searching.
+ *
+ * @param h
+ *  pointer to the net handler
+ * @param conf
+ *  The input buffer of the app configuration
+ * @param name
+ *  The name of the net
+ * @param impl
+ *  The box implemntation name
+ * @param id
+ *  The id of the net
+ *
+ * @return
+ *  0 on success, -1 if nothing was found.
+ */
+int smx_net_get_json_doc( smx_net_t* h, bson_t* conf, const char* name,
+        const char* impl, unsigned int id );
+
+/**
+ * Get the json configuration for a given search string.
+ *
+ * @param h
+ *  pointer to the net handler
+ * @param conf
+ *  The input buffer of the app configuration
+ * @param search_str
+ *  The hierachical search string
+ * @return
+ *  0 on success, -1 if nothing was found.
+ */
+int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
+        const char* search_str );
+
+/**
+ * Get the appropriate profiler configuration setting for the current net.
+ *
+ * The function hiearchically searches for a confic that is specific for
+ *  1. this net id
+ *  2. this net name
+ *  3. the box implementation of this net
+ *  4. all nets
+ *
+ *  If a hit is found, the function returns te config and does not continue
+ *  searching.
+ *
+ * @param conf
+ *  The input buffer of the app configuration
+ * @param name
+ *  The name of the net
+ * @param impl
+ *  The box implemntation name
+ * @param id
+ *  The id of the net
+ *
+ * @return
+ *  true if the profiler must be turned on, false otherwise.
+ */
+bool smx_net_has_profiler( bson_t* conf, const char* name, const char* impl,
+        unsigned int id );
 
 /**
  * Initialise a net

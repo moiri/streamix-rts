@@ -10,11 +10,10 @@
  */
 
 #include <errno.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
 #include <stdbool.h>
 #include <string.h>
 #include "smxch.h"
+#include "smxconfig.h"
 #include "smxnet.h"
 #include "smxprofiler.h"
 #include "smxutils.h"
@@ -89,8 +88,8 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
 
 /*****************************************************************************/
 smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
-        const char* cat_name, void** conf, pthread_barrier_t* init_done,
-        int prio )
+        const char* impl, const char* cat_name, void* conf,
+        pthread_barrier_t* init_done, int prio )
 {
     if( id >= SMX_MAX_NETS )
     {
@@ -98,7 +97,6 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
         return NULL;
     }
 
-    xmlNodePtr cur = NULL;
     smx_net_t* net = smx_malloc( sizeof( struct smx_net_s ) );
     if( net == NULL )
         return NULL;
@@ -125,22 +123,12 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->priority = prio;
     net->init_done = init_done;
     net->cat = zlog_get_category( cat_name );
-    net->conf = NULL;
-    net->has_profiler = false;
     net->name = name;
+    net->impl = impl;
     net->attr = NULL;
-
-    cur = xmlDocGetRootElement( (xmlDocPtr)*conf );
-    cur = cur->xmlChildrenNode;
-    while(cur != NULL)
-    {
-        if(!xmlStrcmp(cur->name, (const xmlChar*)name))
-        {
-            net->conf = cur;
-            break;
-        }
-        cur = cur->next;
-    }
+    net->conf = bson_new();
+    net->has_profiler = smx_net_has_profiler( conf, name, impl, id );
+    smx_net_get_json_doc( net, conf, name, impl, id );
 
     (*net_cnt)++;
     SMX_LOG_MAIN( net, info, "create net instance %s(%d)", name, id );
@@ -152,6 +140,7 @@ void smx_net_destroy( smx_net_t* h )
 {
     if( h != NULL )
     {
+        bson_free( h->conf );
         if( h->sig != NULL )
         {
             if( h->sig->in.ports != NULL )
@@ -162,6 +151,92 @@ void smx_net_destroy( smx_net_t* h )
         }
         free( h );
     }
+}
+
+/*****************************************************************************/
+int smx_net_get_json_doc( smx_net_t* h, bson_t* conf, const char* name,
+        const char* impl, unsigned int id )
+{
+    const char* nets = "_nets";
+    const char* config = "config";
+    char search_str[1000];
+    int rc;
+    sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, config );
+    rc = smx_net_get_json_doc_item( h, conf, search_str );
+    if(rc < 0)
+    {
+        sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, config );
+        rc = smx_net_get_json_doc_item( h, conf, search_str );
+    }
+    if(rc < 0)
+    {
+        sprintf( search_str, "%s.%s._default.%s", nets, impl, config );
+        rc = smx_net_get_json_doc_item( h, conf, search_str );
+    }
+    if(rc < 0)
+    {
+        sprintf( search_str, "%s._default.%s", nets, config );
+        rc = smx_net_get_json_doc_item( h, conf, search_str );
+    }
+
+    return rc;
+}
+
+/*****************************************************************************/
+int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
+        const char* search_str )
+{
+    uint32_t len;
+    const uint8_t* nets;
+    bson_iter_t iter;
+    bson_iter_t child;
+    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
+                search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &child ) )
+    {
+        bson_iter_document( &child, &len, &nets );
+        bson_init_static( h->conf, nets, len );
+        SMX_LOG_NET( h, notice, "load configuration '%s'", search_str );
+        return 0;
+    }
+    SMX_LOG_NET( h, debug, "no configuration loaded from '%s'", search_str );
+    return -1;
+}
+
+/*****************************************************************************/
+bool smx_net_has_profiler( bson_t* conf, const char* name, const char* impl,
+        unsigned int id )
+{
+    bson_iter_t iter;
+    bson_iter_t child;
+    char search_str[1000];
+    const char* nets = "_nets";
+    const char* profiler = "profiler";
+    sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, profiler );
+    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
+                search_str, &child ) && BSON_ITER_HOLDS_BOOL( &iter ) )
+    {
+        return bson_iter_bool( &child );
+    }
+    sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, profiler );
+    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
+                search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
+    {
+        return bson_iter_bool( &child );
+    }
+    sprintf( search_str, "%s.%s._default.%s", nets, impl, profiler );
+    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
+                search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
+    {
+        return bson_iter_bool( &child );
+    }
+    sprintf( search_str, "%s._default.%s", nets, profiler );
+    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
+                search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
+    {
+        return bson_iter_bool( &child );
+    }
+
+    return false;
 }
 
 /*****************************************************************************/
@@ -234,7 +309,7 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     int init_res;
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
-    xmlChar* profiler = NULL;
+    /* xmlChar* profiler = NULL; */
 
     if( h == NULL )
     {
@@ -243,17 +318,6 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     }
 
     SMX_LOG_NET( h, notice, "init net" );
-
-    if( h != NULL && h->conf != NULL )
-    {
-        profiler = xmlGetProp( h->conf, ( const xmlChar* )"profiler" );
-        if( profiler != NULL &&
-                ( 0 == strcmp( ( char* )profiler, "on" )
-                  || 0 == strcmp( ( char* )profiler, "1" ) ) )
-        {
-            h->has_profiler = true;
-        }
-    }
 
     if( h->has_profiler )
         SMX_LOG_NET( h, notice, "profiler enabled" );
@@ -284,7 +348,7 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     elapsed_wall += ( h->end_wall.tv_nsec - h->start_wall.tv_nsec) / 1000000000.0;
     SMX_LOG_NET( h, notice, "terminate net (loop count: %ld, loop rate: %d, wall time: %f)",
             h->count, (int)(h->count/elapsed_wall), elapsed_wall );
-    xmlFree( profiler );
+    /* xmlFree( profiler ); */
     return NULL;
 }
 

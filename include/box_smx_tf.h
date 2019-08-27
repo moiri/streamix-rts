@@ -47,7 +47,7 @@ struct smx_timer_s
  */
 struct net_smx_tf_state_s
 {
-    int do_copy;    /**< config argument to indicate whether msgs are copied */
+    bool do_copy;    /**< config argument to indicate whether msgs are copied */
 };
 
 /**

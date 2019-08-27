@@ -20,10 +20,10 @@ Requires
     resulting software must be published under
     [LGPL-v2.1](https://choosealicense.com/licenses/lgpl-2.1/).
 
- - [`libxml2`](http://www.xmlsoft.org/)
+ - [`libbson`](http://mongoc.org/libbson/current/index.html)
 
     ```
-    sudo apt install libxml2-dev
+    sudo apt install libbson-dev
     ```
 
  - [`pthread`](https://computing.llnl.gov/tutorials/pthreads/)
