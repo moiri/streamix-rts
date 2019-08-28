@@ -7,6 +7,8 @@
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * @defgroup ch Channel API
  */
 
 #include "smxtypes.h"
@@ -14,8 +16,114 @@
 #ifndef SMXCH_H
 #define SMXCH_H
 
+/**
+ * The number of maximal allowed channel in one streamix application.
+ */
 #define SMX_MAX_CHS 10000
 
+/**
+ * User Macros
+ *
+ * @addtogroup smx
+ * @{
+ * @addtogroup ch
+ * @{
+ */
+
+/**
+ * @def SMX_CHANNEL_READ()
+ *
+ * Read from a streamix channel by accessing a net input port.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the input port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @return
+ *  A pointer to a message type ::smx_msg_t or NULL if something went
+ *  wrong. Use the macro SMX_GET_READ_ERROR() to find out the cause of an error.
+ */
+#define SMX_CHANNEL_READ( h, box_name, ch_name )\
+    smx_channel_read( h, SMX_SIG_PORT( h, box_name, ch_name, in ) )
+
+/**
+ * @def SMX_CHANNEL_WRITE()
+ *
+ * Write to a streamix channel by accessing a net output port.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the output port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @param data
+ *  A pointer to an allocated message of type ::smx_msg_t. Use the macro
+ *  SMX_MSG_CREATE() to create a new message if required.
+ * @return
+ *  0 on success, -1 on failure. Use the macro SMX_GET_WRITE_ERROR() to find
+ *  out the cause of an error.
+ */
+#define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
+    smx_channel_write( h, SMX_SIG_PORT( h, box_name, ch_name, out ), data )
+
+/**
+ * @def SMX_GET_READ_ERROR()
+ *
+ * Get the error code of a channel read operation. Use this macro if
+ * SMX_CHANNEL_READ() failed.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the input port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @return
+ *  The error code of the operation. Refer to #smx_channel_err_e for a
+ *  description of the error codes.
+ */
+#define SMX_GET_READ_ERROR( h, box_name, ch_name )\
+    smx_get_read_error( SMX_SIG_PORT( h, box_name, ch_name, in ) )
+
+
+/**
+ * @def SMX_GET_WRITE_ERROR()
+ *
+ * Get the error code of a channel write operation. Use this macro if
+ * SMX_CHANNEL_WRITE() failed.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the input port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @return
+ *  The error code of the operation. Refer to #smx_channel_err_e for a
+ *  description of the error codes.
+ */
+#define SMX_GET_WRITE_ERROR( h, box_name, ch_name )\
+    smx_get_write_error( SMX_SIG_PORT( h, box_name, ch_name, out ) )
+
+/** @} */
+/** @} */
+
+/**
+ * @def SMX_LOG_CH()
+ *
+ * The logger macro for channel-specific logs.
+ */
 #define SMX_LOG_CH( ch, level, format, ... )\
     SMX_LOG_INTERN( level, ch->cat, format,  ##__VA_ARGS__ )
 
@@ -89,9 +197,9 @@ void smx_channel_destroy_end( smx_channel_end_t* end );
 /**
  * @brief Read the data from an input port
  *
- * Allows to access the channel and read data. The channel ist protected by
- * mutual exclusion. The macro SMX_CHANNEL_READ( h, net, port ) provides a
- * convenient interface to access the ports by name.
+ * Allows to access the channel and read data. The channel is protected by
+ * mutual exclusion. The macro SMX_CHANNEL_READ() provides a convenient
+ * interface to access the ports by name.
  *
  * @param h     pointer to the net handler
  * @param ch    pointer to the channel
@@ -367,4 +475,4 @@ int smx_guard_write( void* h, smx_channel_t* ch );
  */
 int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg );
 
-#endif
+#endif // SMXCH_H

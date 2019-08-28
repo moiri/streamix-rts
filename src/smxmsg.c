@@ -1,7 +1,6 @@
 /**
  * Message definitions for the runtime system library of Streamix
  *
- * @file    smxmsg.c
  * @author  Simon Maurer
  */
 

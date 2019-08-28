@@ -38,7 +38,7 @@ PROJECT_NAME           = "smxrts"
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = "v0.1.0"
+PROJECT_NUMBER         = "v0.2.0"
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -425,7 +425,7 @@ LOOKUP_CACHE_SIZE      = 0
 # normally produced when WARNINGS is set to YES.
 # The default value is: NO.
 
-EXTRACT_ALL            = YES
+EXTRACT_ALL            = NO
 
 # If the EXTRACT_PRIVATE tag is set to YES, all private members of a class will
 # be included in the documentation.
@@ -843,9 +843,7 @@ EXCLUDE_PATTERNS       = *.swp \
                          lib \
                          zlog \
                          test \
-                         .ycm* \
-                         CHANGELOG.md \
-                         README.md
+                         .ycm*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the

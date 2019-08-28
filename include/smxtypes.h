@@ -16,9 +16,12 @@
 #ifndef SMXTYPES_H
 #define SMXTYPES_H
 
-#define SMX_MAX_NETS 1000
-
-typedef enum smx_channel_err_e smx_channel_err_t;     /**< #smx_channel_err_e */
+/**
+ * @ingroup ch
+ * The streamix channel error type. Refer to the error enumeration definition
+ * for more details #smx_channel_err_e.
+ */
+typedef enum smx_channel_err_e smx_channel_err_t;
 typedef enum smx_channel_state_e smx_channel_state_t; /**< #smx_channel_state_e */
 typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
 /** #smx_profiler_action_e */
@@ -31,12 +34,18 @@ typedef struct smx_data_tsmem_s smx_data_tsmem_t;     /**< ::smx_data_tsmem_s */
 typedef struct smx_fifo_s smx_fifo_t;                 /**< ::smx_fifo_s */
 typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
 typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
-typedef struct smx_msg_s smx_msg_t;                   /**< ::smx_msg_s */
+/**
+ * @ingroup msg
+ * The streamix message type.
+ * Refer to the structure definition for more information ::smx_msg_s.
+ */
+typedef struct smx_msg_s smx_msg_t;
 typedef struct smx_net_s smx_net_t;                   /**< ::smx_net_s */
 typedef struct smx_net_sig_s smx_net_sig_t;           /**< ::smx_net_sig_s */
 
 /**
  * The error state of a channel end
+ * @ingroup ch
  */
 enum smx_channel_err_e
 {
@@ -99,7 +108,9 @@ enum smx_profiler_action_e
 };
 
 /**
- * @brief Constants to indicate wheter a thread should terminate or continue
+ * @ingroup net
+ * Constants to indicate wheter a thread should terminate or continue.
+ * Use one of these values to return from the main box implemenation funtion.
  */
 enum smx_thread_state_e
 {
@@ -199,10 +210,10 @@ struct smx_guard_s
 };
 
 /**
- * @brief A Streamix port structure
+ * @brief A Streamix message structure
  *
  * The structure contains handlers that can be used to manipulate data.
- * This handler is provided by the box implementation.
+ * These handlers are provided by the box implementation.
  */
 struct smx_msg_s
 {

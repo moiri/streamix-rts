@@ -1,7 +1,6 @@
 /**
  * The runtime system library for Streamix
  *
- * @file    smxrts.c
  * @author  Simon Maurer
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
@@ -9,7 +8,6 @@
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-#include <bson.h>
 #include "smxrts.h"
 
 #define LIBZLOG_VERSION "1.2.14"

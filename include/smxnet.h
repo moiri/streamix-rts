@@ -7,6 +7,8 @@
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * @defgroup net Net API
  */
 
 #include <bson.h>
@@ -17,25 +19,92 @@
 #ifndef SMXNET_H
 #define SMXNET_H
 
+/**
+ * The number of maximal allowed nets in one streamix application.
+ */
 #define SMX_MAX_NETS 1000
 
-#define SMX_LOG_NET( net, level, format, ... )\
-    SMX_LOG_INTERN( level, SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )
+/**
+ * User Macros
+ *
+ * @addtogroup smx
+ * @{
+ * @addtogroup net
+ * @{
+ */
 
 /**
+ * @def SMX_LOG()
+ *
+ * This macro allows to log events to the log file.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param level
+ *  Note that this parameter is not a string but the literal name of the box
+ *  (without quotation marks). Use one of the following levels:
+ *   - `fatal`:   everything went wrong
+ *   - `error`:   an error occured and the net has to terminate
+ *   - `warn`:    The net can continue to execute but the result might be faulty
+ *   - `notice`:  A useful information to report that occurs on initialisation,
+ *                cleanup, or rarely during execution.
+ *   - `info`:    A useful information to report that occurs during execution.
+ *   - `debug`:   Debug information.
+ * @param format
+ *  The [printf](https://linux.die.net/man/3/printf) format string.
+ * @param ...
+ *  The required arguments to be replaced in the printf format string.
  *
  */
-#define SMX_NET_GET_ID( h ) ( ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->id )
+#define SMX_LOG( h, level, format, ... )\
+    SMX_LOG_NET( h, level, format, ##__VA_ARGS__ )
 
 /**
+ * @def SMX_NET_GET_CONF()
  *
+ * Get the net configuration structure.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  The net configuration structure of type `bson_t`.
  */
 #define SMX_NET_GET_CONF( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf )
 
 /**
+ * @def SMX_NET_GET_ID()
  *
+ * Get the net id.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  The net id of type `unsigned int`.
+ */
+#define SMX_NET_GET_ID( h ) ( ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->id )
+
+/**
+ * @def SMX_NET_GET_NAME()
+ *
+ * Get the net name.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  A pointer to the net name of type `const char*`.
  */
 #define SMX_NET_GET_NAME( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->name )
+
+/** @} */
+/** @} */
+
+/**
+ * @def SMX_LOG_NET()
+ *
+ * Refer top SMX_LOG() for more information.
+ */
+#define SMX_LOG_NET( net, level, format, ... )\
+    SMX_LOG_INTERN( level, SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )
 
 /**
  * Check whether messages are available on the collector and block until a
@@ -223,4 +292,4 @@ void smx_net_terminate( smx_net_t* h );
  */
 int smx_net_update_state( smx_net_t* h, int state );
 
-#endif
+#endif // SMXNET_H

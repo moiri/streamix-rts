@@ -1,7 +1,6 @@
 /**
  * Net definitions for the runtime system library of Streamix
  *
- * @file    smxnet.c
  * @author  Simon Maurer
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
