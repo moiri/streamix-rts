@@ -21,6 +21,8 @@
  */
 #define SMX_MAX_CHS 10000
 
+#ifndef SMX_TESTING
+
 /**
  * User Macros
  *
@@ -118,6 +120,8 @@
 
 /** @} */
 /** @} */
+
+#endif // SMX_TESTING
 
 /**
  * @def SMX_LOG_CH()
