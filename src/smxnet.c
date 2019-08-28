@@ -186,16 +186,47 @@ int smx_net_get_json_doc( smx_net_t* h, bson_t* conf, const char* name,
 int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
         const char* search_str )
 {
+    int rc;
     uint32_t len;
     const uint8_t* nets;
+    const char* config;
     bson_iter_t iter;
     bson_iter_t child;
+    bson_json_reader_t *reader;
+    bson_error_t error;
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &child ) )
     {
         bson_iter_document( &child, &len, &nets );
         bson_init_static( h->conf, nets, len );
         SMX_LOG_NET( h, notice, "load configuration '%s'", search_str );
+        return 0;
+    }
+    else if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
+                search_str, &child ) && BSON_ITER_HOLDS_UTF8( &child ) )
+    {
+        config = bson_iter_utf8( &child, NULL );
+        reader = bson_json_reader_new_from_file( config, &error );
+        if( reader == NULL )
+        {
+            SMX_LOG_NET( h, error, "failed to load net config file '%s': %s",
+                    config, error.message );
+            return -1;
+        }
+
+        rc = bson_json_reader_read( reader, h->conf, &error );
+        if( rc < 0 )
+        {
+            SMX_LOG_NET( h, error,
+                    "failed to parse net config file '%s': %s",
+                    config, error.message );
+            return -1;
+        }
+
+        bson_json_reader_destroy( reader );
+        SMX_LOG_NET( h, notice,
+                "load config file '%s' of configuration item '%s'",
+                config, search_str );
         return 0;
     }
     SMX_LOG_NET( h, debug, "no configuration loaded from '%s'", search_str );
