@@ -7,6 +7,7 @@
  - Handle potential seg-faults by checking for null pointers consistently
  - fix mutex locking and unlocking
  - fix collector counter
+ - fix deadline miss reports on non-TT nets (#16)
 
 ### Changes
  - Cleanup cond vars (move the cond var from fifo to channel level)
@@ -22,9 +23,10 @@
 
 ### New Features
  - Add a `unpack` function to the message callbacks
- - Allow to configure the RTS with an XML file (path to the file can be passed
-   by parameter)
- - Pass net-specific configuration to the net instance
+ - Allow to configure the RTS with a JSON file (path to the file can be passed
+   by parameter) (#17)
+ - Pass net-specific configuration to the net instance (#14)
+ - Allow for sub-config files (#7)
  - Each custom net must now define an init and cleanup function
  - Propagate termination signals in both directions
  - Use zlog categories to distinguish between different concept
@@ -33,8 +35,9 @@
  - Allow to configure whether a TF copies msgs on DL miss of the producer or
    sends a NULL msg (if copy is enabled every msg has to be backed up)
  - Run TF and TF-framed nets as RT-Tasks with different priorities
- - Add profiling capabilities (requires a box to capture the profiling events,
-   e.g. `smx_mogo`)
+ - Add profiling capabilities with [lttng](https://lttng.org/) (#13)
+ - At the end of an app execution log execution time and box execution counts
+ - Allow to check for the reason if a channel read or write operation fails (#8)
 
 # `diss_final`
 
