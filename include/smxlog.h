@@ -25,6 +25,14 @@
 #endif
 
 /**
+ * @def SMX_LOG_CH()
+ *
+ * The logger macro for channel-specific logs.
+ */
+#define SMX_LOG_CH( ch, level, format, ... )\
+    SMX_LOG_INTERN( level, ch->cat, format,  ##__VA_ARGS__ )
+
+/**
  * @def SMX_LOG_LOCK()
  *
  * The logger macro performing a mutex lock/unlock before logging to prevent
@@ -49,6 +57,14 @@
  */
 #define SMX_LOG_MAIN( cat, level, format, ... )\
     SMX_LOG_INTERN( level, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ )
+
+/**
+ * @def SMX_LOG_NET()
+ *
+ * Refer top SMX_LOG() for more information.
+ */
+#define SMX_LOG_NET( net, level, format, ... )\
+    SMX_LOG_INTERN( level, SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )
 
 /**
  * Define mutex protection and main categories for zlog. Further, initialise

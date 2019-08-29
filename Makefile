@@ -11,6 +11,7 @@ LOC_INC_DIR = include
 LOC_SRC_DIR = src
 LOC_OBJ_DIR = obj
 LOC_LIB_DIR = lib
+CREATE_DIR = $(LOC_OBJ_DIR) $(LOC_LIB_DIR)
 
 LIBNAME = lib$(PROJECT)
 SONAME = $(LIBNAME)-$(VMAJ).$(VMIN).so.$(VREV)
@@ -45,7 +46,7 @@ DEBUG_FLAGS = -g -O0
 
 CC = gcc
 
-all: $(STATLIB) $(DYNLIB)
+all: directories $(STATLIB) $(DYNLIB)
 
 # compile with dot stuff and debug flags
 debug: CFLAGS += $(DEBUG_FLAGS)
@@ -55,7 +56,6 @@ unsafe: CFLAGS += -DSMX_LOG_UNSAFE
 unsafe: all
 
 $(STATLIB): $(OBJECTS)
-	mkdir -p lib
 	ar -cq $@ $^
 
 $(DYNLIB): $(OBJECTS)
@@ -63,10 +63,14 @@ $(DYNLIB): $(OBJECTS)
 
 # compile project
 $(LOC_OBJ_DIR)/%.o: $(LOC_SRC_DIR)/%.c
-	mkdir -p $(LOC_OBJ_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES_DIR) -c $< -o $@ $(LINK_DIR) $(LINK_FILE)
 
-.PHONY: clean install uninstall doc
+.PHONY: clean install uninstall doc directories
+
+directories: $(CREATE_DIR)
+
+$(CREATE_DIR):
+	mkdir -p $@
 
 install:
 	mkdir -p $(TGT_LIB) $(TGT_INCLUDE)

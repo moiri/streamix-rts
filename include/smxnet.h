@@ -99,14 +99,6 @@
 /** @} */
 
 /**
- * @def SMX_LOG_NET()
- *
- * Refer top SMX_LOG() for more information.
- */
-#define SMX_LOG_NET( net, level, format, ... )\
-    SMX_LOG_INTERN( level, SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )
-
-/**
  * Check whether messages are available on the collector and block until a
  * message is made available or a producer terminates.
  *

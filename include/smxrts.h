@@ -23,6 +23,7 @@
 #include "smxmsg.h"
 #include "smxnet.h"
 #include "smxprofiler.h"
+#include "smxtest.h"
 #include "smxtypes.h"
 #include "smxutils.h"
 

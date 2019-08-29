@@ -47,7 +47,7 @@
  *  wrong. Use the macro SMX_GET_READ_ERROR() to find out the cause of an error.
  */
 #define SMX_CHANNEL_READ( h, box_name, ch_name )\
-    box_name ## in_data_conversion( h, smx_read_test_data( h, "in", #ch_name ),\
+    box_name ## _in_data_conversion( h, smx_read_test_data( h, "in", #ch_name ),\
             SMX_SIG_PORT_IDX( box_name, ch_name, in ) )
 
 /**
@@ -71,7 +71,7 @@
  *  out the cause of an error.
  */
 #define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
-    box_name ## out_data_conversion( h, smx_read_test_data( h, "out", #ch_name ),\
+    box_name ## _out_data_conversion( h, smx_read_test_data( h, "out", #ch_name ),\
             SMX_SIG_PORT_IDX( box_name, ch_name, in ), data )
 
 /**
@@ -90,9 +90,9 @@
 #define SMX_GET_WRITE_ERROR( h, box_name, ch_name )\
     SMX_CHANNEL_ERR_NO_TARGET
 
-#endif // SMX_TESTING
-
 /** @} */
+
+#endif /* SMX_TESTING */
 
 /**
  * Read the test data from the configuration file.
@@ -109,4 +109,4 @@
 const bson_value_t* smx_read_test_data( smx_net_t* h, const char* mode,
         const char* port_name );
 
-#endif // SMXTEST_H
+#endif /* SMXTEST_H */

@@ -87,7 +87,8 @@ smx_rts_t* smx_program_init( const char* config )
     }
 
     if( bson_iter_init_find( &iter, doc, "_name" ) )
-        SMX_LOG_MAIN( main, notice, "initializing app '%s'",
+        SMX_LOG_MAIN( main, notice,
+                "=============== Initializing app '%s' ===============",
                 bson_iter_utf8( &iter, &len ) );
     else
     {

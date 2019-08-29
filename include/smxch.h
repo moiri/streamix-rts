@@ -121,15 +121,7 @@
 /** @} */
 /** @} */
 
-#endif // SMX_TESTING
-
-/**
- * @def SMX_LOG_CH()
- *
- * The logger macro for channel-specific logs.
- */
-#define SMX_LOG_CH( ch, level, format, ... )\
-    SMX_LOG_INTERN( level, ch->cat, format,  ##__VA_ARGS__ )
+#endif /* SMX_TESTING */
 
 /**
  * Change the state of a channel collector. The state is only changed if the
