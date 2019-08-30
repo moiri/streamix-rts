@@ -1,14 +1,13 @@
 /**
- * The runtime system library for Streamix
- *
- * @file    smxrts.h
- * @author  Simon Maurer
+ * @file     smxrts.h
+ * @author   Simon Maurer
+ * @defgroup smx Complete Streamix API
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * @defgroup smx Complete Streamix API
+ * The runtime system library for Streamix
  */
 
 #include <pthread.h>
@@ -206,4 +205,4 @@ smx_rts_t* smx_program_init( const char* config );
  */
 void smx_program_init_run( smx_rts_t* rts );
 
-#endif // SMXRTS_H
+#endif /* SMXRTS_H */

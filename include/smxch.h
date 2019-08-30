@@ -1,14 +1,13 @@
 /**
- * Channel and FIFO definitions for the runtime system library of Streamix
- *
- * @file    smxch.h
- * @author  Simon Maurer
+ * @file     smxch.h
+ * @author   Simon Maurer
+ * @defgroup ch Channel API
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * @defgroup ch Channel API
+ * Channel and FIFO definitions for the runtime system library of Streamix
  */
 
 #include "smxtypes.h"
@@ -24,8 +23,6 @@
 #ifndef SMX_TESTING
 
 /**
- * User Macros
- *
  * @addtogroup smx
  * @{
  * @addtogroup ch
@@ -471,4 +468,4 @@ int smx_guard_write( void* h, smx_channel_t* ch );
  */
 int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg );
 
-#endif // SMXCH_H
+#endif /* SMXCH_H */

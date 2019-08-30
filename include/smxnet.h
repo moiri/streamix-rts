@@ -1,14 +1,13 @@
 /**
- * Net definitions for the runtime system library of Streamix
- *
- * @file    smxnet.h
- * @author  Simon Maurer
+ * @file     smxnet.h
+ * @author   Simon Maurer
+ * @defgroup net Net API
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * @defgroup net Net API
+ * Net definitions for the runtime system library of Streamix
  */
 
 #include <bson.h>
@@ -25,8 +24,6 @@
 #define SMX_MAX_NETS 1000
 
 /**
- * User Macros
- *
  * @addtogroup smx
  * @{
  * @addtogroup net
@@ -284,4 +281,4 @@ void smx_net_terminate( smx_net_t* h );
  */
 int smx_net_update_state( smx_net_t* h, int state );
 
-#endif // SMXNET_H
+#endif /* SMXNET_H */

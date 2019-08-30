@@ -1,12 +1,12 @@
 /**
- * Profiler definitions for the runtime system library of Streamix
- *
  * @file    smxprofiler.h
  * @author  Simon Maurer
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Profiler definitions for the runtime system library of Streamix
  */
 
 #include "smxtypes.h"
@@ -44,4 +44,4 @@ void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
  */
 void smx_profiler_log_net( smx_net_t* net, smx_profiler_action_t action );
 
-#endif
+#endif /* SMXPROFILER_H */

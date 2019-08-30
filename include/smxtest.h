@@ -1,17 +1,15 @@
 /**
- * A test environment that allows to test box implementation without having to
- * run them inside a streamix application.
- *
- * @file    smxtest.h
- * @author  Simon Maurer
+ * @file     smxtest.h
+ * @author   Simon Maurer
+ * @defgroup test User Macros in Test environment
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * @defgroup test User Macros in Test environment
+ * A test environment that allows to test box implementation without having to
+ * run them inside a streamix application.
  */
-
 
 #ifndef SMXTEST_H
 #define SMXTEST_H

@@ -1,13 +1,14 @@
 /**
- * Helper functions for parsing configuration files of the runtime systemr
- * library of Streamix.
- *
- * @file    smxconfig.h
- * @author  Simon Maurer
+ * @file     smxconfig.h
+ * @author   Simon Maurer
+ * @defgroup conf Configuration API
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Helper functions for parsing configuration files of the runtime systemr
+ * library of Streamix.
  */
 
 #include <bson.h>
@@ -15,6 +16,13 @@
 
 #ifndef SMXCONFIG_H
 #define SMXCONFIG_H
+
+/**
+ * @addtogroup smx
+ * @{
+ * @addtogroup conf
+ * @{
+ */
 
 /**
  * Get a boolean value from the config file.
@@ -67,4 +75,7 @@ double smx_config_get_double( bson_t* conf, const char* search );
 const char* smx_config_get_string( bson_t* conf, const char* search,
         unsigned int* len );
 
-#endif
+/** @} */
+/** @} */
+
+#endif /* SMXCONFIG_H */

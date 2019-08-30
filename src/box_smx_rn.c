@@ -1,11 +1,11 @@
 /**
- * Routing node box implementation for the runtime system library of Streamix
- *
  * @author  Simon Maurer
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Routing node box implementation for the runtime system library of Streamix
  */
 
 #include <stdbool.h>

@@ -1,14 +1,13 @@
 /**
- * Message definitions for the runtime system library of Streamix
- *
- * @file    smxmsg.h
- * @author  Simon Maurer
+ * @file     smxmsg.h
+ * @author   Simon Maurer
+ * @defgroup msg Message API
  * @license
  *  This Source Code Form is subject to the terms of the Mozilla Public
  *  License, v. 2.0. If a copy of the MPL was not distributed with this file,
  *  You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * @defgroup msg Message API
+ * Message definitions for the runtime system library of Streamix
  */
 
 #include <stdlib.h>
@@ -18,8 +17,6 @@
 #define SMXMSG_H
 
 /**
- * User Macros
- *
  * @addtogroup smx
  * @{
  * @addtogroup msg
@@ -152,4 +149,4 @@ void smx_msg_destroy( void* h, smx_msg_t* msg, int deep );
  */
 void* smx_msg_unpack( smx_msg_t* msg );
 
-#endif
+#endif /* SMXMSG_H */
