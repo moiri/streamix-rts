@@ -12,51 +12,111 @@
 #include <stdarg.h>
 #include "smxconfig.h"
 
+/*****************************************************************************/
 bool smx_config_get_bool( bson_t* conf, const char* search )
+{
+    smx_config_error_t err;
+    return smx_config_get_bool_err( conf, search, &err );
+}
+
+/*****************************************************************************/
+bool smx_config_get_bool_err( bson_t* conf, const char* search,
+        smx_config_error_t* err )
 {
     bson_iter_t iter;
     bson_iter_t child;
+    *err = SMX_CONFIG_ERROR_NO_ERROR;
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
-                search, &child ) && BSON_ITER_HOLDS_BOOL( &iter ) )
+                search, &child ) )
     {
-        return bson_iter_bool( &child );
+        if( BSON_ITER_HOLDS_BOOL( &iter ) )
+            return bson_iter_bool( &child );
+        else
+            *err = SMX_CONFIG_ERROR_BAD_TYPE;
     }
+    else
+        *err = SMX_CONFIG_ERROR_NO_VALUE;
     return false;
 }
 
+/*****************************************************************************/
 int smx_config_get_int( bson_t* conf, const char* search )
 {
-    bson_iter_t iter;
-    bson_iter_t child;
-    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
-                search, &child ) && BSON_ITER_HOLDS_INT32( &iter ) )
-    {
-        return bson_iter_int32( &child );
-    }
-    return 0;
+    smx_config_error_t err;
+    return smx_config_get_int_err( conf, search, &err );
 }
 
-double smx_config_get_double( bson_t* conf, const char* search )
+/*****************************************************************************/
+int smx_config_get_int_err( bson_t* conf, const char* search,
+        smx_config_error_t* err )
 {
     bson_iter_t iter;
     bson_iter_t child;
+    *err = SMX_CONFIG_ERROR_NO_ERROR;
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
-                search, &child ) && BSON_ITER_HOLDS_DOUBLE( &iter ) )
+                search, &child ) )
     {
-        return bson_iter_double( &child );
+        if( BSON_ITER_HOLDS_INT32( &iter ) )
+            return bson_iter_int32( &child );
+        else
+            *err = SMX_CONFIG_ERROR_BAD_TYPE;
     }
+    else
+        *err = SMX_CONFIG_ERROR_NO_VALUE;
     return 0;
 }
 
+/*****************************************************************************/
+double smx_config_get_double( bson_t* conf, const char* search )
+{
+    smx_config_error_t err;
+    return smx_config_get_double_err( conf, search, &err );
+}
+
+/*****************************************************************************/
+double smx_config_get_double_err( bson_t* conf, const char* search,
+        smx_config_error_t* err )
+{
+    bson_iter_t iter;
+    bson_iter_t child;
+    *err = SMX_CONFIG_ERROR_NO_ERROR;
+    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
+                search, &child ) )
+    {
+        if( BSON_ITER_HOLDS_DOUBLE( &iter ) )
+            return bson_iter_double( &child );
+        else
+            *err = SMX_CONFIG_ERROR_BAD_TYPE;
+    }
+    else
+        *err = SMX_CONFIG_ERROR_NO_VALUE;
+    return 0;
+}
+
+/*****************************************************************************/
 const char* smx_config_get_string( bson_t* conf, const char* search,
         unsigned int* len )
 {
+    smx_config_error_t err;
+    return smx_config_get_string_err( conf, search, len, &err );
+}
+
+/*****************************************************************************/
+const char* smx_config_get_string_err( bson_t* conf, const char* search,
+        unsigned int* len, smx_config_error_t* err )
+{
     bson_iter_t iter;
     bson_iter_t child;
+    *err = SMX_CONFIG_ERROR_NO_ERROR;
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
-                search, &child ) && BSON_ITER_HOLDS_UTF8( &iter ) )
+                search, &child ) )
     {
-        return bson_iter_utf8( &child, len );
+        if( BSON_ITER_HOLDS_UTF8( &iter ) )
+            return bson_iter_utf8( &child, len );
+        else
+            *err = SMX_CONFIG_ERROR_BAD_TYPE;
     }
+    else
+        *err = SMX_CONFIG_ERROR_NO_VALUE;
     return NULL;
 }

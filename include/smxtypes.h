@@ -24,6 +24,8 @@
 typedef enum smx_channel_err_e smx_channel_err_t;
 typedef enum smx_channel_state_e smx_channel_state_t; /**< #smx_channel_state_e */
 typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
+/** #smx_config_error_e */
+typedef enum smx_config_error_e smx_config_error_t;
 /** #smx_profiler_action_e */
 typedef enum smx_profiler_action_e smx_profiler_action_t;
 
@@ -81,6 +83,16 @@ enum smx_channel_type_e
     SMX_FIFO_D,         /**< a FIFO with decoupled output */
     SMX_D_FIFO,         /**< a FIFO with decoupled input */
     SMX_D_FIFO_D        /**< a FIFO with decoupled input and output */
+};
+
+/**
+ * The list of config read errors.
+ */
+enum smx_config_error_e
+{
+    SMX_CONFIG_ERROR_NO_ERROR,  /**< No error */
+    SMX_CONFIG_ERROR_BAD_TYPE,  /**< The item exists but the type does not match */
+    SMX_CONFIG_ERROR_NO_VALUE   /**< The item does not exist */
 };
 
 /**
