@@ -29,7 +29,7 @@ bool smx_config_get_bool_err( bson_t* conf, const char* search,
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search, &child ) )
     {
-        if( BSON_ITER_HOLDS_BOOL( &iter ) )
+        if( BSON_ITER_HOLDS_BOOL( &child ) )
             return bson_iter_bool( &child );
         else
             *err = SMX_CONFIG_ERROR_BAD_TYPE;
@@ -56,7 +56,7 @@ int smx_config_get_int_err( bson_t* conf, const char* search,
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search, &child ) )
     {
-        if( BSON_ITER_HOLDS_INT32( &iter ) )
+        if( BSON_ITER_HOLDS_INT32( &child ) )
             return bson_iter_int32( &child );
         else
             *err = SMX_CONFIG_ERROR_BAD_TYPE;
@@ -83,7 +83,7 @@ double smx_config_get_double_err( bson_t* conf, const char* search,
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search, &child ) )
     {
-        if( BSON_ITER_HOLDS_DOUBLE( &iter ) )
+        if( BSON_ITER_HOLDS_DOUBLE( &child ) )
             return bson_iter_double( &child );
         else
             *err = SMX_CONFIG_ERROR_BAD_TYPE;
@@ -111,7 +111,7 @@ const char* smx_config_get_string_err( bson_t* conf, const char* search,
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search, &child ) )
     {
-        if( BSON_ITER_HOLDS_UTF8( &iter ) )
+        if( BSON_ITER_HOLDS_UTF8( &child ) )
             return bson_iter_utf8( &child, len );
         else
             *err = SMX_CONFIG_ERROR_BAD_TYPE;

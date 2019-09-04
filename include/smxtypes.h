@@ -87,6 +87,7 @@ enum smx_channel_type_e
 
 /**
  * The list of config read errors.
+ * @ingroup conf
  */
 enum smx_config_error_e
 {
