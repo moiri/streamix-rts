@@ -155,7 +155,6 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
     if( ch->source ==  NULL )
     {
         SMX_LOG_MAIN( main, fatal, "channel not initialised" );
-        ch->source->err = SMX_CHANNEL_ERR_UNINITIALISED;
         return NULL;
     }
 
@@ -258,7 +257,6 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     if( ch->sink == NULL )
     {
         SMX_LOG_MAIN( main, fatal, "channel not initialised" );
-        ch->sink->err = SMX_CHANNEL_ERR_UNINITIALISED;
         return -1;
     }
 
