@@ -42,7 +42,7 @@ LINK_FILE = -lpthread \
 	-ldl
 
 CFLAGS = -Wall -fPIC
-DEBUG_FLAGS = -g -O0
+DEBUG_FLAGS = -g -O0 -DLTTNG_UST_DEBUG -DLTTNG_UST_DEBUG_VALGRIND
 
 CC = gcc
 
