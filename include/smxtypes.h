@@ -32,7 +32,6 @@ typedef enum smx_profiler_action_e smx_profiler_action_t;
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
 typedef struct smx_channel_end_s smx_channel_end_t;   /**< ::smx_channel_end_s */
 typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
-typedef struct smx_data_tsmem_s smx_data_tsmem_t;     /**< ::smx_data_tsmem_s */
 typedef struct smx_fifo_s smx_fifo_t;                 /**< ::smx_fifo_s */
 typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
 typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
@@ -173,16 +172,6 @@ struct smx_collector_s
     pthread_cond_t      col_cv;     /**< conditional variable to trigger box */
     int                 count;      /**< collection of channel counts */
     smx_channel_state_t state;      /**< state of the channel */
-};
-
-/**
- * A message data structure that allows to store a time-stamped data chunk.
- */
-struct smx_data_tsmem_s
-{
-    struct timespec ts; /**< the timestamp of the data item */
-    void* data;         /**< the chunk of data */
-    size_t size;        /**< the size of the data chunk */
 };
 
 /**
