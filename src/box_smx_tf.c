@@ -198,7 +198,7 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
         {
             if( msg == NULL )
             {
-                zlog_notice( ch_in[i]->cat,
+                zlog_warn( ch_in[i]->cat,
                         "non-rt net '%s(%d)' missed tt interval to produce:"
                         " no message produced", producer->name, producer->id );
                 smx_profiler_log_ch( h, ch_in[i], NULL,
@@ -233,7 +233,7 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
                 }
                 else
                 {
-                    zlog_notice( ch_out[i]->cat,
+                    zlog_warn( ch_out[i]->cat,
                             "non-rt '%s(%d)' net missed tt interval to consume",
                             consumer->name, consumer->id );
                     smx_profiler_log_ch( h, ch_out[i], NULL,
