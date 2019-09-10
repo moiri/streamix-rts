@@ -560,7 +560,7 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         {
             SMX_LOG_CH( ch, notice,
                     "nothing to read, fifo and its backup is empty" );
-            ch->source->err = SMX_CHANNEL_ERR_NO_DATA;
+            ch->source->err = SMX_CHANNEL_ERR_NO_DEFAULT;
         }
     }
     return msg;

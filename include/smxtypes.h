@@ -50,12 +50,13 @@ typedef struct smx_net_sig_s smx_net_sig_t;           /**< ::smx_net_sig_s */
  */
 enum smx_channel_err_e
 {
-    SMX_CHANNEL_ERR_NONE,          /**< no error */
-    SMX_CHANNEL_ERR_UNINITIALISED, /**< the channel was never initialised */
+    SMX_CHANNEL_ERR_NONE = 0,      /**< no error */
+    SMX_CHANNEL_ERR_NO_DEFAULT,    /**< no default message for decoupled read */
+    SMX_CHANNEL_ERR_NO_TARGET,     /**< connecting net has terminated */
+    SMX_CHANNEL_ERR_DL_MISS,       /**< connecting net missed its deadline */
     SMX_CHANNEL_ERR_NO_DATA,       /**< unexpectedly, the channel has no data */
     SMX_CHANNEL_ERR_NO_SPACE,      /**< unexpectedly, the channel has no space */
-    SMX_CHANNEL_ERR_DL_MISS,       /**< connecting net missed its deadline */
-    SMX_CHANNEL_ERR_NO_TARGET      /**< connecting net has terminated */
+    SMX_CHANNEL_ERR_UNINITIALISED, /**< the channel was never initialised */
 };
 
 /**
