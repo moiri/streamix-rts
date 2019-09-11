@@ -1,0 +1,33 @@
+#!/bin/bash
+
+needs_new_so="0"
+needs_new_a="0"
+
+# check if libname.so link needs to be removed
+tgt=$(readlink <tgt_dir>/<libname>.so)
+if [ $tgt = "<lnname>.so" ]; then
+    rm <tgt_dir>/<libname>.so
+    needs_new_so="1"
+fi;
+
+# check if libname.a link needs to be removed
+tgt=$(readlink <tgt_dir>/<libname>.a)
+if [ $tgt = "<aname>" ]; then
+    rm <tgt_dir>/<libname>.a
+    needs_new_a="1"
+fi;
+
+# remove the libaray link of the current version
+rm <tgt_dir>/<lnname>.so
+
+# check if an older so version is installed and renew link if necessary
+new_so=$(ls <tgt_dir> | grep "<libname>-.*\.so$" | tail -n 1)
+if [ ! -z "$new_so" ] && [ $needs_new_so = "1" ]; then
+    cd <tgt_dir> && ln -s $new_so <libname>.so
+fi;
+
+# check if an older a version is installed and renwe link if necessary
+new_a=$(ls <tgt_dir> | grep "<libname>-.*\.a$" | tail -n 1)
+if [ ! -z "$new_a" ] && [ $needs_new_a = "1" ]; then
+    cd <tgt_dir> && ln -s $new_a <libname>.a
+fi;

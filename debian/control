@@ -1,4 +1,4 @@
-Package: smxrts-<maj_version>
+Package: libsmxrts-<maj_version>
 Version: <version>
 Section: base
 Priority: optional

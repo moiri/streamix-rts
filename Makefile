@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 PROJECT = smxrts
 VMAJ = 0
-VMIN = 2
+VMIN = 3
 VREV = 0
 
 VERSION_LIB = $(VMAJ).$(VMIN)
@@ -26,12 +26,14 @@ UPSTREAM_VERSION = $(LIB_VERSION).$(VREV)
 DEBIAN_REVISION = 0
 VERSION = $(UPSTREAM_VERSION)-$(DEBIAN_REVISION)
 
-SONAME = $(LIBNAME)-$(LIB_VERSION).so.$(VREV)
+VLIBNAME = $(LIBNAME)-$(LIB_VERSION)
+SONAME = $(VLIBNAME).so.$(VREV)
 ANAME = $(LIBNAME)-$(LIB_VERSION).a
 
 TGT_INCLUDE = /opt/smx/include
 TGT_DOC = /opt/smx/doc
 TGT_LIB = /opt/smx/lib
+TGT_LIB_E = \/opt\/smx\/lib
 
 STATLIB = $(LOC_LIB_DIR)/$(LIBNAME).a
 DYNLIB = $(LOC_LIB_DIR)/$(LIBNAME).so
@@ -109,13 +111,6 @@ doc:
 
 dpkg: $(DPKGS)
 $(DPKGS):
-	mkdir -p $@$(TGT_LIB)
-	cp $(LOC_LIB_DIR)/$(LIBNAME).so $@$(TGT_LIB)/$(SONAME)
-	cp $(LOC_LIB_DIR)/$(LIBNAME).a $@$(TGT_LIB)/$(ANAME)
-	ln -sf $(ANAME) $@$(TGT_LIB)/$(LIBNAME).a
-	ln -sf $(SONAME) $@$(TGT_LIB)/$(LIBNAME).so
-	mkdir -p $@$(TGT_DOC)
-	cp README.md $@$(TGT_DOC)/$(PROJECT)-$(LIB_VERSION).md
 	mkdir -p $@/$(DPKG_TGT)
 	@if [[ $@ == *-dev ]]; then \
 		mkdir -p $@$(TGT_INCLUDE); \
@@ -123,7 +118,24 @@ $(DPKGS):
 		echo "cp $(LOC_INC_DIR)/* $@$(TGT_INCLUDE)/."; \
 		cp $(DPKG_CTL_DIR)/control-dev $@/$(DPKG_TGT)/control; \
 	else \
+		mkdir -p $@$(TGT_LIB); \
+		cp $(LOC_LIB_DIR)/$(LIBNAME).so $@$(TGT_LIB)/$(SONAME); \
+		cp $(LOC_LIB_DIR)/$(LIBNAME).a $@$(TGT_LIB)/$(ANAME); \
+		mkdir -p $@$(TGT_DOC); \
+		cp README.md $@$(TGT_DOC)/$(PROJECT)-$(LIB_VERSION).md; \
 		cp $(DPKG_CTL_DIR)/control $@/$(DPKG_TGT)/control; \
+		cp $(DPKG_CTL_DIR)/postinst $@/$(DPKG_TGT)/postinst; \
+		sed -i 's/<tgt_dir>/$(TGT_LIB_E)/g' $@/$(DPKG_TGT)/postinst; \
+		sed -i 's/<soname>/$(SONAME)/g' $@/$(DPKG_TGT)/postinst; \
+		sed -i 's/<aname>/$(ANAME)/g' $@/$(DPKG_TGT)/postinst; \
+		sed -i 's/<libname>/$(LIBNAME)/g' $@/$(DPKG_TGT)/postinst; \
+		sed -i 's/<lnname>/$(VLIBNAME)/g' $@/$(DPKG_TGT)/postinst; \
+		cp $(DPKG_CTL_DIR)/postrm $@/$(DPKG_TGT)/postrm; \
+		sed -i 's/<tgt_dir>/$(TGT_LIB_E)/g' $@/$(DPKG_TGT)/postrm; \
+		sed -i 's/<aname>/$(ANAME)/g' $@/$(DPKG_TGT)/postrm; \
+		sed -i 's/<libname>/$(LIBNAME)/g' $@/$(DPKG_TGT)/postrm; \
+		sed -i 's/<lnname>/$(VLIBNAME)/g' $@/$(DPKG_TGT)/postrm; \
+		cp $(DPKG_CTL_DIR)/triggers $@/$(DPKG_TGT)/triggers; \
 	fi
 	sed -i 's/<version>/$(VERSION)/g' $@/$(DPKG_TGT)/control
 	sed -i 's/<maj_version>/$(LIB_VERSION)/g' $@/$(DPKG_TGT)/control

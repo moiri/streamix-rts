@@ -3,7 +3,7 @@ Version: <version>
 Section: base
 Priority: optional
 Architecture: amd64
-Depends: librts-<maj_version> (>= <version>)
+Depends: libsmxrts-<maj_version> (>= <version>)
 Maintainer: Simon Maurer <tpf@humdek.unibe.ch>
 Description: Development Package of 'libsmxrts'
  This is the development package of the library 'libsmxrts'. This library
