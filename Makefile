@@ -1,9 +1,9 @@
 SHELL := /bin/bash
 
 PROJECT = smxrts
-VMAJ := $(if $(VMAJ),$(VMAJ),0)
-VMIN := $(if $(VMIN),$(VMIN),1)
-VREV := $(if $(VREV),$(VREV),0)
+VMAJ = 0
+VMIN = 2
+VREV = 0
 
 VERSION_LIB = $(VMAJ).$(VMIN)
 
@@ -13,11 +13,24 @@ LOC_OBJ_DIR = obj
 LOC_LIB_DIR = lib
 CREATE_DIR = $(LOC_OBJ_DIR) $(LOC_LIB_DIR)
 
+DPKG_DIR = dpkg
+DPKG_CTL_DIR = debian
+DPKG_TGT = DEBIAN
+DPKGS = $(DPKG_DIR)/$(LIBNAME)_$(VERSION)_amd64 \
+	   $(DPKG_DIR)/$(LIBNAME)_amd64-dev
+
 LIBNAME = lib$(PROJECT)
-SONAME = $(LIBNAME)-$(VMAJ).$(VMIN).so.$(VREV)
-ANAME = $(LIBNAME)-$(VMAJ).$(VMIN).a
+
+LIB_VERSION = $(VMAJ).$(VMIN)
+UPSTREAM_VERSION = $(LIB_VERSION).$(VREV)
+DEBIAN_REVISION = 0
+VERSION = $(UPSTREAM_VERSION)-$(DEBIAN_REVISION)
+
+SONAME = $(LIBNAME)-$(LIB_VERSION).so.$(VREV)
+ANAME = $(LIBNAME)-$(LIB_VERSION).a
 
 TGT_INCLUDE = /opt/smx/include
+TGT_DOC = /opt/smx/doc
 TGT_LIB = /opt/smx/lib
 
 STATLIB = $(LOC_LIB_DIR)/$(LIBNAME).a
@@ -65,7 +78,7 @@ $(DYNLIB): $(OBJECTS)
 $(LOC_OBJ_DIR)/%.o: $(LOC_SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES_DIR) -c $< -o $@ $(LINK_DIR) $(LINK_FILE)
 
-.PHONY: clean install uninstall doc directories
+.PHONY: clean install uninstall doc directories dpkg $(DPKGS)
 
 directories: $(CREATE_DIR)
 
@@ -93,3 +106,25 @@ clean:
 
 doc:
 	doxygen .doxygen
+
+dpkg: $(DPKGS)
+$(DPKGS):
+	mkdir -p $@$(TGT_LIB)
+	cp $(LOC_LIB_DIR)/$(LIBNAME).so $@$(TGT_LIB)/$(SONAME)
+	cp $(LOC_LIB_DIR)/$(LIBNAME).a $@$(TGT_LIB)/$(ANAME)
+	ln -sf $(ANAME) $@$(TGT_LIB)/$(LIBNAME).a
+	ln -sf $(SONAME) $@$(TGT_LIB)/$(LIBNAME).so
+	mkdir -p $@$(TGT_DOC)
+	cp README.md $@$(TGT_DOC)/$(PROJECT)-$(LIB_VERSION).md
+	mkdir -p $@/$(DPKG_TGT)
+	@if [[ $@ == *-dev ]]; then \
+		mkdir -p $@$(TGT_INCLUDE); \
+		cp $(LOC_INC_DIR)/* $@$(TGT_INCLUDE)/.; \
+		echo "cp $(LOC_INC_DIR)/* $@$(TGT_INCLUDE)/."; \
+		cp $(DPKG_CTL_DIR)/control-dev $@/$(DPKG_TGT)/control; \
+	else \
+		cp $(DPKG_CTL_DIR)/control $@/$(DPKG_TGT)/control; \
+	fi
+	sed -i 's/<version>/$(VERSION)/g' $@/$(DPKG_TGT)/control
+	sed -i 's/<maj_version>/$(LIB_VERSION)/g' $@/$(DPKG_TGT)/control
+	dpkg-deb -b $@

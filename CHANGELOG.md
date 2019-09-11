@@ -1,4 +1,4 @@
-# `v0.2.0` - work in progress
+# `v0.2.0` (latest)
 
 ### Bug Fixes
  - fix deadline miss reports on non-TT nets (#16)
@@ -8,13 +8,18 @@
  - Remove XML configuration
  - Remove Streamix-based profiling
  - Improve deadline detection handling (#16)
+ - Remove the message type `tsmem` from the RTS and created an external library
+   instead (`libsmxmsgtsmem`)
 
 ### New Features
  - Allow to configure the RTS with a JSON file instead of XML (#17)
+ - Create a small configuration API which allows to easily access keys in a
+   JSON configuration file
  - Allow to address each net instance in configuration (#14)
  - Allow for sub-configuration files (#7)
  - Add profiling capabilities with [lttng](https://lttng.org/) (#13)
  - Allow to check for the reason if a channel read or write operation fails (#8)
+ - Add a test environment that allows to run a single box implementation (#12)
 
 
 -------------------

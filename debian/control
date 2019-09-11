@@ -1,0 +1,9 @@
+Package: smxrts-<maj_version>
+Version: <version>
+Section: base
+Priority: optional
+Architecture: amd64
+Depends: libbson-1.0-0 (>= 1.9.2-1)
+Maintainer: Simon Maurer <tpf@humdek.unibe.ch>
+Description: Streamix RTS 'smxrts'
+ The runtime system (RTS) for the coordination language Streamix.
