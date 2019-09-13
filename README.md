@@ -48,6 +48,14 @@ Requires
     resulting software must be published under
     [LGPL-v2.1](https://choosealicense.com/licenses/lgpl-2.1/).
 
+ - [`lttng`](https://lttng.org/)
+
+    ```
+    apt-get install lttng-tools
+    apt-get install lttng-modules-dkms
+    apt-get install liblttng-ust-dev
+    ```
+
 ## Examples
 Some example can be found in the [root repository of Streamix](https://github.com/moiri/streamix).
 Refer to this repo for compilation instructions.
