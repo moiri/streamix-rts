@@ -51,9 +51,9 @@ Requires
  - [`lttng`](https://lttng.org/)
 
     ```
-    apt-get install lttng-tools
-    apt-get install lttng-modules-dkms
-    apt-get install liblttng-ust-dev
+    sudo apt-get install lttng-tools
+    sudo apt-get install lttng-modules-dkms
+    sudo apt-get install liblttng-ust-dev
     ```
 
 ## Examples
