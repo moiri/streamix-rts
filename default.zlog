@@ -1,0 +1,5 @@
+[global]
+default format = "[%d.%us] [%H] [%p] [%V] [%c] %m%n"
+[rules]
+*.NOTICE   "fatal.log"
+*.WARN     >stderr

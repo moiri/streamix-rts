@@ -32,6 +32,7 @@ ANAME = $(LIBNAME)-$(LIB_VERSION).a
 
 TGT_INCLUDE = /opt/smx/include
 TGT_DOC = /opt/smx/doc
+TGT_CONF = /opt/smx/conf
 TGT_LIB = /opt/smx/lib
 TGT_LIB_E = \/opt\/smx\/lib
 
@@ -89,6 +90,7 @@ $(CREATE_DIR):
 
 install:
 	mkdir -p $(TGT_LIB) $(TGT_INCLUDE)
+	cp -a default.zlog $(TGT_CONF)/.
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
 	cp -a $(LOC_LIB_DIR)/$(LIBNAME).a $(TGT_LIB)/$(ANAME)
 	cp -a $(LOC_LIB_DIR)/$(LIBNAME).so $(TGT_LIB)/$(SONAME)
@@ -119,6 +121,7 @@ $(DPKGS):
 		cp $(DPKG_CTL_DIR)/control-dev $@/$(DPKG_TGT)/control; \
 	else \
 		mkdir -p $@$(TGT_LIB); \
+		cp default.zlog $(TGT_CONF)/.
 		cp $(LOC_LIB_DIR)/$(LIBNAME).so $@$(TGT_LIB)/$(SONAME); \
 		cp $(LOC_LIB_DIR)/$(LIBNAME).a $@$(TGT_LIB)/$(ANAME); \
 		mkdir -p $@$(TGT_DOC); \
