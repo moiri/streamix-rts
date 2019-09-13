@@ -28,6 +28,12 @@ Requires
  - [`zlog`](https://github.com/HardySimpson/zlog)
     is added as a git submodule and can be used to compile from source.
 
+    ```
+    cd zlog
+    make
+    sudo make install
+    ```
+
     **Important Note:** Do not statically link `libzlog`, otherwise the
     resulting software must be published under
     [LGPL-v2.1](https://choosealicense.com/licenses/lgpl-2.1/).

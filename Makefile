@@ -45,7 +45,6 @@ INCLUDES = $(LOC_INC_DIR)/*.h
 
 INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I/usr/include/libbson-1.0 \
-			   -I./zlog/src \
 			   -I.
 
 LINK_DIR = -L/usr/local/lib
