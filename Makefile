@@ -47,10 +47,11 @@ INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I/usr/include/libbson-1.0 \
 			   -I.
 
-LINK_DIR = -L/usr/local/lib
+LINK_DIR = -L/usr/local/lib \
+		   -L/usr/lib/x86_64-linux-gnu
 
 LINK_FILE = -lpthread \
-	-lbson \
+	-lbson-1.0 \
 	-lzlog \
 	-llttng-ust \
 	-ldl
