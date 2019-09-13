@@ -843,6 +843,7 @@ EXCLUDE_PATTERNS       = *.swp \
                          lib \
                          zlog \
                          test \
+                         dpkg \
                          .ycm*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names

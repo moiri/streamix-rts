@@ -1,4 +1,4 @@
-# `v0.2.0` (latest)
+# `v0.2.1` (latest)
 
 ### Bug Fixes
  - fix deadline miss reports on non-TT nets (#16)
