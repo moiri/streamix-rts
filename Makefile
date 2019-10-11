@@ -48,8 +48,7 @@ INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I/usr/include/libbson-1.0 \
 			   -I.
 
-LINK_DIR = -L/usr/local/lib \
-		   -L/usr/lib/x86_64-linux-gnu
+LINK_DIR = -L/usr/local/lib
 
 LINK_FILE = -lpthread \
 	-lbson-1.0 \
@@ -58,7 +57,7 @@ LINK_FILE = -lpthread \
 	-ldl
 
 CFLAGS = -Wall -fPIC
-DEBUG_FLAGS = -g -O0 -DLTTNG_UST_DEBUG -DLTTNG_UST_DEBUG_VALGRIND
+DEBUG_FLAGS = -g -O0
 
 CC = gcc
 
@@ -89,7 +88,7 @@ $(CREATE_DIR):
 	mkdir -p $@
 
 install:
-	mkdir -p $(TGT_LIB) $(TGT_INCLUDE)
+	mkdir -p $(TGT_LIB) $(TGT_INCLUDE) $(TGT_CONF)
 	cp -a default.zlog $(TGT_CONF)/.
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
 	cp -a $(LOC_LIB_DIR)/$(LIBNAME).a $(TGT_LIB)/$(ANAME)
@@ -120,8 +119,9 @@ $(DPKGS):
 		echo "cp $(LOC_INC_DIR)/* $@$(TGT_INCLUDE)/."; \
 		cp $(DPKG_CTL_DIR)/control-dev $@/$(DPKG_TGT)/control; \
 	else \
+		mkdir -p $@$(TGT_CONF); \
+		cp default.zlog $(TGT_CONF)/.; \
 		mkdir -p $@$(TGT_LIB); \
-		cp default.zlog $(TGT_CONF)/.
 		cp $(LOC_LIB_DIR)/$(LIBNAME).so $@$(TGT_LIB)/$(SONAME); \
 		cp $(LOC_LIB_DIR)/$(LIBNAME).a $@$(TGT_LIB)/$(ANAME); \
 		mkdir -p $@$(TGT_DOC); \
