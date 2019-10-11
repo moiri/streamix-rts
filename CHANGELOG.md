@@ -20,6 +20,7 @@
  - Add profiling capabilities with [lttng](https://lttng.org/) (#13)
  - Allow to check for the reason if a channel read or write operation fails (#8)
  - Add a test environment that allows to run a single box implementation (#12)
+ - Add a type field to the message structure.
 
 
 -------------------

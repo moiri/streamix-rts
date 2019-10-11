@@ -55,6 +55,15 @@
 #define SMX_MSG_UNPACK( msg )\
     smx_msg_unpack( msg )
 
+/**
+ * @def SMX_MSG_SET_TYPE()
+ *
+ * Set the type of the message payload. The type can be an arbitrary string.
+ * For details refer to smx_msg_set_type().
+ */
+#define SMX_MSG_SET_TYPE( msg, type )\
+    smx_msg_set_type( msg, type )
+
 /** @} */
 /** @} */
 
@@ -148,5 +157,16 @@ void smx_msg_destroy( void* h, smx_msg_t* msg, int deep );
  * @return      a void pointer to the payload
  */
 void* smx_msg_unpack( smx_msg_t* msg );
+
+/**
+ * Set the type of the message payload. The type can be an arbitrary string.
+ *
+ * @param msg
+ *  A pointer to the message where the type will be set.
+ * @param type
+ *  An arbitrary string definig the type. This function will allocate the
+ *  string in memory.
+ */
+int smx_msg_set_type( smx_msg_t* msg, const char* type );
 
 #endif /* SMXMSG_H */

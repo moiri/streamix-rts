@@ -221,6 +221,7 @@ struct smx_guard_s
 struct smx_msg_s
 {
     unsigned long id;               /**< the unique message id */
+    char* type;                     /**< an optional string indicating the msg data type */
     void* data;                     /**< pointer to the data */
     int   size;                     /**< size of the data */
     void* (*copy)( void*, size_t ); /**< pointer to a fct making a deep copy */
