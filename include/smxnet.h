@@ -92,6 +92,18 @@
  */
 #define SMX_NET_GET_NAME( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->name )
 
+/**
+ * @def SMX_NET_GET_IMPL()
+ *
+ * Get the box implementation name.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  A pointer to the box implementation name of type `const char*`.
+ */
+#define SMX_NET_GET_IMPL( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->impl )
+
 /** @} */
 /** @} */
 
