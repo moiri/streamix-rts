@@ -252,7 +252,11 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     bool abort = false;
     int new_count;
     if( ch == NULL )
+    {
+        // channel is open, dismiss message silently.
+        smx_msg_destroy( h, msg, true );
         return 0;
+    }
 
     if( ch->sink == NULL )
     {
