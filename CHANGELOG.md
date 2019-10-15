@@ -22,6 +22,7 @@
  - Add a test environment that allows to run a single box implementation (#12)
  - Add a type field to the message structure.
  - Add a macro to access the implementation name.
+ - Add a utility function to filter message types.
 
 
 -------------------
