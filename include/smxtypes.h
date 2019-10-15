@@ -56,6 +56,7 @@ enum smx_channel_err_e
     SMX_CHANNEL_ERR_DL_MISS,       /**< connecting net missed its deadline */
     SMX_CHANNEL_ERR_NO_DATA,       /**< unexpectedly, the channel has no data */
     SMX_CHANNEL_ERR_NO_SPACE,      /**< unexpectedly, the channel has no space */
+    SMX_CHANNEL_ERR_FILTER,        /**< the msg type does not match the filter */
     SMX_CHANNEL_ERR_UNINITIALISED, /**< the channel was never initialised */
 };
 
@@ -159,6 +160,12 @@ struct smx_channel_end_s
     pthread_cond_t      ch_cv;    /**< conditional variable to trigger producer */
     unsigned long       count;    /**< access counter */
     smx_net_t*          net;      /**< pointer to the connecting net */
+    struct {
+        char**  items;
+        int     count;
+    } filter;     /**< All message types allowed on this channel */
+    /** A pointer to the filter function. */
+    bool ( *content_filter )( smx_msg_t* msg );
 };
 
 /**
@@ -235,6 +242,7 @@ struct smx_msg_s
 struct smx_net_s
 {
     bool                has_profiler; /**< is profiler enabled? */
+    bool                has_type_filter; /**< is type filter enabled? */
     /** the thread priority of the net. 0 means ET, >0 means TT */
     int                 priority;
     unsigned int        id;           /**< a unique net id */

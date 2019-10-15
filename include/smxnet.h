@@ -203,7 +203,7 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
         const char* search_str );
 
 /**
- * Get the appropriate profiler configuration setting for the current net.
+ * Get a boolean property configuration setting for the current net.
  *
  * The function hiearchically searches for a confic that is specific for
  *  1. this net id
@@ -222,12 +222,14 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
  *  The box implemntation name
  * @param id
  *  The id of the net
+ * @param prop
+ *  The name of the property.
  *
  * @return
- *  true if the profiler must be turned on, false otherwise.
+ *  the boolean property
  */
-bool smx_net_has_profiler( bson_t* conf, const char* name, const char* impl,
-        unsigned int id );
+bool smx_net_has_boolean_prop( bson_t* conf, const char* name, const char* impl,
+        unsigned int id, const char* prop );
 
 /**
  * Initialise a net

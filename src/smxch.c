@@ -117,6 +117,9 @@ smx_channel_end_t* smx_channel_create_end()
     end->count = 0;
     end->err = SMX_CHANNEL_ERR_NONE;
     end->net = NULL;
+    end->filter.items = NULL;
+    end->filter.count = 0;
+    end->content_filter = NULL;
     pthread_cond_init( &end->ch_cv, NULL );
     return end;
 }
@@ -141,6 +144,13 @@ void smx_channel_destroy_end( smx_channel_end_t* end )
 {
     if( end == NULL )
         return;
+    int i;
+    if( end->filter.items != NULL )
+    {
+        for( i = 0; i < end->filter.count; i++ )
+            free( end->filter.items[i] );
+        free( end->filter.items );
+    }
     pthread_cond_destroy( &end->ch_cv );
     free( end );
 }
@@ -229,6 +239,45 @@ int smx_channel_ready_to_write( smx_channel_t* ch )
 }
 
 /*****************************************************************************/
+bool smx_channel_set_content_filter( smx_channel_t* ch,
+        bool filter( smx_msg_t* ) )
+{
+    if( ch == NULL || ch->sink == NULL || filter == NULL )
+        return false;
+    SMX_LOG_CH( ch, notice, "adding message content filter" );
+    ch->sink->content_filter = filter;
+    return true;
+}
+
+/*****************************************************************************/
+bool smx_channel_set_filter( smx_net_t* h, smx_channel_t* ch, int count, ... )
+{
+    int i;
+    va_list arg_ptr;
+    const char* arg;
+
+    if( !h->has_type_filter )
+        return false;
+
+    SMX_LOG_CH( ch, notice, "adding message type filter" );
+    ch->sink->filter.items = smx_malloc( sizeof( char* ) * count );
+    ch->sink->filter.count = count;
+
+    va_start( arg_ptr, count );
+
+    for( i = 0; i < count; i++ )
+    {
+        arg = va_arg( arg_ptr, char* );
+        ch->sink->filter.items[i] = arg ? strdup( arg ) : NULL;
+        SMX_LOG_CH( ch, notice, "allow message type '%s'", arg );
+    }
+
+    va_end( arg_ptr );
+
+    return true;
+}
+
+/*****************************************************************************/
 void smx_channel_terminate_sink( smx_channel_t* ch )
 {
     zlog_debug( ch->cat, "mark as stale" );
@@ -251,6 +300,9 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
 {
     bool abort = false;
     int new_count;
+    int i;
+    const char* filter;
+    bool pass = false;
     if( ch == NULL )
     {
         // channel is open, dismiss message silently.
@@ -269,6 +321,38 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         SMX_LOG_MAIN( main, warn, "write aborted: message is NULL" );
         ch->sink->err = SMX_CHANNEL_ERR_NO_DATA;
         return -1;
+    }
+
+    if( ch->sink->content_filter != NULL && !ch->sink->content_filter( msg ) )
+    {
+        SMX_LOG_CH( ch, debug, "msg content filter failed, dismissing msg" );
+        smx_msg_destroy( h, msg, true );
+        return 0;
+    }
+
+    if( ch->sink->filter.items != NULL )
+    {
+        for( i = 0; i < ch->sink->filter.count; i++ )
+        {
+            filter = ch->sink->filter.items[i];
+            if( ( msg->type == NULL && filter == NULL )
+                    || ( ( msg->type != NULL ) && ( filter != NULL )
+                        && strcmp( msg->type, filter ) == 0 ) )
+            {
+                pass = true;
+                break;
+            }
+        }
+
+        if( !pass )
+        {
+            ch->sink->err = SMX_CHANNEL_ERR_FILTER;
+            SMX_LOG_CH( ch, error, "write aborted: msg type '%s' did not pass"
+                    " filter, msg dismissed (%ld)",
+                    msg->type ? msg->type : "unknonw", msg->id );
+            smx_msg_destroy( h, msg, true );
+            return -1;
+        }
     }
 
     pthread_mutex_lock( &ch->ch_mutex );

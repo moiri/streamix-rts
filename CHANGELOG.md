@@ -23,6 +23,9 @@
  - Add a type field to the message structure.
  - Add a macro to access the implementation name.
  - Add a utility function to filter message types.
+ - Add generic message type and message content filter functionality that acts
+   upon writing a message to a channel. For reasons of performance, the type
+   filter can be disabled globally with a boolean config option `type_filter`.
 
 
 -------------------

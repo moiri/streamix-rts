@@ -50,6 +50,68 @@
     smx_channel_read( h, SMX_SIG_PORT( h, box_name, ch_name, in ) )
 
 /**
+ * @def SMX_CHANNEL_SET_CONTENT_FILTER()
+ *
+ * Set a message content filter on a channel. The filter is a function that
+ * operates on the message content. The function receives the message as
+ * parameter and must return either true if the filter passes or false if the
+ * filter fails.
+ *
+ * If the filter failes, the macro SMX_CHANNEL_WRITE() silently dismisses the
+ * message and returns 0. A content filter fail does not count as error.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the output port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @param filter
+ *  A pointer to the filter function. The filter function must return a booloan
+ *  and takes a pointer to the message to be checked as parameter.
+ * @return
+ *  true on success or false on failure.
+ */
+#define SMX_CHANNEL_SET_CONTENT_FILTER( h, box_name, ch_name, filter )\
+    smx_channel_set_content_filter( SMX_SIG_PORT( h, box_name, ch_name, in ),\
+            filter )
+
+/**
+ * @def SMX_CHANNEL_SET_TYPE_FILTER()
+ *
+ * Set a message type filter on a channel filter. A channel filter allows to
+ * whitelist message types. If the filter is set, only messages of the
+ * specified types are allowed to be written to a channel. One filter is an
+ * arbitrary string or NULL to allow messages with undefined message type.
+ * If a message type does not match any whitelisted types, an error is logged
+ * and the message is dismissed.
+ *
+ * If the filter failes, the macro SMX_CHANNEL_WRITE() returns -1 and sets the
+ * error SMX_CHANNEL_ERR_FILTER.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the output port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @param count
+ *  The number of filter arguments passed to the function
+ * @param ...
+ *  Any number of string arguments. If the message type matches any of these
+ *  the filter check passed. NULL is a valid argument.
+ * @return
+ *  true on success or false on failure.
+ */
+#define SMX_CHANNEL_SET_TYPE_FILTER( h, box_name, ch_name, count, ... )\
+    smx_channel_set_filter( h, SMX_SIG_PORT( h, box_name, ch_name, in ),\
+            count, ##__VA_ARGS__ )
+
+/**
  * @def SMX_CHANNEL_WRITE()
  *
  * Write to a streamix channel by accessing a net output port.
@@ -92,7 +154,6 @@
  */
 #define SMX_GET_READ_ERROR( h, box_name, ch_name )\
     smx_get_read_error( SMX_SIG_PORT( h, box_name, ch_name, in ) )
-
 
 /**
  * @def SMX_GET_WRITE_ERROR()
@@ -216,6 +277,39 @@ int smx_channel_ready_to_read( smx_channel_t* ch );
  * @return      number of available space in a channel or -1 on failure
  */
 int smx_channel_ready_to_write( smx_channel_t* ch );
+
+/**
+ * Set a channel filter to only allow messages of a certain content to be
+ * written to this channel.
+ *
+ * @param ch
+ *  pointer to the channel
+ * @param filter
+ *  a pointer to a function returning a booloan and taking the message to be
+ *  filtered as argument.
+ * @return
+ *  true on success or false on failure.
+ */
+bool smx_channel_set_content_filter( smx_channel_t* ch,
+        bool filter( smx_msg_t* ) );
+
+/**
+ * Set the channel filter to only allow messages of a certain type to be
+ * written to this channel.
+ *
+ * @param h
+ *  pointer to the net handler.
+ * @param ch
+ *  pointer to the channel
+ * @param count
+ *  The number of filter arguments passed to the function
+ * @param ...
+ *  Any number of string arguments. If the message type matches any of these
+ *  the filter check passed. NULL is a valid argument.
+ * @return
+ *  true on success or false on failure.
+ */
+bool smx_channel_set_filter( smx_net_t* h, smx_channel_t* ch, int count, ... );
 
 /**
  * Send the termination signal to a channel sink

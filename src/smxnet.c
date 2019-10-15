@@ -126,7 +126,10 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->impl = impl;
     net->attr = NULL;
     net->conf = bson_new();
-    net->has_profiler = smx_net_has_profiler( conf, name, impl, id );
+    net->has_profiler = smx_net_has_boolean_prop( conf, name, impl, id,
+            "profiler" );
+    net->has_type_filter = smx_net_has_boolean_prop( conf, name, impl, id,
+            "type_filter" );
     smx_net_get_json_doc( net, conf, name, impl, id );
 
     (*net_cnt)++;
@@ -233,33 +236,32 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
 }
 
 /*****************************************************************************/
-bool smx_net_has_profiler( bson_t* conf, const char* name, const char* impl,
-        unsigned int id )
+bool smx_net_has_boolean_prop( bson_t* conf, const char* name, const char* impl,
+        unsigned int id, const char* prop )
 {
     bson_iter_t iter;
     bson_iter_t child;
     char search_str[1000];
     const char* nets = "_nets";
-    const char* profiler = "profiler";
-    sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, profiler );
+    sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search_str, &child ) && BSON_ITER_HOLDS_BOOL( &iter ) )
     {
         return bson_iter_bool( &child );
     }
-    sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, profiler );
+    sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, prop );
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
     {
         return bson_iter_bool( &child );
     }
-    sprintf( search_str, "%s.%s._default.%s", nets, impl, profiler );
+    sprintf( search_str, "%s.%s._default.%s", nets, impl, prop );
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
     {
         return bson_iter_bool( &child );
     }
-    sprintf( search_str, "%s._default.%s", nets, profiler );
+    sprintf( search_str, "%s._default.%s", nets, prop );
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
     {
