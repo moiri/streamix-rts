@@ -48,6 +48,15 @@
     smx_msg_destroy( h, msg, 1 )
 
 /**
+ * @def SMX_MSG_FILTER()
+ *
+ * Checks wether any of the provided filter match with the message type.
+ * For more details refer to smx_msg_filer().
+ */
+#define SMX_MSG_FILTER( msg, count, ... )\
+    smx_msg_filter( msg, count, ##__VA_ARGS__ )
+
+/**
  * @def SMX_MSG_UNPACK()
  *
  * Unpack the message payload. For details refer to smx_msg_unpack().
@@ -128,6 +137,22 @@ void* smx_msg_data_copy( void* data, size_t size );
  * @param data  a void pointer to the data to be freed (shallow)
  */
 void smx_msg_data_destroy( void* data );
+
+/**
+ * Checks wether the message type matches any of the strings passed as
+ * arguments.
+ *
+ * @param msg
+ *  The message to be checked
+ * @param count
+ *  The number of filter arguments passed to the function
+ * @param ...
+ *  Any number of string arguments. If the message type matches any of these
+ *  the filter check passed. NULL is a valid argument.
+ * @return
+ *  The index of the mathcing filer on success or -1 on failure.
+ */
+int smx_msg_filter( smx_msg_t* msg, int count, ... );
 
 /**
  * @brief Default unpack function for the message payload

@@ -100,6 +100,30 @@ void smx_msg_destroy( void* h, smx_msg_t* msg, int deep )
 }
 
 /*****************************************************************************/
+int smx_msg_filter( smx_msg_t* msg, int count, ... )
+{
+    int i;
+    va_list arg_ptr;
+    const char* arg;
+
+    va_start( arg_ptr, count );
+
+    for( i = 0; i < count; i++ )
+    {
+        arg = va_arg( arg_ptr, const char* );
+        if( ( msg->type == arg )
+                || ( ( msg->type != NULL ) && strcmp( msg->type, arg ) == 0 ) )
+        {
+            break;
+        }
+    }
+
+    va_end( arg_ptr );
+
+    return (i < count) ? i : -1;
+}
+
+/*****************************************************************************/
 void* smx_msg_unpack( smx_msg_t* msg )
 {
     return msg->unpack( msg->data );
@@ -108,6 +132,8 @@ void* smx_msg_unpack( smx_msg_t* msg )
 /*****************************************************************************/
 int smx_msg_set_type( smx_msg_t* msg, const char* type )
 {
+    if( msg->type != NULL )
+        free( msg->type );
     msg->type = strdup( type );
     return 0;
 }
