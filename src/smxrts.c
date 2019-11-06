@@ -18,6 +18,7 @@ void smx_program_cleanup( smx_rts_t* rts )
 {
     double elapsed_wall;
     bson_destroy( rts->conf );
+    pthread_barrier_destroy( &rts->init_done );
     clock_gettime( CLOCK_MONOTONIC, &rts->end_wall );
     elapsed_wall = ( rts->end_wall.tv_sec - rts->start_wall.tv_sec );
     elapsed_wall += ( rts->end_wall.tv_nsec - rts->start_wall.tv_nsec) / 1000000000.0;
@@ -77,7 +78,7 @@ smx_rts_t* smx_program_init( const char* config )
     }
     else
         SMX_LOG_MAIN( main, warn,
-                "no log configuration found in app config, missing mandatory ket '_log'" );
+                "no log configuration found in app config, missing mandatory key '_log'" );
 
     if( !( bson_iter_init_find( &iter, doc, "_nets" )
             && BSON_ITER_HOLDS_DOCUMENT( &iter ) ) )
@@ -114,7 +115,7 @@ smx_rts_t* smx_program_init( const char* config )
 
     SMX_LOG_MAIN( main, info, "using libbson version: %s", bson_get_version() );
     SMX_LOG_MAIN( main, info, "using libzlog version: %s", LIBZLOG_VERSION );
-    SMX_LOG_MAIN( main, info, "using libphtread stubs version: %s", LIBPTHREAD_STUBS_VERSION );
+    SMX_LOG_MAIN( main, info, "using libpthread stubs version: %s", LIBPTHREAD_STUBS_VERSION );
 
     SMX_LOG_MAIN( main, notice, "start thread main" );
 
