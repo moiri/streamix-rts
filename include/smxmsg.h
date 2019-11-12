@@ -73,6 +73,14 @@
 #define SMX_MSG_SET_TYPE( msg, type )\
     smx_msg_set_type( msg, type )
 
+/**
+ * @def SMX_MSG_PREVENT_BACKUP()
+ *
+ * Prevent a message from creating backups in decoupled channels.
+ */
+#define SMX_MSG_PREVENT_BACKUP( msg )\
+    smx_msg_prevent_backup( msg )
+
 /** @} */
 /** @} */
 
@@ -174,6 +182,15 @@ void* smx_msg_data_unpack( void* data );
  *              if msg->destroy() is NULL this flag is ignored
  */
 void smx_msg_destroy( void* h, smx_msg_t* msg, int deep );
+
+/**
+ * Prevents a message from being copied to the backup space in a decoupled
+ * channel.
+ *
+ * @param msg
+ *  A pointer to the message structure.
+ */
+void smx_msg_prevent_backup( smx_msg_t* msg );
 
 /**
  * @brief Unpack the message payload

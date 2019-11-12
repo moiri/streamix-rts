@@ -619,7 +619,7 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         msg = fifo->head->msg;
         fifo->head->msg = NULL;
         fifo->head = fifo->head->prev;
-        if( fifo->count == 1 )
+        if( fifo->count == 1 && !msg->prevent_backup )
         {
             // last message, backup for later duplication
             if( fifo->backup != NULL ) // delete old backup
@@ -646,7 +646,7 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         }
         else
         {
-            SMX_LOG_CH( ch, notice,
+            SMX_LOG_CH( ch, info,
                     "nothing to read, fifo and its backup is empty" );
             ch->source->err = SMX_CHANNEL_ERR_NO_DEFAULT;
         }

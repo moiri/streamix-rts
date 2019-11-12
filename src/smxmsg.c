@@ -28,6 +28,8 @@ smx_msg_t* smx_msg_copy( void* h, smx_msg_t* msg )
             msg->size, msg->copy, msg->destroy, msg->unpack );
     if( msg->type != NULL )
         smx_msg_set_type( copy, msg->type );
+    if( msg->prevent_backup )
+        smx_msg_prevent_backup( copy );
     return copy;
 }
 
@@ -48,6 +50,7 @@ smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
     msg->type = NULL;
     msg->data = data;
     msg->size = size;
+    msg->prevent_backup = false;
     if( copy == NULL ) msg->copy = smx_msg_data_copy;
     else msg->copy = copy;
     if( destroy == NULL ) msg->destroy = smx_msg_data_destroy;
