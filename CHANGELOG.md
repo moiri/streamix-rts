@@ -1,4 +1,15 @@
-# `v0.2.1` (latest)
+# `v0.2.2` (latest)
+
+### Bug Fixes
+ - fix some typos
+ - exclude channel macro to set content filter from testing clause
+
+### New Features
+ - Allow to configure whether a message is backed up in a decoupled channel.
+
+
+-------------------
+# `v0.2.1`
 
 ### Bug Fixes
  - fix deadline miss reports on non-TT nets (#16)
