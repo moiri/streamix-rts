@@ -1,4 +1,4 @@
-# `v0.2.2` (latest)
+# `v0.3.0` (latest)
 
 ### Bug Fixes
  - fix some typos
