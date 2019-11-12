@@ -127,6 +127,12 @@ int smx_msg_filter( smx_msg_t* msg, int count, ... )
 }
 
 /*****************************************************************************/
+void smx_msg_prevent_backup( smx_msg_t* msg )
+{
+    msg->prevent_backup = true;
+}
+
+/*****************************************************************************/
 void* smx_msg_unpack( smx_msg_t* msg )
 {
     return msg->unpack( msg->data );
