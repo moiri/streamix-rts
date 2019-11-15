@@ -93,7 +93,8 @@ install:
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
 	cp -a $(LOC_LIB_DIR)/$(LIBNAME).a $(TGT_LIB)/$(ANAME)
 	cp -a $(LOC_LIB_DIR)/$(LIBNAME).so $(TGT_LIB)/$(SONAME)
-	ln -sf $(SONAME) $(TGT_LIB)/$(LIBNAME).so
+	ln -sf $(SONAME) $(TGT_LIB)/$(VLIBNAME).so
+	ln -sf $(VLIBNAME).so $(TGT_LIB)/$(LIBNAME).so
 	ln -sf $(ANAME) $(TGT_LIB)/$(LIBNAME).a
 
 uninstall:
@@ -102,6 +103,7 @@ uninstall:
 	rm $(TGT_LIB)/$(SONAME)
 	rm $(TGT_LIB)/$(LIBNAME).a
 	rm $(TGT_LIB)/$(LIBNAME).so
+	rm $(TGT_LIB)/$(VLIBNAME).so
 
 clean:
 	rm -rf $(LOC_OBJ_DIR)
