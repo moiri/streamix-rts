@@ -4,10 +4,15 @@ PROJECT = smxrts
 LOC_INC_DIR = include
 LOC_SRC_DIR = src
 LOC_LIB_DIR = lib
+LOC_SPEC_DIR = specs
+
+SPEC_EXE_NAME = run-specs
 
 STATLIB = $(LOC_LIB_DIR)/lib$(PROJECT).a
 
 SOURCES = $(wildcard $(LOC_SRC_DIR)/*.c)
+
+SPECS = $(wildcard $(LOC_SPEC_DIR)/*.c)
 
 OBJECTS = $(SOURCES:%.c=%.o)
 
@@ -23,6 +28,8 @@ CFLAGS = -Wall -c
 DEBUG_FLAGS = -g -O0
 
 CC = gcc
+
+## Process this file with automake to produce Makefile.in
 
 all: $(STATLIB)
 
@@ -49,7 +56,10 @@ install:
 clean:
 	rm -f $(LOC_SRC_DIR)/$(PROJECT).o
 	rm -f $(LOC_LIB_DIR)/lib$(PROJECT).a
+	rm -f ./${SPEC_EXE_NAME}
 
 doc:
 	doxygen .doxygen
 
+spec: $(SPECS)
+	$(CC) $(SPECS) -Wall -o $(SPEC_EXE_NAME) -lcheck -pthread -lcheck_pic -pthread -lrt -lm -lsubunit
