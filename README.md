@@ -65,3 +65,8 @@ Requires
 ## Examples
 Some example can be found in the [root repository of Streamix](https://github.com/moiri/streamix).
 Refer to this repo for compilation instructions.
+
+## Troubleshooting
+zlog fails if it does not have read access to the configuration file. Make sure
+that the default configuration file as well as a customized version is writable
+by the user executing a Streamix application.
