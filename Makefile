@@ -3,7 +3,7 @@ SHELL := /bin/bash
 PROJECT = smxrts
 VMAJ = 0
 VMIN = 3
-VREV = 0
+VREV = 1
 
 VERSION_LIB = $(VMAJ).$(VMIN)
 
