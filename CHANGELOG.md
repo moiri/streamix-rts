@@ -1,10 +1,20 @@
-# `v0.3.0` (latest)
+# `v0.3.1` (latest)
+
+### Changes
+
+ - Log version numbers on level NOTICE
+
+
+-------------------
+# `v0.3.0`
 
 ### Bug Fixes
+
  - fix some typos
  - exclude channel macro to set content filter from testing clause
 
 ### New Features
+
  - Allow to configure whether a message is backed up in a decoupled channel.
 
 
@@ -12,6 +22,7 @@
 # `v0.2.1`
 
 ### Bug Fixes
+
  - fix deadline miss reports on non-TT nets (#16)
 
 ### Changes
@@ -23,6 +34,7 @@
    instead (`libsmxmsgtsmem`)
 
 ### New Features
+
  - Allow to configure the RTS with a JSON file instead of XML (#17)
  - Create a small configuration API which allows to easily access keys in a
    JSON configuration file
@@ -43,6 +55,7 @@
 # `v0.1.0`
 
 ### Bug Fixes
+
  - fix the TF read function (#1)
  - fix the termination behaviour of TF
  - fix the termination behaviour of RN
@@ -51,6 +64,7 @@
  - fix collector counter
 
 ### Changes
+
  - Cleanup cond vars (move the cond var from fifo to channel level)
  - Use a common net structure to store information every net has
  - Create channel ends to better distinguish between read and write operations
@@ -63,6 +77,7 @@
  - Change the license from GPL-v3.0 to MPL-v2.0
 
 ### New Features
+
  - Add a `unpack` function to the message callbacks
  - Allow to configure the RTS with an XML file (path to the file can be passed
    by parameter)

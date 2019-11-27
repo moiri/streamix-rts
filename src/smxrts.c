@@ -113,9 +113,11 @@ smx_rts_t* smx_program_init( const char* config )
     rts->conf = doc;
     clock_gettime( CLOCK_MONOTONIC, &rts->start_wall );
 
-    SMX_LOG_MAIN( main, info, "using libbson version: %s", bson_get_version() );
-    SMX_LOG_MAIN( main, info, "using libzlog version: %s", LIBZLOG_VERSION );
-    SMX_LOG_MAIN( main, info, "using libpthread stubs version: %s", LIBPTHREAD_STUBS_VERSION );
+    SMX_LOG_MAIN( main, notice, "using libbson version: %s",
+            bson_get_version() );
+    SMX_LOG_MAIN( main, notice, "using libzlog version: %s", LIBZLOG_VERSION );
+    SMX_LOG_MAIN( main, notice, "using libpthread stubs version: %s",
+            LIBPTHREAD_STUBS_VERSION );
 
     SMX_LOG_MAIN( main, notice, "start thread main" );
 
