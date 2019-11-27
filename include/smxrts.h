@@ -204,4 +204,12 @@ smx_rts_t* smx_program_init( const char* config );
  */
 void smx_program_init_run( smx_rts_t* rts );
 
+/**
+ * Get the current version of the library.
+ *
+ * @return
+ *  A version number string.
+ */
+const char* smx_rts_get_version();
+
 #endif /* SMXRTS_H */

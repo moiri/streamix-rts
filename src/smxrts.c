@@ -134,3 +134,9 @@ void smx_program_init_run( smx_rts_t* rts )
 {
     pthread_barrier_init( &rts->init_done, NULL, rts->net_cnt );
 }
+
+/******************************************************************************/
+const char* smx_rts_get_version()
+{
+    return LIBSMXRTS_VERSION;
+}
