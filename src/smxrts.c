@@ -12,6 +12,9 @@
 
 #define LIBZLOG_VERSION "1.2.14"
 #define LIBPTHREAD_STUBS_VERSION "0.4-1"
+#ifndef LIBSMXRTS_VERSION
+#define LIBSMXRTS_VERSION "undefined"
+#endif
 
 /*****************************************************************************/
 void smx_program_cleanup( smx_rts_t* rts )
@@ -113,6 +116,8 @@ smx_rts_t* smx_program_init( const char* config )
     rts->conf = doc;
     clock_gettime( CLOCK_MONOTONIC, &rts->start_wall );
 
+    SMX_LOG_MAIN( main, notice, "using libsmxrtl version: %s",
+            LIBSMXRTS_VERSION );
     SMX_LOG_MAIN( main, notice, "using libbson version: %s",
             bson_get_version() );
     SMX_LOG_MAIN( main, notice, "using libzlog version: %s", LIBZLOG_VERSION );

@@ -56,7 +56,7 @@ LINK_FILE = -lpthread \
 	-llttng-ust \
 	-ldl
 
-CFLAGS = -Wall -fPIC
+CFLAGS = -Wall -fPIC -DLIBSMXRTS_VERSION=\"$(UPSTREAM_VERSION)\"
 DEBUG_FLAGS = -g -O0
 
 CC = gcc

@@ -2,7 +2,8 @@
 
 ### Changes
 
- - Log version numbers on level NOTICE
+ - Log version numbers on level NOTICE.
+ - Log RTS version number.
 
 
 -------------------
