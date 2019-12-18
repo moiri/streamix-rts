@@ -33,6 +33,7 @@ ANAME = $(LIBNAME)-$(LIB_VERSION).a
 TGT_INCLUDE = /opt/smx/include
 TGT_DOC = /opt/smx/doc
 TGT_CONF = /opt/smx/conf
+TGT_LOG = /opt/smx/log
 TGT_LIB = /opt/smx/lib
 TGT_LIB_E = \/opt\/smx\/lib
 
@@ -121,6 +122,7 @@ $(DPKGS):
 		echo "cp $(LOC_INC_DIR)/* $@$(TGT_INCLUDE)/."; \
 		cp $(DPKG_CTL_DIR)/control-dev $@/$(DPKG_TGT)/control; \
 	else \
+		mkdir -p $@$(TGT_LOG); \
 		mkdir -p $@$(TGT_CONF); \
 		cp default.zlog $(TGT_CONF)/.; \
 		mkdir -p $@$(TGT_LIB); \
