@@ -306,6 +306,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     if( ch == NULL )
     {
         // channel is open, dismiss message silently.
+        SMX_LOG_MAIN( main, debug, "channel is open, dismissing message" );
         smx_msg_destroy( h, msg, true );
         return 0;
     }
