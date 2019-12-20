@@ -3,7 +3,7 @@ SHELL := /bin/bash
 PROJECT = smxrts
 VMAJ = 0
 VMIN = 3
-VREV = 1
+VREV = 2
 
 VERSION_LIB = $(VMAJ).$(VMIN)
 
@@ -89,7 +89,7 @@ $(CREATE_DIR):
 	mkdir -p $@
 
 install:
-	mkdir -p $(TGT_LIB) $(TGT_INCLUDE) $(TGT_CONF)
+	mkdir -p $(TGT_LIB) $(TGT_INCLUDE) $(TGT_CONF) $(TGT_LOG)
 	cp -a default.zlog $(TGT_CONF)/.
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
 	cp -a $(LOC_LIB_DIR)/$(LIBNAME).a $(TGT_LIB)/$(ANAME)
