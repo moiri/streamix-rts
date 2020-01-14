@@ -244,26 +244,30 @@ bool smx_net_has_boolean_prop( bson_t* conf, const char* name, const char* impl,
     char search_str[1000];
     const char* nets = "_nets";
     sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
-    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
-                search_str, &child ) && BSON_ITER_HOLDS_BOOL( &iter ) )
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_BOOL( &iter ) )
     {
         return bson_iter_bool( &child );
     }
     sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, prop );
-    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
-                search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_BOOL( &child ) )
     {
         return bson_iter_bool( &child );
     }
     sprintf( search_str, "%s.%s._default.%s", nets, impl, prop );
-    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
-                search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_BOOL( &child ) )
     {
         return bson_iter_bool( &child );
     }
     sprintf( search_str, "%s._default.%s", nets, prop );
-    if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
-                search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &iter ) )
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_BOOL( &child ) )
     {
         return bson_iter_bool( &child );
     }
