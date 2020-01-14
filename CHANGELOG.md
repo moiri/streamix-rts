@@ -1,4 +1,13 @@
-# `v0.3.1` (latest)
+# `v0.3.2` (latest)
+
+### Bug Fixes
+
+ - now, general boolean properties of a net are read correctly.
+ - first check message type filter, then check message content filter.
+
+
+-------------------
+# `v0.3.1`
 
 ### Changes
 
