@@ -324,19 +324,13 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         return -1;
     }
 
-    if( ch->sink->content_filter != NULL && !ch->sink->content_filter( msg ) )
-    {
-        SMX_LOG_CH( ch, debug, "msg content filter failed, dismissing msg" );
-        smx_msg_destroy( h, msg, true );
-        return 0;
-    }
-
     if( ch->sink->filter.items != NULL )
     {
         for( i = 0; i < ch->sink->filter.count; i++ )
         {
             filter = ch->sink->filter.items[i];
-            if( ( msg->type == NULL && filter == NULL )
+            if( msg->type == NULL
+                    || filter == NULL
                     || ( ( msg->type != NULL ) && ( filter != NULL )
                         && strcmp( msg->type, filter ) == 0 ) )
             {
@@ -354,6 +348,13 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
             smx_msg_destroy( h, msg, true );
             return -1;
         }
+    }
+
+    if( ch->sink->content_filter != NULL && !ch->sink->content_filter( msg ) )
+    {
+        SMX_LOG_CH( ch, debug, "msg content filter failed, dismissing msg" );
+        smx_msg_destroy( h, msg, true );
+        return 0;
     }
 
     pthread_mutex_lock( &ch->ch_mutex );
