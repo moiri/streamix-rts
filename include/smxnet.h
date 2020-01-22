@@ -295,4 +295,12 @@ void smx_net_terminate( smx_net_t* h );
  */
 int smx_net_update_state( smx_net_t* h, int state );
 
+/**
+ * Wait for all nets to terminate by joining the net threads.
+ *
+ * @param th
+ *  The thread id
+ */
+void smx_net_wait_end( pthread_t th );
+
 #endif /* SMXNET_H */

@@ -161,7 +161,7 @@ struct smx_rts_s
  * Macro to wait for all threads to reach this point.
  */
 #define SMX_NET_WAIT_END( id )\
-    pthread_join( rts->ths[id], NULL )
+    smx_net_wait_end( rts->ths[id] )
 
 /**
  * Macro to wait for initialisation of all nets to complete before running the

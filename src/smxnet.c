@@ -474,3 +474,9 @@ int smx_net_update_state( smx_net_t* h, int state )
 
     return SMX_NET_CONTINUE;
 }
+
+/*****************************************************************************/
+void smx_net_wait_end( pthread_t th )
+{
+    pthread_join( th, NULL );
+}
