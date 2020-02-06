@@ -132,7 +132,10 @@ smx_rts_t* smx_program_init( const char* config )
 /*****************************************************************************/
 void smx_program_init_run( smx_rts_t* rts )
 {
+    SMX_LOG_MAIN( main, notice, "waiting for all nets to finish"
+            " initialisation" );
     pthread_barrier_init( &rts->init_done, NULL, rts->net_cnt );
+    SMX_LOG_MAIN( main, notice, " initialisation on all nets done" );
 }
 
 /******************************************************************************/
