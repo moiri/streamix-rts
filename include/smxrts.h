@@ -136,8 +136,10 @@ struct smx_rts_s
 /**
  * Allocate the necessary space for a net structure.
  */
-#define SMX_NET_INIT( id, indegree, outdegree )\
-    smx_net_init( rts->nets[id], indegree, outdegree )
+#define SMX_NET_INIT( id, indegree, outdegree, box_name )\
+    smx_net_init( rts->nets[id],\
+            SMX_MAX( indegree, SMX_INDEGREE_ ## box_name )\
+            SMX_MAX( outdegree, SMX_OUTDEGREE_ ## box_name ) )
 
 /**
  * Allocate the necessary space for a routing node structure.

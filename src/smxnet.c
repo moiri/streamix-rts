@@ -283,14 +283,14 @@ void smx_net_init( smx_net_t* h, int indegree, int outdegree )
         return;
 
     h->sig->in.len = indegree;
-    h->sig->in.ports = smx_malloc( sizeof( smx_channel_t* ) * indegree );
-    for( i = 0; i < indegree; i++ )
+    h->sig->in.ports = smx_malloc( sizeof( smx_channel_t* ) * h->sig->in.len );
+    for( i = 0; i < h->sig->in.len; i++ )
         h->sig->in.ports[i] = NULL;
 
     h->sig->out.len = outdegree;
-    h->sig->out.ports = smx_malloc( sizeof( smx_channel_t* ) * outdegree );
-    for( i = 0; i < indegree; i++ )
-        h->sig->in.ports[i] = NULL;
+    h->sig->out.ports = smx_malloc( sizeof( smx_channel_t* ) * h->sig->out.len );
+    for( i = 0; i < h->sig->out.len; i++ )
+        h->sig->out.ports[i] = NULL;
 }
 
 /*****************************************************************************/
