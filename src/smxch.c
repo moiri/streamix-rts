@@ -256,7 +256,7 @@ bool smx_channel_set_filter( smx_net_t* h, smx_channel_t* ch, int count, ... )
     va_list arg_ptr;
     const char* arg;
 
-    if( !h->has_type_filter )
+    if( !h->has_type_filter || ch == NULL )
         return false;
 
     SMX_LOG_CH( ch, notice, "adding message type filter" );
