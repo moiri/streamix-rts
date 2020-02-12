@@ -28,8 +28,8 @@ ANAME = $(LIBNAME).a
 
 TGT_INCLUDE = $(DESTDIR)/usr/include/smx
 TGT_LIB = $(DESTDIR)/usr/lib/x86_64-linux-gnu
-TGT_DOC = $(DESTDIR)/usr/share/doc/smx/boxes
-TGT_CONF = $(DESTDIR)/usr/etc/smx/boxes
+TGT_DOC = $(DESTDIR)/usr/share/doc/smx
+TGT_CONF = $(DESTDIR)/usr/etc/smx
 TGT_LOG = $(DESTDIR)/var/log/smx
 
 STATLIB = $(LOC_LIB_DIR)/$(LIBNAME).a
@@ -98,6 +98,8 @@ uninstall:
 	rm $(TGT_LIB)/$(VLIBNAME).so
 
 clean:
+	rm -rf $(LOC_LIB_DIR)
+	rm -rf $(LOC_OBJ_DIR)
 	rm -rf $(LOC_BUILD_DIR)
 
 doc:
