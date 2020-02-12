@@ -3,6 +3,6 @@ default format = "[%d.%us] [%V] [%c] %m%n"
 [formats]
 debug = "[%d.%us] [%V] [%t] [%c] %m%n"
 [rules]
-*.NOTICE   "/opt/smx/log/%d(%F).%p.log",1GB * 5
+*.NOTICE   "/var/log/smx/%d(%F).%p.log",1GB * 5
 *.=NOTICE  >stdout
 *.WARN     >stderr

@@ -26,12 +26,11 @@ VLIBNAME = $(LIBNAME)-$(LIB_VERSION)
 SONAME = $(LIBNAME).so.$(LIB_VERSION)
 ANAME = $(LIBNAME).a
 
-TGT_INCLUDE = /opt/smx/include
-TGT_DOC = /opt/smx/doc
-TGT_CONF = /opt/smx/conf
-TGT_LOG = /opt/smx/log
-TGT_LIB = /opt/smx/lib
-TGT_LIB_E = \/opt\/smx\/lib
+TGT_INCLUDE = $(DESTDIR)/usr/include/smx
+TGT_LIB = $(DESTDIR)/usr/lib/x86_64-linux-gnu
+TGT_DOC = $(DESTDIR)/usr/share/doc/smx/boxes
+TGT_CONF = $(DESTDIR)/usr/etc/smx/boxes
+TGT_LOG = $(DESTDIR)/var/log/smx
 
 STATLIB = $(LOC_LIB_DIR)/$(LIBNAME).a
 DYNLIB = $(LOC_LIB_DIR)/$(LIBNAME).so
