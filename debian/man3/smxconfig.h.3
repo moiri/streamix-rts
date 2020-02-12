@@ -1,0 +1,56 @@
+.TH "include/smxconfig.h" 3 "Wed Feb 12 2020" "Version v0.4.0" "smxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxconfig.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <bson\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include 'smxtypes\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "bool \fBsmx_config_get_bool\fP (bson_t *conf, const char *search)"
+.br
+.ti -1c
+.RI "bool \fBsmx_config_get_bool_err\fP (bson_t *conf, const char *search, \fBsmx_config_error_t\fP *err)"
+.br
+.ti -1c
+.RI "int \fBsmx_config_get_int\fP (bson_t *conf, const char *search)"
+.br
+.ti -1c
+.RI "int \fBsmx_config_get_int_err\fP (bson_t *conf, const char *search, \fBsmx_config_error_t\fP *err)"
+.br
+.ti -1c
+.RI "double \fBsmx_config_get_double\fP (bson_t *conf, const char *search)"
+.br
+.ti -1c
+.RI "double \fBsmx_config_get_double_err\fP (bson_t *conf, const char *search, \fBsmx_config_error_t\fP *err)"
+.br
+.ti -1c
+.RI "const char * \fBsmx_config_get_string\fP (bson_t *conf, const char *search, unsigned int *len)"
+.br
+.ti -1c
+.RI "const char * \fBsmx_config_get_string_err\fP (bson_t *conf, const char *search, unsigned int *len, \fBsmx_config_error_t\fP *err)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for smxrts from the source code\&.

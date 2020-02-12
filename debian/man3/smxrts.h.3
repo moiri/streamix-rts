@@ -1,0 +1,312 @@
+.TH "include/smxrts.h" 3 "Wed Feb 12 2020" "Version v0.4.0" "smxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxrts.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <pthread\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <zlog\&.h>\fP
+.br
+\fC#include 'box_smx_rn\&.h'\fP
+.br
+\fC#include 'box_smx_tf\&.h'\fP
+.br
+\fC#include 'smxch\&.h'\fP
+.br
+\fC#include 'smxconfig\&.h'\fP
+.br
+\fC#include 'smxlog\&.h'\fP
+.br
+\fC#include 'smxmsg\&.h'\fP
+.br
+\fC#include 'smxnet\&.h'\fP
+.br
+\fC#include 'smxprofiler\&.h'\fP
+.br
+\fC#include 'smxtest\&.h'\fP
+.br
+\fC#include 'smxtypes\&.h'\fP
+.br
+\fC#include 'smxutils\&.h'\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBsmx_rts_s\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSMXRTS_H\fP"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_CREATE\fP(id,  len,  type,  name)"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_DESTROY\fP(id)   \fBsmx_channel_destroy\fP( rts\->chs[id] )"
+.br
+.ti -1c
+.RI "#define \fBSMX_CONNECT\fP(net_id,  ch_id,  box_name,  ch_name,  mode)"
+.br
+.ti -1c
+.RI "#define \fBSMX_CONNECT_ARR\fP(net_id,  ch_id,  mode)"
+.br
+.ti -1c
+.RI "#define \fBSMX_CONNECT_GUARD\fP(id,  iats,  iatns)"
+.br
+.ti -1c
+.RI "#define \fBSMX_CONNECT_RN\fP(net_id,  ch_id)   \fBsmx_connect_rn\fP( rts\->chs[ch_id], rts\->nets[net_id] )"
+.br
+.ti -1c
+.RI "#define \fBSMX_CONNECT_TF\fP(net_id,  ch_in_id,  ch_out_id,  ch_name)   \fBsmx_connect_tf\fP( rts\->nets[net_id], rts\->chs[ch_in_id], rts\->chs[ch_out_id] )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_CREATE\fP(id,  net_name,  box_name,  prio)"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_DESTROY\fP(id)   \fBsmx_net_destroy\fP( rts\->nets[id] )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_DESTROY_RN\fP(id)   \fBsmx_net_destroy_rn\fP( rts\->nets[id] );\\"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_DESTROY_TF\fP(id)   \fBsmx_net_destroy_tf\fP( rts\->nets[id] );\\"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_FINALIZE_TF\fP(net_id)   \fBsmx_net_finalize_tf\fP( rts\->nets[net_id] )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_INIT\fP(id,  indegree,  outdegree,  box_name)"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_INIT_RN\fP(id)   \fBsmx_net_init_rn\fP( rts\->nets[id] )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_INIT_TF\fP(id,  sec,  nsec)   \fBsmx_net_init_tf\fP( rts\->nets[id], sec, nsec )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_RUN\fP(id,  box_name)   \fBsmx_net_run\fP( rts\->ths, id, start_routine_ ## box_name, rts\->nets[id] )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_WAIT_END\fP(id)   \fBsmx_net_wait_end\fP( rts\->ths[id] )"
+.br
+.ti -1c
+.RI "#define \fBSMX_PROGRAM_INIT_RUN\fP()   \fBsmx_program_init_run\fP( rts )"
+.br
+.ti -1c
+.RI "#define \fBSTART_ROUTINE_NET\fP(h,  box_name)   \fBsmx_net_start_routine\fP( h, box_name, box_name ## _init, box_name ## _cleanup )"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBsmx_rts_s\fP \fBsmx_rts_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBsmx_program_cleanup\fP (\fBsmx_rts_t\fP *rts)"
+.br
+.RI "Perfrom some cleanup tasks\&. "
+.ti -1c
+.RI "\fBsmx_rts_t\fP * \fBsmx_program_init\fP (const char *config)"
+.br
+.ti -1c
+.RI "void \fBsmx_program_init_run\fP (\fBsmx_rts_t\fP *rts)"
+.br
+.ti -1c
+.RI "const char * \fBsmx_rts_get_version\fP ()"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+
+.SH "Data Structure Documentation"
+.PP 
+.SH "struct smx_rts_s"
+.PP 
+The main RTS structure holding information about the streamix network\&. 
+.PP
+\fBData Fields:\fP
+.RS 4
+int \fIch_cnt\fP the number of channels of the system 
+.br
+.PP
+\fBsmx_channel_t\fP * \fIchs[\fBSMX_MAX_CHS\fP]\fP the array holding all channel pointers 
+.br
+.PP
+void * \fIconf\fP the application configuration 
+.br
+.PP
+struct timespec \fIend_wall\fP the walltime of the application end\&. 
+.br
+.PP
+pthread_barrier_t \fIinit_done\fP the barrier for syncing initialisation 
+.br
+.PP
+int \fInet_cnt\fP the number of nets of the system 
+.br
+.PP
+\fBsmx_net_t\fP * \fInets[\fBSMX_MAX_NETS\fP]\fP the array holdaing all net pointers 
+.br
+.PP
+struct timespec \fIstart_wall\fP the walltime of the application start 
+.br
+.PP
+pthread_t \fIths[\fBSMX_MAX_NETS\fP]\fP the array holding all thread ids 
+.br
+.PP
+.RE
+.PP
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define SMX_CHANNEL_CREATE(id, len, type, name)"
+\fBValue:\fP
+.PP
+.nf
+rts->chs[id] = smx_channel_create( &rts->ch_cnt, len, type, id, #name,\
+            STRINGIFY( ch_ ## name ## _ ## id ) )
+.fi
+Macro to create a streamix channel\&. 
+.SS "#define SMX_CHANNEL_DESTROY(id)   \fBsmx_channel_destroy\fP( rts\->chs[id] )"
+Macro to destroy a streamix channel\&. 
+.SS "#define SMX_CONNECT(net_id, ch_id, box_name, ch_name, mode)"
+\fBValue:\fP
+.PP
+.nf
+smx_connect_ ## mode(\
+            SMX_SIG_PORT_PTR( rts->nets[net_id], box_name, ch_name, mode ),\
+            rts->chs[ch_id], rts->nets[net_id], SMX_MODE_ ## mode,\
+            SMX_SIG_PORT_COUNT( rts->nets[net_id], mode ) )
+.fi
+Macro to connect a streamix channel and a net by name mapping\&. 
+.SS "#define SMX_CONNECT_ARR(net_id, ch_id, mode)"
+\fBValue:\fP
+.PP
+.nf
+smx_connect_ ## mode( SMX_SIG_PORT_ARR_PTR( rts->nets[net_id], mode ),\
+            rts->chs[ch_id], rts->nets[net_id], SMX_MODE_ ## mode,\
+            SMX_SIG_PORT_COUNT( rts->nets[net_id], mode ) )
+.fi
+Macro to connect a streamix channel and a net by id mapping\&. 
+.SS "#define SMX_CONNECT_GUARD(id, iats, iatns)"
+\fBValue:\fP
+.PP
+.nf
+smx_connect_guard( rts->chs[id],\
+            smx_guard_create( iats, iatns, rts->chs[id] ) )
+.fi
+Macro to connect a rate control guard to a streamix channel\&. 
+.SS "#define SMX_CONNECT_RN(net_id, ch_id)   \fBsmx_connect_rn\fP( rts\->chs[ch_id], rts\->nets[net_id] )"
+Macro to connect a collector to a routing node net\&. 
+.SS "#define SMX_CONNECT_TF(net_id, ch_in_id, ch_out_id, ch_name)   \fBsmx_connect_tf\fP( rts\->nets[net_id], rts\->chs[ch_in_id], rts\->chs[ch_out_id] )"
+Macro to interconnect a temporal firewall with streamix channels\&. 
+.SS "#define SMX_NET_CREATE(id, net_name, box_name, prio)"
+\fBValue:\fP
+.PP
+.nf
+rts->nets[id] = smx_net_create( &rts->net_cnt, id, #net_name, #box_name,\
+            STRINGIFY( net_ ## net_name ## _ ## id ), rts->conf,\
+            &rts->init_done, prio )
+.fi
+Macro to create a streamix net\&. 
+.SS "#define SMX_NET_DESTROY(id)   \fBsmx_net_destroy\fP( rts\->nets[id] )"
+Macro to destroy a streamix net\&. 
+.SS "#define SMX_NET_DESTROY_RN(id)   \fBsmx_net_destroy_rn\fP( rts\->nets[id] );\\"
+Macro to destroy a additional structures created by a routing node\&. 
+.SS "#define SMX_NET_DESTROY_TF(id)   \fBsmx_net_destroy_tf\fP( rts\->nets[id] );\\"
+Macro to destroy a additional structures created by a temporal firewall\&. 
+.SS "#define SMX_NET_FINALIZE_TF(net_id)   \fBsmx_net_finalize_tf\fP( rts\->nets[net_id] )"
+Macro to interconnect temporal fierwalls with neighbouring nets\&. 
+.SS "#define SMX_NET_INIT(id, indegree, outdegree, box_name)"
+\fBValue:\fP
+.PP
+.nf
+smx_net_init( rts->nets[id],\
+            SMX_MAX( indegree, SMX_INDEGREE_ ## box_name )\
+            SMX_MAX( outdegree, SMX_OUTDEGREE_ ## box_name ) )
+.fi
+Allocate the necessary space for a net structure\&. 
+.SS "#define SMX_NET_INIT_RN(id)   \fBsmx_net_init_rn\fP( rts\->nets[id] )"
+Allocate the necessary space for a routing node structure\&. 
+.SS "#define SMX_NET_INIT_TF(id, sec, nsec)   \fBsmx_net_init_tf\fP( rts\->nets[id], sec, nsec )"
+Allocate the necessary space for a temporal firewall structure\&. 
+.SS "#define SMX_NET_RUN(id, box_name)   \fBsmx_net_run\fP( rts\->ths, id, start_routine_ ## box_name, rts\->nets[id] )"
+Macro to create and execute a thread associated to a net\&. 
+.SS "#define SMX_NET_WAIT_END(id)   \fBsmx_net_wait_end\fP( rts\->ths[id] )"
+Macro to wait for all threads to reach this point\&. 
+.SS "#define SMX_PROGRAM_INIT_RUN()   \fBsmx_program_init_run\fP( rts )"
+Macro to wait for initialisation of all nets to complete before running the application\&. 
+.SS "#define START_ROUTINE_NET(h, box_name)   \fBsmx_net_start_routine\fP( h, box_name, box_name ## _init, box_name ## _cleanup )"
+The start routing to be passed to the pthread\&. 
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBsmx_rts_s\fP \fBsmx_rts_t\fP"
+\fBsmx_rts_s\fP 
+.SH "Function Documentation"
+.PP 
+.SS "void smx_program_cleanup (\fBsmx_rts_t\fP * rts)"
+
+.PP
+Perfrom some cleanup tasks\&. Close the log file
+.PP
+\fBParameters:\fP
+.RS 4
+\fIrts\fP a pointer to the RTS structure 
+.RE
+.PP
+
+.SS "\fBsmx_rts_t\fP* smx_program_init (const char * config)"
+Initialize the rts structure, read the configuration files, and initialize the log\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIconfig\fP the path of the config file to be loaded 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the RTS structure which holds the network information\&. 
+.RE
+.PP
+
+.SS "void smx_program_init_run (\fBsmx_rts_t\fP * rts)"
+Initialize the synchronisation barrier to make sure all nets finish intialisation befor staring the main loop\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIrts\fP a pointer to the RTS structure which holds the network information\&. 
+.RE
+.PP
+
+.SS "const char* smx_rts_get_version ()"
+Get the current version of the library\&.
+.PP
+\fBReturns:\fP
+.RS 4
+A version number string\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for smxrts from the source code\&.

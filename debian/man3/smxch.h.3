@@ -1,0 +1,746 @@
+.TH "include/smxch.h" 3 "Wed Feb 12 2020" "Version v0.4.0" "smxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxch.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'smxtypes\&.h'\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSMX_MAX_CHS\fP   10000"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_READ\fP(h,  box_name,  ch_name)   \fBsmx_channel_read\fP( h, \fBSMX_SIG_PORT\fP( h, box_name, ch_name, in ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_WRITE\fP(h,  box_name,  ch_name,  data)   \fBsmx_channel_write\fP( h, \fBSMX_SIG_PORT\fP( h, box_name, ch_name, out ), data )"
+.br
+.ti -1c
+.RI "#define \fBSMX_GET_READ_ERROR\fP(h,  box_name,  ch_name)   \fBsmx_get_read_error\fP( \fBSMX_SIG_PORT\fP( h, box_name, ch_name, in ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_GET_WRITE_ERROR\fP(h,  box_name,  ch_name)   \fBsmx_get_write_error\fP( \fBSMX_SIG_PORT\fP( h, box_name, ch_name, out ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_SET_CONTENT_FILTER\fP(h,  box_name,  ch_name,  filter)"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_SET_TYPE_FILTER\fP(h,  box_name,  ch_name,  count, \&.\&.\&.)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBsmx_channel_change_collector_state\fP (\fBsmx_channel_t\fP *ch, \fBsmx_channel_state_t\fP state)"
+.br
+.ti -1c
+.RI "void \fBsmx_channel_change_read_state\fP (\fBsmx_channel_t\fP *ch, \fBsmx_channel_state_t\fP state)"
+.br
+.ti -1c
+.RI "void \fBsmx_channel_change_write_state\fP (\fBsmx_channel_t\fP *ch, \fBsmx_channel_state_t\fP state)"
+.br
+.ti -1c
+.RI "\fBsmx_channel_t\fP * \fBsmx_channel_create\fP (int *ch_cnt, int len, \fBsmx_channel_type_t\fP type, int id, const char *name, const char *cat_name)"
+.br
+.RI "Create Streamix channel\&. "
+.ti -1c
+.RI "\fBsmx_channel_end_t\fP * \fBsmx_channel_create_end\fP ()"
+.br
+.ti -1c
+.RI "void \fBsmx_channel_destroy\fP (\fBsmx_channel_t\fP *ch)"
+.br
+.RI "Destroy Streamix channel structure\&. "
+.ti -1c
+.RI "void \fBsmx_channel_destroy_end\fP (\fBsmx_channel_end_t\fP *end)"
+.br
+.RI "Destroy Streamix channel end structure\&. "
+.ti -1c
+.RI "\fBsmx_msg_t\fP * \fBsmx_channel_read\fP (void *h, \fBsmx_channel_t\fP *ch)"
+.br
+.RI "Read the data from an input port\&. "
+.ti -1c
+.RI "int \fBsmx_channel_ready_to_read\fP (\fBsmx_channel_t\fP *ch)"
+.br
+.RI "Returns the number of available messages in channel\&. "
+.ti -1c
+.RI "int \fBsmx_channel_ready_to_write\fP (\fBsmx_channel_t\fP *ch)"
+.br
+.RI "Returns the number of available space in a channel\&. "
+.ti -1c
+.RI "bool \fBsmx_channel_set_content_filter\fP (\fBsmx_channel_t\fP *ch, bool filter(\fBsmx_msg_t\fP *))"
+.br
+.ti -1c
+.RI "bool \fBsmx_channel_set_filter\fP (\fBsmx_net_t\fP *h, \fBsmx_channel_t\fP *ch, int count,\&.\&.\&.)"
+.br
+.ti -1c
+.RI "void \fBsmx_channel_terminate_sink\fP (\fBsmx_channel_t\fP *ch)"
+.br
+.ti -1c
+.RI "void \fBsmx_channel_terminate_source\fP (\fBsmx_channel_t\fP *ch)"
+.br
+.ti -1c
+.RI "int \fBsmx_channel_write\fP (void *h, \fBsmx_channel_t\fP *ch, \fBsmx_msg_t\fP *msg)"
+.br
+.RI "Write data to an output port\&. "
+.ti -1c
+.RI "\fBsmx_collector_t\fP * \fBsmx_collector_create\fP ()"
+.br
+.ti -1c
+.RI "void \fBsmx_collector_destroy\fP (\fBsmx_collector_t\fP *collector)"
+.br
+.ti -1c
+.RI "void \fBsmx_collector_terminate\fP (\fBsmx_channel_t\fP *ch)"
+.br
+.ti -1c
+.RI "void \fBsmx_connect\fP (\fBsmx_channel_t\fP **dest, \fBsmx_channel_t\fP *src, int net_id, const char *net_name, const char *mode, int *count)"
+.br
+.ti -1c
+.RI "void \fBsmx_connect_guard\fP (\fBsmx_channel_t\fP *ch, \fBsmx_guard_t\fP *guard)"
+.br
+.ti -1c
+.RI "void \fBsmx_connect_in\fP (\fBsmx_channel_t\fP **dest, \fBsmx_channel_t\fP *src, \fBsmx_net_t\fP *net, const char *mode, int *count)"
+.br
+.ti -1c
+.RI "void \fBsmx_connect_out\fP (\fBsmx_channel_t\fP **dest, \fBsmx_channel_t\fP *src, \fBsmx_net_t\fP *net, const char *mode, int *count)"
+.br
+.ti -1c
+.RI "\fBsmx_fifo_t\fP * \fBsmx_fifo_create\fP (int length)"
+.br
+.RI "Create Streamix FIFO channel\&. "
+.ti -1c
+.RI "void \fBsmx_fifo_destroy\fP (\fBsmx_fifo_t\fP *fifo)"
+.br
+.RI "Destroy Streamix FIFO channel structure\&. "
+.ti -1c
+.RI "\fBsmx_msg_t\fP * \fBsmx_fifo_read\fP (void *h, \fBsmx_channel_t\fP *ch, \fBsmx_fifo_t\fP *fifo)"
+.br
+.RI "read from a Streamix FIFO channel "
+.ti -1c
+.RI "\fBsmx_msg_t\fP * \fBsmx_fifo_d_read\fP (void *h, \fBsmx_channel_t\fP *ch, \fBsmx_fifo_t\fP *fifo)"
+.br
+.RI "read from a Streamix FIFO_D channel "
+.ti -1c
+.RI "\fBsmx_msg_t\fP * \fBsmx_fifo_dd_read\fP (void *h, \fBsmx_channel_t\fP *ch, \fBsmx_fifo_t\fP *fifo)"
+.br
+.RI "read from a Streamix FIFO_DD channel "
+.ti -1c
+.RI "int \fBsmx_fifo_write\fP (void *h, \fBsmx_channel_t\fP *ch, \fBsmx_fifo_t\fP *fifo, \fBsmx_msg_t\fP *msg)"
+.br
+.RI "write to a Streamix FIFO channel "
+.ti -1c
+.RI "int \fBsmx_d_fifo_write\fP (void *h, \fBsmx_channel_t\fP *ch, \fBsmx_fifo_t\fP *fifo, \fBsmx_msg_t\fP *msg)"
+.br
+.RI "write to a Streamix D_FIFO channel "
+.ti -1c
+.RI "\fBsmx_channel_t\fP * \fBsmx_get_channel_by_name\fP (\fBsmx_channel_t\fP **ports, int count, const char *name)"
+.br
+.ti -1c
+.RI "\fBsmx_channel_err_t\fP \fBsmx_get_read_error\fP (\fBsmx_channel_t\fP *ch)"
+.br
+.ti -1c
+.RI "\fBsmx_channel_err_t\fP \fBsmx_get_write_error\fP (\fBsmx_channel_t\fP *ch)"
+.br
+.ti -1c
+.RI "\fBsmx_guard_t\fP * \fBsmx_guard_create\fP (int iats, int iatns, \fBsmx_channel_t\fP *ch)"
+.br
+.RI "create timed guard structure and initialise timer "
+.ti -1c
+.RI "void \fBsmx_guard_destroy\fP (\fBsmx_guard_t\fP *guard)"
+.br
+.RI "destroy the guard structure "
+.ti -1c
+.RI "int \fBsmx_guard_write\fP (void *h, \fBsmx_channel_t\fP *ch)"
+.br
+.RI "imposes a rate-controld on write operations "
+.ti -1c
+.RI "int \fBsmx_d_guard_write\fP (void *h, \fBsmx_channel_t\fP *ch, \fBsmx_msg_t\fP *msg)"
+.br
+.RI "imposes a rate-control on decoupled write operations "
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define SMX_MAX_CHS   10000"
+The number of maximal allowed channel in one streamix application\&. 
+.SH "Function Documentation"
+.PP 
+.SS "void smx_channel_change_collector_state (\fBsmx_channel_t\fP * ch, \fBsmx_channel_state_t\fP state)"
+Change the state of a channel collector\&. The state is only changed if the current state is differnt than the new state and than the end state\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.br
+\fIstate\fP the new state
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Channel and FIFO definitions for the runtime system library of Streamix 
+.SS "void smx_channel_change_read_state (\fBsmx_channel_t\fP * ch, \fBsmx_channel_state_t\fP state)"
+Change the read state of a channel\&. The state is only changed if the current state is differnt than the new state and than the end state\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.br
+\fIstate\fP the new state 
+.RE
+.PP
+
+.SS "void smx_channel_change_write_state (\fBsmx_channel_t\fP * ch, \fBsmx_channel_state_t\fP state)"
+Change the write state of a channel\&. The state is only changed if the current state is differnt than the new state and than the end state\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.br
+\fIstate\fP the new state 
+.RE
+.PP
+
+.SS "\fBsmx_channel_t\fP* smx_channel_create (int * ch_cnt, int len, \fBsmx_channel_type_t\fP type, int id, const char * name, const char * cat_name)"
+
+.PP
+Create Streamix channel\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch_cnt\fP pointer to the channel counter (is increased by one after channel creation) 
+.br
+\fIlen\fP length of a FIFO 
+.br
+\fItype\fP type of the buffer 
+.br
+\fIid\fP unique identifier of the channel 
+.br
+\fIname\fP name of the channel 
+.br
+\fIcat_name\fP name of the channel zlog category 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the created channel or NULL 
+.RE
+.PP
+
+.SS "\fBsmx_channel_end_t\fP* smx_channel_create_end ()"
+Create a channel end\&.
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to a ne channel end or NULL if something went wrong 
+.RE
+.PP
+
+.SS "void smx_channel_destroy (\fBsmx_channel_t\fP * ch)"
+
+.PP
+Destroy Streamix channel structure\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel to destroy 
+.RE
+.PP
+
+.SS "void smx_channel_destroy_end (\fBsmx_channel_end_t\fP * end)"
+
+.PP
+Destroy Streamix channel end structure\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIend\fP pointer to the channel end to destroy 
+.RE
+.PP
+
+.SS "\fBsmx_msg_t\fP* smx_channel_read (void * h, \fBsmx_channel_t\fP * ch)"
+
+.PP
+Read the data from an input port\&. Allows to access the channel and read data\&. The channel is protected by mutual exclusion\&. The macro \fBSMX_CHANNEL_READ()\fP provides a convenient interface to access the ports by name\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to the channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+pointer to a message structure \fBsmx_msg_s\fP or NULL if something went wrong\&. 
+.RE
+.PP
+
+.SS "int smx_channel_ready_to_read (\fBsmx_channel_t\fP * ch)"
+
+.PP
+Returns the number of available messages in channel\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+number of available messages in channel or -1 on failure 
+.RE
+.PP
+
+.SS "int smx_channel_ready_to_write (\fBsmx_channel_t\fP * ch)"
+
+.PP
+Returns the number of available space in a channel\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+number of available space in a channel or -1 on failure 
+.RE
+.PP
+
+.SS "bool smx_channel_set_content_filter (\fBsmx_channel_t\fP * ch, bool  filtersmx_msg_t *)"
+Set a channel filter to only allow messages of a certain content to be written to this channel\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.br
+\fIfilter\fP a pointer to a function returning a booloan and taking the message to be filtered as argument\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+true on success or false on failure\&. 
+.RE
+.PP
+
+.SS "bool smx_channel_set_filter (\fBsmx_net_t\fP * h, \fBsmx_channel_t\fP * ch, int count,  \&.\&.\&.)"
+Set the channel filter to only allow messages of a certain type to be written to this channel\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler\&. 
+.br
+\fIch\fP pointer to the channel 
+.br
+\fIcount\fP The number of filter arguments passed to the function 
+.br
+\fI\&.\&.\&.\fP Any number of string arguments\&. If the message type matches any of these the filter check passed\&. NULL is a valid argument\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+true on success or false on failure\&. 
+.RE
+.PP
+
+.SS "void smx_channel_terminate_sink (\fBsmx_channel_t\fP * ch)"
+Send the termination signal to a channel sink
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.RE
+.PP
+
+.SS "void smx_channel_terminate_source (\fBsmx_channel_t\fP * ch)"
+Send the termination signal to a channel source
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.RE
+.PP
+
+.SS "int smx_channel_write (void * h, \fBsmx_channel_t\fP * ch, \fBsmx_msg_t\fP * msg)"
+
+.PP
+Write data to an output port\&. Allows to access the channel and write data\&. The channel ist protected by mutual exclusion\&. The macro \fBSMX_CHANNEL_WRITE( h, net, port, data )\fP provides a convenient interface to access the ports by name\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to the channel 
+.br
+\fImsg\fP pointer to the a message structure 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 otherwise 
+.RE
+.PP
+
+.SS "\fBsmx_collector_t\fP* smx_collector_create ()"
+Create a collector structure and initialize it\&.
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the created collector strcuture or NULL\&. 
+.RE
+.PP
+
+.SS "void smx_collector_destroy (\fBsmx_collector_t\fP * collector)"
+Destroy and deinit a collector structure\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcollector\fP a pointer to the collector structure to be destroyed\&. 
+.RE
+.PP
+
+.SS "void smx_collector_terminate (\fBsmx_channel_t\fP * ch)"
+Send the termination signal to the collector
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP pointer to the channel 
+.RE
+.PP
+
+.SS "void smx_connect (\fBsmx_channel_t\fP ** dest, \fBsmx_channel_t\fP * src, int net_id, const char * net_name, const char * mode, int * count)"
+Connect a channel to a net by name matching\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIdest\fP a pointer to the destination 
+.br
+\fIsrc\fP a pointer to the source 
+.br
+\fInet_id\fP the id of the net 
+.br
+\fInet_name\fP the name of the net 
+.br
+\fImode\fP the direction of the connection 
+.br
+\fIcount\fP pointer to th econnected port counter 
+.RE
+.PP
+
+.SS "void smx_connect_guard (\fBsmx_channel_t\fP * ch, \fBsmx_guard_t\fP * guard)"
+Connect a guard to a channel
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP the target channel 
+.br
+\fIguard\fP the guard to be connected 
+.RE
+.PP
+
+.SS "void smx_connect_in (\fBsmx_channel_t\fP ** dest, \fBsmx_channel_t\fP * src, \fBsmx_net_t\fP * net, const char * mode, int * count)"
+Connect a channel to an input of a net\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIdest\fP a pointer to the destination 
+.br
+\fIsrc\fP a pointer to the source 
+.br
+\fInet\fP a pointer to the net 
+.br
+\fImode\fP the direction of the connection 
+.br
+\fIcount\fP pointer to th econnected port counter 
+.RE
+.PP
+
+.SS "void smx_connect_out (\fBsmx_channel_t\fP ** dest, \fBsmx_channel_t\fP * src, \fBsmx_net_t\fP * net, const char * mode, int * count)"
+Connect a channel to an output of a net\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIdest\fP a pointer to the destination 
+.br
+\fIsrc\fP a pointer to the source 
+.br
+\fInet\fP a pointer to the net 
+.br
+\fImode\fP the direction of the connection 
+.br
+\fIcount\fP pointer to th econnected port counter 
+.RE
+.PP
+
+.SS "int smx_d_fifo_write (void * h, \fBsmx_channel_t\fP * ch, \fBsmx_fifo_t\fP * fifo, \fBsmx_msg_t\fP * msg)"
+
+.PP
+write to a Streamix D_FIFO channel Write to a channel that is decoupled at the input (the produced is decoupled at the output)\&. This means that the tail of the D_FIFO will potentially be overwritten\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to channel struct of the FIFO 
+.br
+\fIfifo\fP pointer to a D_FIFO channel 
+.br
+\fImsg\fP pointer to the data 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, 1 otherwise 
+.RE
+.PP
+
+.SS "int smx_d_guard_write (void * h, \fBsmx_channel_t\fP * ch, \fBsmx_msg_t\fP * msg)"
+
+.PP
+imposes a rate-control on decoupled write operations A message is discarded if it did not reach the specified minimal inter- arrival time (messages are not buffered and delayed, it's only a very simple implementation)
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to the channel structure 
+.br
+\fImsg\fP pointer to the message structure
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+-1 if message was discarded, 0 otherwise 
+.RE
+.PP
+
+.SS "\fBsmx_fifo_t\fP* smx_fifo_create (int length)"
+
+.PP
+Create Streamix FIFO channel\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIlength\fP length of the FIFO 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+pointer to the created FIFO 
+.RE
+.PP
+
+.SS "\fBsmx_msg_t\fP* smx_fifo_d_read (void * h, \fBsmx_channel_t\fP * ch, \fBsmx_fifo_t\fP * fifo)"
+
+.PP
+read from a Streamix FIFO_D channel Read from a channel that is decoupled at the output (the consumer is decoupled at the input)\&. This means that the msg at the head of the FIFO_D will potentially be duplicated\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to channel struct of the FIFO 
+.br
+\fIfifo\fP pointer to a FIFO_D channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+pointer to a message structure 
+.RE
+.PP
+
+.SS "\fBsmx_msg_t\fP* smx_fifo_dd_read (void * h, \fBsmx_channel_t\fP * ch, \fBsmx_fifo_t\fP * fifo)"
+
+.PP
+read from a Streamix FIFO_DD channel Read from a channel that is decoupled at the output and connected to a temporal firewall\&. The read is non-blocking but no duplication of messages is done\&. If no message is available NULL is returned\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to channel struct of the FIFO 
+.br
+\fIfifo\fP pointer to a FIFO_D channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+pointer to a message structure 
+.RE
+.PP
+
+.SS "void smx_fifo_destroy (\fBsmx_fifo_t\fP * fifo)"
+
+.PP
+Destroy Streamix FIFO channel structure\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfifo\fP pointer to the channel to destroy 
+.RE
+.PP
+
+.SS "\fBsmx_msg_t\fP* smx_fifo_read (void * h, \fBsmx_channel_t\fP * ch, \fBsmx_fifo_t\fP * fifo)"
+
+.PP
+read from a Streamix FIFO channel 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to channel struct of the FIFO 
+.br
+\fIfifo\fP pointer to a FIFO channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+pointer to a message structure 
+.RE
+.PP
+
+.SS "int smx_fifo_write (void * h, \fBsmx_channel_t\fP * ch, \fBsmx_fifo_t\fP * fifo, \fBsmx_msg_t\fP * msg)"
+
+.PP
+write to a Streamix FIFO channel 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to channel struct of the FIFO 
+.br
+\fIfifo\fP pointer to a FIFO channel 
+.br
+\fImsg\fP pointer to the data 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, 1 otherwise 
+.RE
+.PP
+
+.SS "\fBsmx_channel_t\fP* smx_get_channel_by_name (\fBsmx_channel_t\fP ** ports, int count, const char * name)"
+Given a port name return a pointer to the port\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIports\fP an array of ports to be searched 
+.br
+\fIcount\fP the number of ports to search 
+.br
+\fIname\fP the name to search for 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the pointer to a port on success, NULL otherwise 
+.RE
+.PP
+
+.SS "\fBsmx_channel_err_t\fP smx_get_read_error (\fBsmx_channel_t\fP * ch)"
+Get the read error on a channel\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP Pointer to the channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The error value indicationg the problem 
+.RE
+.PP
+
+.SS "\fBsmx_channel_err_t\fP smx_get_write_error (\fBsmx_channel_t\fP * ch)"
+Get the write error on a channel\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP Pointer to the channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The error value indicationg the problem 
+.RE
+.PP
+
+.SS "\fBsmx_guard_t\fP* smx_guard_create (int iats, int iatns, \fBsmx_channel_t\fP * ch)"
+
+.PP
+create timed guard structure and initialise timer 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIiats\fP minimal inter-arrival time in seconds 
+.br
+\fIiatns\fP minimal inter-arrival time in nano seconds 
+.br
+\fIch\fP pointer to the channel 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+pointer to the created guard structure 
+.RE
+.PP
+
+.SS "void smx_guard_destroy (\fBsmx_guard_t\fP * guard)"
+
+.PP
+destroy the guard structure 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIguard\fP pointer to the guard structure 
+.RE
+.PP
+
+.SS "int smx_guard_write (void * h, \fBsmx_channel_t\fP * ch)"
+
+.PP
+imposes a rate-controld on write operations A producer is blocked until the minimum inter-arrival-time between two consecutive messges has passed
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIch\fP pointer to the channel structure 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, 1 otherwise 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for smxrts from the source code\&.

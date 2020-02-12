@@ -1,0 +1,226 @@
+.TH "ch" 3 "Wed Feb 12 2020" "Version v0.4.0" "smxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ch
+.SH SYNOPSIS
+.br
+.PP
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_READ\fP(h,  box_name,  ch_name)   \fBsmx_channel_read\fP( h, \fBSMX_SIG_PORT\fP( h, box_name, ch_name, in ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_WRITE\fP(h,  box_name,  ch_name,  data)   \fBsmx_channel_write\fP( h, \fBSMX_SIG_PORT\fP( h, box_name, ch_name, out ), data )"
+.br
+.ti -1c
+.RI "#define \fBSMX_GET_READ_ERROR\fP(h,  box_name,  ch_name)   \fBsmx_get_read_error\fP( \fBSMX_SIG_PORT\fP( h, box_name, ch_name, in ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_GET_WRITE_ERROR\fP(h,  box_name,  ch_name)   \fBsmx_get_write_error\fP( \fBSMX_SIG_PORT\fP( h, box_name, ch_name, out ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_SET_CONTENT_FILTER\fP(h,  box_name,  ch_name,  filter)"
+.br
+.ti -1c
+.RI "#define \fBSMX_CHANNEL_SET_TYPE_FILTER\fP(h,  box_name,  ch_name,  count, \&.\&.\&.)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef enum \fBsmx_channel_err_e\fP \fBsmx_channel_err_t\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBsmx_channel_err_e\fP { \fBSMX_CHANNEL_ERR_NONE\fP = 0, \fBSMX_CHANNEL_ERR_NO_DEFAULT\fP, \fBSMX_CHANNEL_ERR_NO_TARGET\fP, \fBSMX_CHANNEL_ERR_DL_MISS\fP, \fBSMX_CHANNEL_ERR_NO_DATA\fP, \fBSMX_CHANNEL_ERR_NO_SPACE\fP, \fBSMX_CHANNEL_ERR_FILTER\fP, \fBSMX_CHANNEL_ERR_UNINITIALISED\fP }"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Channel and FIFO definitions for the runtime system library of Streamix 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define SMX_CHANNEL_READ(h, box_name, ch_name)   \fBsmx_channel_read\fP( h, \fBSMX_SIG_PORT\fP( h, box_name, ch_name, in ) )"
+Read from a streamix channel by accessing a net input port\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.br
+\fIbox_name\fP The name of the box\&. Note that this is not a string but the literal name of the box (without quotation marks)\&. 
+.br
+\fIch_name\fP The name of the input port\&. Note that this is not a string but the literal name of the port (without quotation marks)\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+A pointer to a message type \fBsmx_msg_t\fP or NULL if something went wrong\&. Use the macro \fBSMX_GET_READ_ERROR()\fP to find out the cause of an error\&. 
+.RE
+.PP
+
+.SS "#define SMX_CHANNEL_SET_CONTENT_FILTER(h, box_name, ch_name, filter)"
+\fBValue:\fP
+.PP
+.nf
+smx_channel_set_content_filter( SMX_SIG_PORT( h, box_name, ch_name, in ),\
+            filter )
+.fi
+Set a message content filter on a channel\&. The filter is a function that operates on the message content\&. The function receives the message as parameter and must return either true if the filter passes or false if the filter fails\&.
+.PP
+If the filter failes, the macro \fBSMX_CHANNEL_WRITE()\fP silently dismisses the message and returns 0\&. A content filter fail does not count as error\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.br
+\fIbox_name\fP The name of the box\&. Note that this is not a string but the literal name of the box (without quotation marks)\&. 
+.br
+\fIch_name\fP The name of the output port\&. Note that this is not a string but the literal name of the port (without quotation marks)\&. 
+.br
+\fIfilter\fP A pointer to the filter function\&. The filter function must return a booloan and takes a pointer to the message to be checked as parameter\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+true on success or false on failure\&. 
+.RE
+.PP
+
+.SS "#define SMX_CHANNEL_SET_TYPE_FILTER(h, box_name, ch_name, count,  \&.\&.\&.)"
+\fBValue:\fP
+.PP
+.nf
+smx_channel_set_filter( h, SMX_SIG_PORT( h, box_name, ch_name, in ),\
+            count, ##__VA_ARGS__ )
+.fi
+Set a message type filter on a channel filter\&. A channel filter allows to whitelist message types\&. If the filter is set, only messages of the specified types are allowed to be written to a channel\&. One filter is an arbitrary string or NULL to allow messages with undefined message type\&. If a message type does not match any whitelisted types, an error is logged and the message is dismissed\&.
+.PP
+If the filter failes, the macro \fBSMX_CHANNEL_WRITE()\fP returns -1 and sets the error SMX_CHANNEL_ERR_FILTER\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.br
+\fIbox_name\fP The name of the box\&. Note that this is not a string but the literal name of the box (without quotation marks)\&. 
+.br
+\fIch_name\fP The name of the output port\&. Note that this is not a string but the literal name of the port (without quotation marks)\&. 
+.br
+\fIcount\fP The number of filter arguments passed to the function 
+.br
+\fI\&.\&.\&.\fP Any number of string arguments\&. If the message type matches any of these the filter check passed\&. NULL is a valid argument\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+true on success or false on failure\&. 
+.RE
+.PP
+
+.SS "#define SMX_CHANNEL_WRITE(h, box_name, ch_name, data)   \fBsmx_channel_write\fP( h, \fBSMX_SIG_PORT\fP( h, box_name, ch_name, out ), data )"
+Write to a streamix channel by accessing a net output port\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.br
+\fIbox_name\fP The name of the box\&. Note that this is not a string but the literal name of the box (without quotation marks)\&. 
+.br
+\fIch_name\fP The name of the output port\&. Note that this is not a string but the literal name of the port (without quotation marks)\&. 
+.br
+\fIdata\fP A pointer to an allocated message of type \fBsmx_msg_t\fP\&. Use the macro \fBSMX_MSG_CREATE()\fP to create a new message if required\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. Use the macro \fBSMX_GET_WRITE_ERROR()\fP to find out the cause of an error\&. 
+.RE
+.PP
+
+.SS "#define SMX_GET_READ_ERROR(h, box_name, ch_name)   \fBsmx_get_read_error\fP( \fBSMX_SIG_PORT\fP( h, box_name, ch_name, in ) )"
+Get the error code of a channel read operation\&. Use this macro if \fBSMX_CHANNEL_READ()\fP failed\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.br
+\fIbox_name\fP The name of the box\&. Note that this is not a string but the literal name of the box (without quotation marks)\&. 
+.br
+\fIch_name\fP The name of the input port\&. Note that this is not a string but the literal name of the port (without quotation marks)\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The error code of the operation\&. Refer to \fBsmx_channel_err_e\fP for a description of the error codes\&. 
+.RE
+.PP
+
+.SS "#define SMX_GET_WRITE_ERROR(h, box_name, ch_name)   \fBsmx_get_write_error\fP( \fBSMX_SIG_PORT\fP( h, box_name, ch_name, out ) )"
+Get the error code of a channel write operation\&. Use this macro if \fBSMX_CHANNEL_WRITE()\fP failed\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.br
+\fIbox_name\fP The name of the box\&. Note that this is not a string but the literal name of the box (without quotation marks)\&. 
+.br
+\fIch_name\fP The name of the input port\&. Note that this is not a string but the literal name of the port (without quotation marks)\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The error code of the operation\&. Refer to \fBsmx_channel_err_e\fP for a description of the error codes\&. 
+.RE
+.PP
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef enum \fBsmx_channel_err_e\fP \fBsmx_channel_err_t\fP"
+The streamix channel error type\&. Refer to the error enumeration definition for more details \fBsmx_channel_err_e\fP\&. 
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBsmx_channel_err_e\fP"
+The error state of a channel end 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fISMX_CHANNEL_ERR_NONE \fP\fP
+no error 
+.TP
+\fB\fISMX_CHANNEL_ERR_NO_DEFAULT \fP\fP
+no default message for decoupled read 
+.TP
+\fB\fISMX_CHANNEL_ERR_NO_TARGET \fP\fP
+connecting net has terminated 
+.TP
+\fB\fISMX_CHANNEL_ERR_DL_MISS \fP\fP
+connecting net missed its deadline 
+.TP
+\fB\fISMX_CHANNEL_ERR_NO_DATA \fP\fP
+unexpectedly, the channel has no data 
+.TP
+\fB\fISMX_CHANNEL_ERR_NO_SPACE \fP\fP
+unexpectedly, the channel has no space 
+.TP
+\fB\fISMX_CHANNEL_ERR_FILTER \fP\fP
+the msg type does not match the filter 
+.TP
+\fB\fISMX_CHANNEL_ERR_UNINITIALISED \fP\fP
+the channel was never initialised 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for smxrts from the source code\&.

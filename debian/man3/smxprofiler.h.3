@@ -1,0 +1,85 @@
+.TH "include/smxprofiler.h" 3 "Wed Feb 12 2020" "Version v0.4.0" "smxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxprofiler.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'smxtypes\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBsmx_profiler_log_ch\fP (\fBsmx_net_t\fP *net, \fBsmx_channel_t\fP *ch, \fBsmx_msg_t\fP *msg, \fBsmx_profiler_action_t\fP action, int val)"
+.br
+.ti -1c
+.RI "void \fBsmx_profiler_log_msg\fP (\fBsmx_net_t\fP *net, \fBsmx_msg_t\fP *msg, \fBsmx_profiler_action_t\fP action)"
+.br
+.ti -1c
+.RI "void \fBsmx_profiler_log_net\fP (\fBsmx_net_t\fP *net, \fBsmx_profiler_action_t\fP action)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Profiler definitions for the runtime system library of Streamix 
+.SH "Function Documentation"
+.PP 
+.SS "void smx_profiler_log_ch (\fBsmx_net_t\fP * net, \fBsmx_channel_t\fP * ch, \fBsmx_msg_t\fP * msg, \fBsmx_profiler_action_t\fP action, int val)"
+The function to log profiler messages related to a channel\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fInet\fP a pointer to the net handler which logs the event\&. 
+.br
+\fIch\fP a pointer to the channel which logs the event\&. 
+.br
+\fImsg\fP a pointer to the message invloved in the log event\&. 
+.br
+\fIaction\fP the channel action\&. 
+.br
+\fIval\fP the current message count held in the channel\&. 
+.RE
+.PP
+
+.SS "void smx_profiler_log_msg (\fBsmx_net_t\fP * net, \fBsmx_msg_t\fP * msg, \fBsmx_profiler_action_t\fP action)"
+The function to log profiler messages related to a smx message\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fInet\fP a pointer to the net handler which logs the event\&. 
+.br
+\fImsg\fP a pointer to the message which logs the event\&. 
+.br
+\fIaction\fP the message action\&. 
+.RE
+.PP
+
+.SS "void smx_profiler_log_net (\fBsmx_net_t\fP * net, \fBsmx_profiler_action_t\fP action)"
+The function to log profiler messages related to a smx net\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fInet\fP a pointer to the net handler which logs the event\&. 
+.br
+\fIaction\fP the net action\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for smxrts from the source code\&.
