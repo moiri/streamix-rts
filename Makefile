@@ -86,7 +86,7 @@ $(CREATE_DIR):
 
 install:
 	mkdir -p $(TGT_LIB) $(TGT_INCLUDE) $(TGT_CONF) $(TGT_LOG)
-	cp -a default.zlog $(TGT_CONF)/.
+	cp -a tpl/default.zlog $(TGT_CONF)/.
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
 	cp -a $(LOC_LIB_DIR)/$(LIBNAME).so $(TGT_LIB)/$(SONAME)
 	ln -sf $(SONAME) $(TGT_LIB)/$(VLIBNAME).so
