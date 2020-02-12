@@ -2,19 +2,20 @@ SHELL := /bin/bash
 
 PROJECT = smxrts
 VMAJ = 0
-VMIN = 3
-VREV = 3
+VMIN = 4
+VREV = 0
 
 VERSION_LIB = $(VMAJ).$(VMIN)
 
 LOC_INC_DIR = include
 LOC_SRC_DIR = src
-LOC_OBJ_DIR = obj
-LOC_LIB_DIR = lib
+LOC_BUILD_DIR = build
+LOC_OBJ_DIR = $(LOC_BUILD_DIR)/obj
+LOC_LIB_DIR = $(LOC_BUILD_DIR)/lib
 CREATE_DIR = $(LOC_OBJ_DIR) $(LOC_LIB_DIR)
 
 DPKG_DIR = dpkg
-DPKG_CTL_DIR = debian
+DPKG_CTL_DIR = build/debian
 DPKG_TGT = DEBIAN
 DPKGS = $(DPKG_DIR)/$(LIBNAME)_$(VERSION)_amd64 \
 	   $(DPKG_DIR)/$(LIBNAME)_amd64-dev
@@ -27,8 +28,8 @@ DEBIAN_REVISION = 0
 VERSION = $(UPSTREAM_VERSION)-$(DEBIAN_REVISION)
 
 VLIBNAME = $(LIBNAME)-$(LIB_VERSION)
-SONAME = $(VLIBNAME).so.$(VREV)
-ANAME = $(LIBNAME)-$(LIB_VERSION).a
+SONAME = $(LIBNAME).so.$(LIB_VERSION)
+ANAME = $(LIBNAME).a
 
 TGT_INCLUDE = /opt/smx/include
 TGT_DOC = /opt/smx/doc
@@ -92,23 +93,18 @@ install:
 	mkdir -p $(TGT_LIB) $(TGT_INCLUDE) $(TGT_CONF) $(TGT_LOG)
 	cp -a default.zlog $(TGT_CONF)/.
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
-	cp -a $(LOC_LIB_DIR)/$(LIBNAME).a $(TGT_LIB)/$(ANAME)
 	cp -a $(LOC_LIB_DIR)/$(LIBNAME).so $(TGT_LIB)/$(SONAME)
 	ln -sf $(SONAME) $(TGT_LIB)/$(VLIBNAME).so
-	ln -sf $(VLIBNAME).so $(TGT_LIB)/$(LIBNAME).so
-	ln -sf $(ANAME) $(TGT_LIB)/$(LIBNAME).a
+	ln -sf $(SONAME) $(TGT_LIB)/$(LIBNAME).so
 
 uninstall:
 	rm $(addprefix $(TGT_INCLUDE)/,$(notdir $(wildcard $(INCLUDES))))
-	rm $(TGT_LIB)/$(ANAME)
 	rm $(TGT_LIB)/$(SONAME)
-	rm $(TGT_LIB)/$(LIBNAME).a
 	rm $(TGT_LIB)/$(LIBNAME).so
 	rm $(TGT_LIB)/$(VLIBNAME).so
 
 clean:
-	rm -rf $(LOC_OBJ_DIR)
-	rm -rf $(LOC_LIB_DIR)
+	rm -rf $(LOC_BUILD_DIR)
 
 doc:
 	doxygen .doxygen

@@ -1,9 +1,0 @@
-Package: libsmxrts-<maj_version>
-Version: <version>
-Section: base
-Priority: optional
-Architecture: amd64
-Depends: libbson-1.0-0 (>= 1.9.2-1), lttng-tools (>= 2.10.2-1), lttng-modules-dkms (>= 2.10.5-1ubuntu1.3), liblttng-ust0 (>= 2.10.1-1)
-Maintainer: Simon Maurer <tpf@humdek.unibe.ch>
-Description: Streamix RTS 'smxrts'
- The runtime system (RTS) for the coordination language Streamix.

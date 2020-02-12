@@ -1,3 +1,0 @@
-#!/bin/sh
-
-cd <tgt_dir> && ln -s <soname> <lnname>.so && ln -sf <lnname>.so <libname>.so && ln -sf <aname> <libname>.a
