@@ -2,20 +2,12 @@ SHELL := /bin/bash
 
 include config.mk
 
-VERSION_LIB = $(VMAJ).$(VMIN)
-
 LOC_INC_DIR = include
 LOC_SRC_DIR = src
 LOC_BUILD_DIR = build
 LOC_OBJ_DIR = $(LOC_BUILD_DIR)/obj
 LOC_LIB_DIR = $(LOC_BUILD_DIR)/lib
 CREATE_DIR = $(LOC_OBJ_DIR) $(LOC_LIB_DIR)
-
-DPKG_DIR = dpkg
-DPKG_CTL_DIR = build/debian
-DPKG_TGT = DEBIAN
-DPKGS = $(DPKG_DIR)/$(LIBNAME)_$(VERSION)_amd64 \
-	   $(DPKG_DIR)/$(LIBNAME)_amd64-dev
 
 LIB_VERSION = $(VMAJ).$(VMIN)
 UPSTREAM_VERSION = $(LIB_VERSION).$(VREV)
@@ -76,7 +68,7 @@ $(DYNLIB): $(OBJECTS)
 $(LOC_OBJ_DIR)/%.o: $(LOC_SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES_DIR) -c $< -o $@ $(LINK_DIR) $(LINK_FILE)
 
-.PHONY: clean install uninstall doc directories dpkg $(DPKGS)
+.PHONY: clean install uninstall doc directories
 
 directories: $(CREATE_DIR)
 
