@@ -1,9 +1,6 @@
 SHELL := /bin/bash
 
-PROJECT = smxrts
-VMAJ = 0
-VMIN = 4
-VREV = 0
+include config.mk
 
 VERSION_LIB = $(VMAJ).$(VMIN)
 
@@ -19,8 +16,6 @@ DPKG_CTL_DIR = build/debian
 DPKG_TGT = DEBIAN
 DPKGS = $(DPKG_DIR)/$(LIBNAME)_$(VERSION)_amd64 \
 	   $(DPKG_DIR)/$(LIBNAME)_amd64-dev
-
-LIBNAME = lib$(PROJECT)
 
 LIB_VERSION = $(VMAJ).$(VMIN)
 UPSTREAM_VERSION = $(LIB_VERSION).$(VREV)
@@ -108,38 +103,3 @@ clean:
 
 doc:
 	doxygen .doxygen
-
-dpkg: $(DPKGS)
-$(DPKGS):
-	mkdir -p $@/$(DPKG_TGT)
-	@if [[ $@ == *-dev ]]; then \
-		mkdir -p $@$(TGT_INCLUDE); \
-		cp $(LOC_INC_DIR)/* $@$(TGT_INCLUDE)/.; \
-		echo "cp $(LOC_INC_DIR)/* $@$(TGT_INCLUDE)/."; \
-		cp $(DPKG_CTL_DIR)/control-dev $@/$(DPKG_TGT)/control; \
-	else \
-		mkdir -p $@$(TGT_LOG); \
-		mkdir -p $@$(TGT_CONF); \
-		cp default.zlog $(TGT_CONF)/.; \
-		mkdir -p $@$(TGT_LIB); \
-		cp $(LOC_LIB_DIR)/$(LIBNAME).so $@$(TGT_LIB)/$(SONAME); \
-		cp $(LOC_LIB_DIR)/$(LIBNAME).a $@$(TGT_LIB)/$(ANAME); \
-		mkdir -p $@$(TGT_DOC); \
-		cp README.md $@$(TGT_DOC)/$(PROJECT)-$(LIB_VERSION).md; \
-		cp $(DPKG_CTL_DIR)/control $@/$(DPKG_TGT)/control; \
-		cp $(DPKG_CTL_DIR)/postinst $@/$(DPKG_TGT)/postinst; \
-		sed -i 's/<tgt_dir>/$(TGT_LIB_E)/g' $@/$(DPKG_TGT)/postinst; \
-		sed -i 's/<soname>/$(SONAME)/g' $@/$(DPKG_TGT)/postinst; \
-		sed -i 's/<aname>/$(ANAME)/g' $@/$(DPKG_TGT)/postinst; \
-		sed -i 's/<libname>/$(LIBNAME)/g' $@/$(DPKG_TGT)/postinst; \
-		sed -i 's/<lnname>/$(VLIBNAME)/g' $@/$(DPKG_TGT)/postinst; \
-		cp $(DPKG_CTL_DIR)/postrm $@/$(DPKG_TGT)/postrm; \
-		sed -i 's/<tgt_dir>/$(TGT_LIB_E)/g' $@/$(DPKG_TGT)/postrm; \
-		sed -i 's/<aname>/$(ANAME)/g' $@/$(DPKG_TGT)/postrm; \
-		sed -i 's/<libname>/$(LIBNAME)/g' $@/$(DPKG_TGT)/postrm; \
-		sed -i 's/<lnname>/$(VLIBNAME)/g' $@/$(DPKG_TGT)/postrm; \
-		cp $(DPKG_CTL_DIR)/triggers $@/$(DPKG_TGT)/triggers; \
-	fi
-	sed -i 's/<version>/$(VERSION)/g' $@/$(DPKG_TGT)/control
-	sed -i 's/<maj_version>/$(LIB_VERSION)/g' $@/$(DPKG_TGT)/control
-	dpkg-deb -b $@
