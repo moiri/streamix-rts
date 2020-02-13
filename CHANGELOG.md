@@ -1,4 +1,24 @@
-# `v0.3.2` (latest)
+# `v0.4.0` (latest)
+
+### Bug Fixes
+ - check whether channel is null before setting type filter
+ - use the maximum net degree from the signature and the graph
+
+### Changes
+
+ - don't use pthread functions in header to avoid unnecessary dependencies
+ - add log messages before and after init barrier
+ - use specific zlog version
+ - add debian revision to config
+ - remove default zlog file (added to zlog package)
+ - fix doxygen config
+ - use debian install locations
+ - seperate config.mk and Makefile
+ - update to new debian files
+
+
+-------------------
+# `v0.3.2`
 
 ### Bug Fixes
 
