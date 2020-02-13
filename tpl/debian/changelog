@@ -1,4 +1,4 @@
-<lib_name><maj_version> (<version>) bionic; urgency=medium
+libsmxrts<maj_version> (<version>) bionic; urgency=medium
 
   * Initial release
 

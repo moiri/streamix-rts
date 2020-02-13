@@ -1,4 +1,4 @@
-Source: <lib_name><maj_version>
+Source: libsmxrts<maj_version>
 Priority: optional
 Maintainer: Simon Maurer <simon.maurer@humdek.unibe.ch>
 Build-Depends: debhelper (>= 10)
@@ -6,16 +6,16 @@ Standards-Version: 4.1.2
 Section: libs
 Homepage: https://github.com/moiri/streamix-rts
 
-Package: <lib_name>-dev
+Package: libsmxrts-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Depends: <lib_name><maj_version> (= ${binary:Version}), ${misc:Depends}
+Depends: libsmxrts<maj_version> (= ${binary:Version}), ${misc:Depends}
 Description: Development Package of 'libsmxrts'
  This is the development package of the library 'libsmxrts'. This library
  contains the Streamix RTS.
 
-Package: <lib_name><maj_version>
+Package: libsmxrts<maj_version>
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}

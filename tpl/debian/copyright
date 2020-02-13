@@ -1,16 +1,16 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: <lib_name><maj_version>
+Upstream-Name: libsmxrts<maj_version>
 Source: https://github.com/moiri/streamix-rts
 
 Files: *
-Copyright: <date_y> Simon Maurer <simon.maurer@humdek.unibe.ch>
+Copyright: 2017 Simon Maurer <simon.maurer@humdek.unibe.ch>
 License: MPL-2.0
  This Source Code Form is subject to the terms of the Mozilla Public
  License, v. 2.0. If a copy of the MPL was not distributed with this
  file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 Files: debian/*
-Copyright: <date_y> Simon Maurer <simon.maurer@humdek.unibe.ch>
+Copyright: 2020 Simon Maurer <simon.maurer@humdek.unibe.ch>
 License: GPL-2+
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
