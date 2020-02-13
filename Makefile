@@ -2,6 +2,7 @@ SHELL := /bin/bash
 
 include config.mk
 
+LLIBNAME = $(LIBNAME)
 LOC_INC_DIR = include
 LOC_SRC_DIR = src
 LOC_BUILD_DIR = build
@@ -14,9 +15,9 @@ UPSTREAM_VERSION = $(LIB_VERSION).$(VREV)
 DEBIAN_REVISION = $(VDEB)
 VERSION = $(UPSTREAM_VERSION)-$(DEBIAN_REVISION)
 
-VLIBNAME = $(LIBNAME)-$(LIB_VERSION)
-SONAME = $(LIBNAME).so.$(LIB_VERSION)
-ANAME = $(LIBNAME).a
+VLIBNAME = $(LLIBNAME)-$(LIB_VERSION)
+SONAME = $(LLIBNAME).so.$(LIB_VERSION)
+ANAME = $(LLIBNAME).a
 
 TGT_INCLUDE = $(DESTDIR)/usr/include/smx
 TGT_LIB = $(DESTDIR)/usr/lib/x86_64-linux-gnu
@@ -24,8 +25,8 @@ TGT_DOC = $(DESTDIR)/usr/share/doc/smx
 TGT_CONF = $(DESTDIR)/usr/etc/smx
 TGT_LOG = $(DESTDIR)/var/log/smx
 
-STATLIB = $(LOC_LIB_DIR)/$(LIBNAME).a
-DYNLIB = $(LOC_LIB_DIR)/$(LIBNAME).so
+STATLIB = $(LOC_LIB_DIR)/$(LLIBNAME).a
+DYNLIB = $(LOC_LIB_DIR)/$(LLIBNAME).so
 
 SOURCES = $(wildcard $(LOC_SRC_DIR)/*.c)
 OBJECTS := $(patsubst $(LOC_SRC_DIR)/%.c, $(LOC_OBJ_DIR)/%.o, $(SOURCES))
@@ -78,14 +79,14 @@ $(CREATE_DIR):
 install:
 	mkdir -p $(TGT_LIB) $(TGT_INCLUDE) $(TGT_CONF) $(TGT_LOG)
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
-	cp -a $(LOC_LIB_DIR)/$(LIBNAME).so $(TGT_LIB)/$(SONAME)
+	cp -a $(LOC_LIB_DIR)/$(LLIBNAME).so $(TGT_LIB)/$(SONAME)
 	ln -sf $(SONAME) $(TGT_LIB)/$(VLIBNAME).so
-	ln -sf $(SONAME) $(TGT_LIB)/$(LIBNAME).so
+	ln -sf $(SONAME) $(TGT_LIB)/$(LLIBNAME).so
 
 uninstall:
 	rm $(addprefix $(TGT_INCLUDE)/,$(notdir $(wildcard $(INCLUDES))))
 	rm $(TGT_LIB)/$(SONAME)
-	rm $(TGT_LIB)/$(LIBNAME).so
+	rm $(TGT_LIB)/$(LLIBNAME).so
 	rm $(TGT_LIB)/$(VLIBNAME).so
 
 clean:

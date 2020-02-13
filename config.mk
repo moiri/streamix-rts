@@ -12,4 +12,4 @@ VREV = 0
 VDEB = 1
 
 # the name of the library
-LIBNAME = libsmxrts
+LIBNAME = smxrts
