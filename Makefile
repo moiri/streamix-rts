@@ -40,7 +40,7 @@ LINK_DIR = -L/usr/local/lib
 
 LINK_FILE = -lpthread \
 	-lbson-1.0 \
-	-lzlog \
+	-lzlog-1.2 \
 	-llttng-ust \
 	-ldl
 
