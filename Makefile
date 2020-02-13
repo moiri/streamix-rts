@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 include config.mk
 
-LLIBNAME = $(LIBNAME)
+LLIBNAME = lib$(LIBNAME)
 LOC_INC_DIR = include
 LOC_SRC_DIR = src
 LOC_BUILD_DIR = build
