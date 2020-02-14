@@ -32,5 +32,4 @@
 # Debug files
 *.dSYM/
 
-doc
 dpkg
