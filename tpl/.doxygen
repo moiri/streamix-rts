@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "<lib_name>"
+PROJECT_NAME           = "libsmxrts"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -844,7 +844,8 @@ EXCLUDE_PATTERNS       = *.swp \
                          zlog \
                          test \
                          dpkg \
-                         .ycm*
+                         .ycm* \
+                         SMX_CHANGELOG.md
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
