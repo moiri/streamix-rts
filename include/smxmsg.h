@@ -17,13 +17,6 @@
 #define SMXMSG_H
 
 /**
- * @addtogroup smx
- * @{
- * @addtogroup msg
- * @{
- */
-
-/**
  * @def SMX_MSG_COPY()
  *
  * Make a deep copy of a message. For details refer to smx_msg_copy().
@@ -80,9 +73,6 @@
  */
 #define SMX_MSG_PREVENT_BACKUP( msg )\
     smx_msg_prevent_backup( msg )
-
-/** @} */
-/** @} */
 
 /**
  * @brief make a deep copy of a message

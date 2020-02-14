@@ -21,13 +21,6 @@
 #ifdef SMX_TESTING
 
 /**
- * User Macros
- *
- * @addtogroup test
- * @{
- */
-
-/**
  * @def SMX_CHANNEL_READ()
  *
  * Read test input data from the configuration file.
@@ -87,8 +80,6 @@
  */
 #define SMX_GET_WRITE_ERROR( h, box_name, ch_name )\
     SMX_CHANNEL_ERR_NO_TARGET
-
-/** @} */
 
 #endif /* SMX_TESTING */
 

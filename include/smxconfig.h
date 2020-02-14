@@ -19,13 +19,6 @@
 #define SMXCONFIG_H
 
 /**
- * @addtogroup smx
- * @{
- * @addtogroup conf
- * @{
- */
-
-/**
  * This is the same as smx_config_get_bool_err() however without the err output
  * parameter.
  */
@@ -111,8 +104,5 @@ const char* smx_config_get_string( bson_t* conf, const char* search,
  */
 const char* smx_config_get_string_err( bson_t* conf, const char* search,
         unsigned int* len, smx_config_error_t* err );
-
-/** @} */
-/** @} */
 
 #endif /* SMXCONFIG_H */

@@ -17,7 +17,6 @@
 #define SMXTYPES_H
 
 /**
- * @ingroup ch
  * The streamix channel error type. Refer to the error enumeration definition
  * for more details #smx_channel_err_e.
  */
@@ -36,7 +35,6 @@ typedef struct smx_fifo_s smx_fifo_t;                 /**< ::smx_fifo_s */
 typedef struct smx_fifo_item_s smx_fifo_item_t;       /**< ::smx_fifo_item_s */
 typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
 /**
- * @ingroup msg
  * The streamix message type.
  * Refer to the structure definition for more information ::smx_msg_s.
  */
@@ -46,7 +44,6 @@ typedef struct smx_net_sig_s smx_net_sig_t;           /**< ::smx_net_sig_s */
 
 /**
  * The error state of a channel end
- * @ingroup ch
  */
 enum smx_channel_err_e
 {
@@ -88,7 +85,6 @@ enum smx_channel_type_e
 
 /**
  * The list of config read errors.
- * @ingroup conf
  */
 enum smx_config_error_e
 {
@@ -122,7 +118,6 @@ enum smx_profiler_action_e
 };
 
 /**
- * @ingroup net
  * Constants to indicate wheter a thread should terminate or continue.
  * Use one of these values to return from the main box implemenation funtion.
  */

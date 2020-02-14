@@ -20,13 +20,6 @@
  */
 #define SMX_MAX_CHS 10000
 
-/**
- * @addtogroup smx
- * @{
- * @addtogroup ch
- * @{
- */
-
 #ifndef SMX_TESTING
 
 /**
@@ -177,9 +170,6 @@
 #define SMX_CHANNEL_SET_TYPE_FILTER( h, box_name, ch_name, count, ... )\
     smx_channel_set_filter( h, SMX_SIG_PORT( h, box_name, ch_name, in ),\
             count, ##__VA_ARGS__ )
-
-/** @} */
-/** @} */
 
 /**
  * Change the state of a channel collector. The state is only changed if the

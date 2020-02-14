@@ -24,13 +24,6 @@
 #define SMX_MAX_NETS 1000
 
 /**
- * @addtogroup smx
- * @{
- * @addtogroup net
- * @{
- */
-
-/**
  * @def SMX_LOG()
  *
  * This macro allows to log events to the log file.
@@ -103,9 +96,6 @@
  *  A pointer to the box implementation name of type `const char*`.
  */
 #define SMX_NET_GET_IMPL( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->impl )
-
-/** @} */
-/** @} */
 
 /**
  * Check whether messages are available on the collector and block until a
