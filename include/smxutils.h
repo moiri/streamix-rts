@@ -14,10 +14,7 @@
 #ifndef SMXUTILS_H
 #define SMXUTILS_H
 
-#define SMX_MAX( a , b ) \
-    ({ __typeof__ (a) _a = (a); \
-     __typeof__ (b) _b = (b); \
-     _a > _b ? _a : _b; })
+#define SMX_MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 /**
  * ASCII definition of an input port
