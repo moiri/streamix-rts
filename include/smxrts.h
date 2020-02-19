@@ -137,7 +137,7 @@ struct smx_rts_s
  */
 #define SMX_NET_INIT( id, indegree, outdegree, box_name )\
     smx_net_init( rts->nets[id],\
-            SMX_MAX( indegree, SMX_INDEGREE_ ## box_name )\
+            SMX_MAX( indegree, SMX_INDEGREE_ ## box_name ),\
             SMX_MAX( outdegree, SMX_OUTDEGREE_ ## box_name ) )
 
 /**
