@@ -15,6 +15,9 @@
 #ifndef BOX_SMX_TF_H
 #define BOX_SMX_TF_H
 
+#define SMX_INDEGREE_smx_tf 0
+#define SMX_OUTDEGREE_smx_tf 0
+
 typedef struct net_smx_tf_s net_smx_tf_t;             /**< ::net_smx_tf_s */
 typedef struct net_smx_tf_state_s net_smx_tf_state_t; /**< ::net_smx_tf_state_s */
 typedef struct smx_timer_s smx_timer_t;               /**< ::smx_timer_s */

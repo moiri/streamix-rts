@@ -14,6 +14,9 @@
 #ifndef BOX_SMX_RN_H
 #define BOX_SMX_RN_H
 
+#define SMX_INDEGREE_smx_rn 0
+#define SMX_OUTDEGREE_smx_rn 0
+
 /**
  * Connect a routing node to a channel
  *
