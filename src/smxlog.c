@@ -12,7 +12,7 @@
 #include <zlog.h>
 #include "smxlog.h"
 
-#define ZLOG_DEFAULT    "/opt/smx/conf/default.zlog"
+#define ZLOG_DEFAULT    "/etc/smx/default.zlog"
 
 zlog_category_t* smx_zcat_ch;
 zlog_category_t* smx_zcat_net;

@@ -8,7 +8,7 @@
 # The version number of the box library ($(VMAJ).$(VMIN).$(VREV))
 VMAJ = 0
 VMIN = 4
-VREV = 2
+VREV = 0
 VDEB = 1
 
 # the name of the library
