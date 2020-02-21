@@ -9,7 +9,6 @@
  */
 
 #include <unistd.h>
-#include <zlog.h>
 #include "smxlog.h"
 
 #define ZLOG_DEFAULT    "/etc/smx/default.zlog"
