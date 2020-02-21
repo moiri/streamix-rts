@@ -15,6 +15,17 @@
 #ifndef SMXLOG_H
 #define SMXLOG_H
 
+/** The custom zlog level "event" */
+#define ZLOG_LEVEL_EVENT 50
+
+/**
+ * The macro to use the custom zlog level "event".
+ */
+#define zlog_event( cat, format, ... )\
+     zlog( cat, __FILE__, sizeof( __FILE__ )-1, \
+    __func__, sizeof( __func__ )-1, __LINE__, \
+    ZLOG_LEVEL_EVENT, format, ## __VA_ARGS__ )
+
 /**
  * The logger macro for all types of logs.
  */
