@@ -32,26 +32,27 @@ void smx_program_cleanup( smx_rts_t* rts )
 }
 
 /*****************************************************************************/
-smx_rts_t* smx_program_init( const char* config )
+smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf )
 {
     bson_json_reader_t *reader;
     bson_error_t error;
     bson_t* doc = bson_new();
     bson_iter_t iter;
     uint32_t len;
-    const char* conf;
 
-    int rc = smx_log_init();
+    int rc = smx_log_init( log_conf );
 
     if( rc ) {
         fprintf( stderr, "error: failed to initialise zlog, aborting\n" );
         exit( 0 );
     }
 
-    reader = bson_json_reader_new_from_file( config, &error );
+    SMX_LOG_MAIN( main, notice, "using log configuration file '%s'", log_conf );
+
+    reader = bson_json_reader_new_from_file( app_conf, &error );
     if( reader == NULL )
     {
-        SMX_LOG_MAIN( main, error, "failed to open '%s': %s", config,
+        SMX_LOG_MAIN( main, error, "failed to open '%s': %s", app_conf,
                 error.message );
         exit( 0 );
     }
@@ -60,28 +61,12 @@ smx_rts_t* smx_program_init( const char* config )
     if( rc < 0 )
     {
         SMX_LOG_MAIN( main, error,
-                "could not parse the app config file '%s': %s",
-                config, error.message );
+                "could not parse the app app_conf file '%s': %s",
+                app_conf, error.message );
         exit( 0 );
     }
 
     bson_json_reader_destroy( reader );
-    if( bson_iter_init_find( &iter, doc, "_log" ) )
-    {
-        conf = bson_iter_utf8( &iter, &len );
-        rc = zlog_reload( conf );
-        if( rc ) {
-            SMX_LOG_MAIN( main, error, "zlog reload failed with conf: '%s'\n",
-                    conf );
-            exit( 0 );
-        }
-        else
-            SMX_LOG_MAIN( main, notice,
-                    "switched to app specific zlog config file '%s'", conf );
-    }
-    else
-        SMX_LOG_MAIN( main, warn,
-                "no log configuration found in app config, missing mandatory key '_log'" );
 
     if( !( bson_iter_init_find( &iter, doc, "_nets" )
             && BSON_ITER_HOLDS_DOCUMENT( &iter ) ) )
@@ -96,7 +81,7 @@ smx_rts_t* smx_program_init( const char* config )
                 "=============== Initializing app '%s' ===============",
                 bson_iter_utf8( &iter, &len ) );
         SMX_LOG_MAIN( main, notice, "successfully parsed config file '%s'",
-                config );
+                app_conf );
     }
     else
     {

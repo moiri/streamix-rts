@@ -192,10 +192,11 @@ void smx_program_cleanup( smx_rts_t* rts );
  * Initialize the rts structure, read the configuration files, and initialize
  * the log.
  *
- * @param config    the path of the config file to be loaded
+ * @param app_conf    the path of the application config file to be loaded
+ * @param log_conf    the path of the log config file to be loaded
  * @return a pointer to the RTS structure which holds the network information.
  */
-smx_rts_t* smx_program_init( const char* config );
+smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf );
 
 /**
  * Initialize the synchronisation barrier to make sure all nets finish

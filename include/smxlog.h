@@ -79,9 +79,12 @@
 
 /**
  * Define mutex protection and main categories for zlog. Further, initialise
- * zlog with the default configuration file.
+ * zlog with the configuration file.
+ *
+ * @param log_conf
+ *  A pointer to the zlog configuration file.
  */
-int smx_log_init();
+int smx_log_init( const char* log_conf );
 
 /**
  * Cleanup zlog

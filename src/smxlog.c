@@ -11,8 +11,6 @@
 #include <unistd.h>
 #include "smxlog.h"
 
-#define ZLOG_DEFAULT    "/etc/smx/default.zlog"
-
 zlog_category_t* smx_zcat_ch;
 zlog_category_t* smx_zcat_net;
 zlog_category_t* smx_zcat_main;
@@ -20,15 +18,8 @@ zlog_category_t* smx_zcat_msg;
 pthread_mutex_t mlog;
 
 /*****************************************************************************/
-int smx_log_init()
+int smx_log_init( const char* log_conf )
 {
-    if( access( ZLOG_DEFAULT, F_OK ) == -1 )
-    {
-        fprintf( stderr,
-                "error: cannot open default zlog configuration file: '%s'\n",
-                ZLOG_DEFAULT );
-        return -1;
-    }
     pthread_mutexattr_t mutexattr_prioinherit;
 
     pthread_mutexattr_init( &mutexattr_prioinherit );
@@ -36,9 +27,12 @@ int smx_log_init()
             PTHREAD_PRIO_INHERIT );
     pthread_mutex_init( &mlog, &mutexattr_prioinherit );
 
-    int rc = zlog_init( ZLOG_DEFAULT );
+    int rc = zlog_init( log_conf );
 
     if( rc ) {
+        fprintf( stderr,
+                "error: failed to init zlog with configuration file: '%s'\n",
+                log_conf );
         return -1;
     }
 
