@@ -127,12 +127,14 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->attr = NULL;
     net->conf = bson_new();
     smx_net_get_json_doc( net, conf, name, impl, id );
-    net->has_profiler = smx_net_has_boolean_prop( conf, name, impl, id,
+    net->has_profiler = smx_net_get_boolean_prop( conf, name, impl, id,
             "profiler" );
-    net->has_type_filter = smx_net_has_boolean_prop( conf, name, impl, id,
+    net->has_type_filter = smx_net_get_boolean_prop( conf, name, impl, id,
             "type_filter" );
     net->conf_port_name = smx_net_get_string_prop( conf, name, impl, id,
             "dyn_conf_port" );
+    net->conf_port_timeout = smx_net_get_int_prop( conf, name, impl, id,
+            "dyn_conf_timeout" );
 
     (*net_cnt)++;
     SMX_LOG_MAIN( net, info, "create net instance %s(%d)", name, id );
@@ -155,6 +157,86 @@ void smx_net_destroy( smx_net_t* h )
         }
         free( h );
     }
+}
+
+/*****************************************************************************/
+bool smx_net_get_boolean_prop( bson_t* conf, const char* name, const char* impl,
+        unsigned int id, const char* prop )
+{
+    bson_iter_t iter;
+    bson_iter_t child;
+    char search_str[1000];
+    const char* nets = "_nets";
+    sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_BOOL( &iter ) )
+    {
+        return bson_iter_bool( &child );
+    }
+    sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_BOOL( &child ) )
+    {
+        return bson_iter_bool( &child );
+    }
+    sprintf( search_str, "%s.%s._default.%s", nets, impl, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_BOOL( &child ) )
+    {
+        return bson_iter_bool( &child );
+    }
+    sprintf( search_str, "%s._default.%s", nets, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_BOOL( &child ) )
+    {
+        return bson_iter_bool( &child );
+    }
+
+    return false;
+}
+
+/*****************************************************************************/
+int smx_net_get_int_prop( bson_t* conf, const char* name, const char* impl,
+        unsigned int id, const char* prop )
+{
+    bson_iter_t iter;
+    bson_iter_t child;
+    char search_str[1000];
+    const char* nets = "_nets";
+    sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_INT32( &iter ) )
+    {
+        return bson_iter_int32( &child );
+    }
+    sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_INT32( &iter ) )
+    {
+        return bson_iter_int32( &child );
+    }
+    sprintf( search_str, "%s.%s._default.%s", nets, impl, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_INT32( &iter ) )
+    {
+        return bson_iter_int32( &child );
+    }
+    sprintf( search_str, "%s._default.%s", nets, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_INT32( &iter ) )
+    {
+        return bson_iter_int32( &child );
+    }
+
+    return false;
 }
 
 /*****************************************************************************/
@@ -235,46 +317,6 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
     }
     SMX_LOG_NET( h, debug, "no configuration loaded from '%s'", search_str );
     return -1;
-}
-
-/*****************************************************************************/
-bool smx_net_has_boolean_prop( bson_t* conf, const char* name, const char* impl,
-        unsigned int id, const char* prop )
-{
-    bson_iter_t iter;
-    bson_iter_t child;
-    char search_str[1000];
-    const char* nets = "_nets";
-    sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
-    if( bson_iter_init( &iter, conf )
-            && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_BOOL( &iter ) )
-    {
-        return bson_iter_bool( &child );
-    }
-    sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, prop );
-    if( bson_iter_init( &iter, conf )
-            && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_BOOL( &child ) )
-    {
-        return bson_iter_bool( &child );
-    }
-    sprintf( search_str, "%s.%s._default.%s", nets, impl, prop );
-    if( bson_iter_init( &iter, conf )
-            && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_BOOL( &child ) )
-    {
-        return bson_iter_bool( &child );
-    }
-    sprintf( search_str, "%s._default.%s", nets, prop );
-    if( bson_iter_init( &iter, conf )
-            && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_BOOL( &child ) )
-    {
-        return bson_iter_bool( &child );
-    }
-
-    return false;
 }
 
 /*****************************************************************************/
@@ -418,7 +460,8 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         }
         SMX_LOG_NET( h, notice, "awaiting dynamic configuration" );
         smx_channel_set_filter( h, conf_port, 1, "json" );
-        smx_set_read_timeout( conf_port, 5, 0 );
+        smx_set_read_timeout( conf_port, h->conf_port_timeout / 1000,
+                ( h->conf_port_timeout % 1000 ) * 1000000 );
         msg = smx_channel_read( h, conf_port );
         if( msg == NULL )
         {

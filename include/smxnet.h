@@ -148,6 +148,64 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
 void smx_net_destroy( smx_net_t* h );
 
 /**
+ * Get a boolean property configuration setting for the current net.
+ *
+ * The function hiearchically searches for a confic that is specific for
+ *  1. this net id
+ *  2. this net name
+ *  3. the box implementation of this net
+ *  4. all nets
+ *
+ *  If a hit is found, the function returns te config and does not continue
+ *  searching.
+ *
+ * @param conf
+ *  The input buffer of the app configuration
+ * @param name
+ *  The name of the net
+ * @param impl
+ *  The box implemntation name
+ * @param id
+ *  The id of the net
+ * @param prop
+ *  The name of the property.
+ *
+ * @return
+ *  the boolean property
+ */
+bool smx_net_get_boolean_prop( bson_t* conf, const char* name, const char* impl,
+        unsigned int id, const char* prop );
+
+/**
+ * Get a int property configuration setting for the current net.
+ *
+ * The function hiearchically searches for a confic that is specific for
+ *  1. this net id
+ *  2. this net name
+ *  3. the box implementation of this net
+ *  4. all nets
+ *
+ *  If a hit is found, the function returns te config and does not continue
+ *  searching.
+ *
+ * @param conf
+ *  The input buffer of the app configuration
+ * @param name
+ *  The name of the net
+ * @param impl
+ *  The box implemntation name
+ * @param id
+ *  The id of the net
+ * @param prop
+ *  The name of the property.
+ *
+ * @return
+ *  the boolean property
+ */
+int smx_net_get_int_prop( bson_t* conf, const char* name, const char* impl,
+        unsigned int id, const char* prop );
+
+/**
  * Get the appropriate json configuration for the current net.
  *
  * The function hiearchically searches for a confic that is specific for
@@ -218,35 +276,6 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
  *  the string property
  */
 const char* smx_net_get_string_prop( bson_t* conf, const char* name, const char* impl,
-        unsigned int id, const char* prop );
-
-/**
- * Get a boolean property configuration setting for the current net.
- *
- * The function hiearchically searches for a confic that is specific for
- *  1. this net id
- *  2. this net name
- *  3. the box implementation of this net
- *  4. all nets
- *
- *  If a hit is found, the function returns te config and does not continue
- *  searching.
- *
- * @param conf
- *  The input buffer of the app configuration
- * @param name
- *  The name of the net
- * @param impl
- *  The box implemntation name
- * @param id
- *  The id of the net
- * @param prop
- *  The name of the property.
- *
- * @return
- *  the boolean property
- */
-bool smx_net_has_boolean_prop( bson_t* conf, const char* name, const char* impl,
         unsigned int id, const char* prop );
 
 /**

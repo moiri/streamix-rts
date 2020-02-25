@@ -251,6 +251,8 @@ struct smx_net_s
     smx_net_sig_t*      sig;          /**< the net port signature */
     /** port name on which to receive the dynamic configuration  */
     const char*         conf_port_name;
+    /** read timeout on dynamic conf port in milliseconds */
+    int                 conf_port_timeout;
     void*               attr;         /**< custom attributes of special nets */
     void*               conf;         /**< pointer to the XML configuration */
     const char*         name;         /**< the name of the net */
