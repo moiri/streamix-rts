@@ -429,9 +429,10 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
     smx_channel_t* conf_port;
+    smx_channel_err_t c_err;
     smx_msg_t* msg;
     bson_t* dyn_conf;
-    bson_error_t err;
+    bson_error_t b_err;
     bool has_init_err = false;
     /* xmlChar* profiler = NULL; */
 
@@ -465,13 +466,19 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         msg = smx_channel_read( h, conf_port );
         if( msg == NULL )
         {
+            c_err = smx_get_read_error( conf_port );
+            if( c_err == SMX_CHANNEL_ERR_TIMEOUT )
+            {
+                SMX_LOG_NET( h, warn, "read operation dynamic configuration"
+                        " port '%s' timed out", h->conf_port_name );
+            }
             SMX_LOG_NET( h, error, "failed to read dynamic configuration" );
             has_init_err = true;
             goto smx_barrier;
         }
         else
         {
-            dyn_conf = bson_new_from_json( msg->data, msg->size, &err );
+            dyn_conf = bson_new_from_json( msg->data, msg->size, &b_err );
             if( dyn_conf == NULL )
             {
                 SMX_LOG( h, error, "unable to parse dynamic configuration" );
