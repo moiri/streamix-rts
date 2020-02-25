@@ -332,7 +332,7 @@ void smx_channel_terminate_source( smx_channel_t* ch )
 /*****************************************************************************/
 int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
 {
-    int rc;
+    int rc = 0;
     bool abort = false;
     int new_count;
     int i;

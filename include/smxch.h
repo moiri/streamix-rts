@@ -152,7 +152,7 @@
  *  description of the error codes.
  */
 #define SMX_SET_WRITE_TIMEOUT( h, box_name, ch_name, sec, nsec )\
-    smx_set_write_timeout( SMX_SIG_PORT( h, box_name, ch_name, in ), sec, nsec )
+    smx_set_write_timeout( SMX_SIG_PORT( h, box_name, ch_name, out ), sec, nsec )
 
 
 #endif /* SMX_TESTING */
