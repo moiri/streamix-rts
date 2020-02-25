@@ -1,6 +1,24 @@
-# `v0.4.0` (latest)
+# `v0.5.0` (latest)
 
 ### Bug Fixes
+
+### Changes
+
+ - handle the log config file in a similar way as the app config file (by
+   passing it as app parameter)
+
+### New Features
+
+ - add a log level 'event'
+ - add support for channel read and write timeouts
+ - allow to dynamically configure each net
+
+
+-------------------
+# `v0.4.0`
+
+### Bug Fixes
+
  - check whether channel is null before setting type filter
  - use the maximum net degree from the signature and the graph
 
