@@ -161,6 +161,7 @@ struct smx_channel_end_s
     } filter;     /**< All message types allowed on this channel */
     /** A pointer to the filter function. */
     bool ( *content_filter )( smx_msg_t* msg );
+    struct timespec     timeout;    /**< channel-blocking timeout */
 };
 
 /**

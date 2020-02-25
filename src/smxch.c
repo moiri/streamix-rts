@@ -120,6 +120,8 @@ smx_channel_end_t* smx_channel_create_end()
     end->filter.items = NULL;
     end->filter.count = 0;
     end->content_filter = NULL;
+    end->timeout.tv_sec = 0;
+    end->timeout.tv_nsec = 0;
     pthread_cond_init( &end->ch_cv, NULL );
     return end;
 }
@@ -158,6 +160,8 @@ void smx_channel_destroy_end( smx_channel_end_t* end )
 /*****************************************************************************/
 smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
 {
+    int rc = 0;
+    struct timespec ts;
     smx_msg_t* msg = NULL;
     if( ch == NULL )
         return NULL;
@@ -169,10 +173,34 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
     }
 
     pthread_mutex_lock( &ch->ch_mutex);
-    while( ch->source->state == SMX_CHANNEL_PENDING )
+    while( ch->source->state == SMX_CHANNEL_PENDING && rc == 0 )
     {
         SMX_LOG_CH( ch, debug, "waiting for message" );
-        pthread_cond_wait( &ch->source->ch_cv, &ch->ch_mutex );
+        if( ch->source->timeout.tv_sec == 0
+                && ch->source->timeout.tv_nsec == 0 )
+        {
+            rc = pthread_cond_wait( &ch->source->ch_cv, &ch->ch_mutex );
+        }
+        else
+        {
+            clock_gettime( CLOCK_REALTIME, &ts );
+            ts.tv_sec += ch->source->timeout.tv_sec;
+            ts.tv_nsec += ch->source->timeout.tv_nsec;
+            SMX_LOG_CH( ch, debug, "wait timeout set to %ld, %ld",
+                    ch->source->timeout.tv_sec, ch->source->timeout.tv_nsec );
+            rc = pthread_cond_timedwait( &ch->source->ch_cv,
+                    &ch->ch_mutex, &ts );
+        }
+        if( rc == ETIMEDOUT )
+        {
+            SMX_LOG_CH( ch, debug, "channel read timed out" );
+        }
+        else if( rc != 0 )
+        {
+            SMX_LOG_CH( ch, error,
+                    "channel conditional wait failed with error '%s'",
+                    strerror( rc ) );
+        }
     }
     switch( ch->type ) {
         case SMX_FIFO:
@@ -298,11 +326,14 @@ void smx_channel_terminate_source( smx_channel_t* ch )
 /*****************************************************************************/
 int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
 {
+    int rc;
     bool abort = false;
     int new_count;
     int i;
     const char* filter;
     bool pass = false;
+    struct timespec ts;
+
     if( ch == NULL )
     {
         // channel is open, dismiss message silently.
@@ -358,10 +389,33 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     }
 
     pthread_mutex_lock( &ch->ch_mutex );
-    while( ch->sink->state == SMX_CHANNEL_PENDING )
+    while( ch->sink->state == SMX_CHANNEL_PENDING && rc == 0 )
     {
         SMX_LOG_CH( ch, debug, "waiting for free space" );
-        pthread_cond_wait( &ch->sink->ch_cv, &ch->ch_mutex );
+        if( ch->sink->timeout.tv_sec == 0 && ch->sink->timeout.tv_nsec == 0 )
+        {
+            rc = pthread_cond_wait( &ch->sink->ch_cv, &ch->ch_mutex );
+        }
+        else
+        {
+            clock_gettime( CLOCK_REALTIME, &ts );
+            ts.tv_sec += ch->sink->timeout.tv_sec;
+            ts.tv_nsec += ch->sink->timeout.tv_nsec;
+            SMX_LOG_CH( ch, debug, "wait timeout set to %ld, %ld",
+                    ch->sink->timeout.tv_sec, ch->sink->timeout.tv_nsec );
+            rc = pthread_cond_timedwait( &ch->sink->ch_cv,
+                    &ch->ch_mutex, &ts );
+        }
+        if( rc == ETIMEDOUT )
+        {
+            SMX_LOG_CH( ch, debug, "channel write timed out" );
+        }
+        else if( rc != 0 )
+        {
+            SMX_LOG_CH( ch, error,
+                    "channel conditional wait failed with error '%s'",
+                    strerror( rc ) );
+        }
     }
     if( ch->sink->state == SMX_CHANNEL_END ) abort = true;
     if( abort )
