@@ -121,10 +121,12 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf )
 /*****************************************************************************/
 void smx_program_init_run( smx_rts_t* rts )
 {
-    SMX_LOG_MAIN( main, notice, "waiting for all nets to finish"
-            " initialisation" );
-    pthread_barrier_init( &rts->init_done, NULL, rts->net_cnt );
-    SMX_LOG_MAIN( main, notice, " initialisation on all nets done" );
+    SMX_LOG_MAIN( main, notice, "waiting for all %d nets to finish"
+            " initialisation", rts->net_cnt );
+    if( pthread_barrier_init( &rts->init_done, NULL, rts->net_cnt ) != 0 )
+    {
+        SMX_LOG_MAIN( main, error, "barrier initialisation failed" );
+    }
 }
 
 /******************************************************************************/

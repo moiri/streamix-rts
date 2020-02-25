@@ -494,6 +494,7 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     }
 
 smx_barrier:
+    SMX_LOG_NET( h, notice, "init done" );
     pthread_barrier_wait( h->init_done );
 
     if( has_init_err )
