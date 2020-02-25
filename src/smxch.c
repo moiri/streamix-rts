@@ -193,13 +193,19 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
         }
         if( rc == ETIMEDOUT )
         {
+            ch->source->err = SMX_CHANNEL_ERR_TIMEOUT;
+            pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, debug, "channel read timed out" );
+            return NULL;
         }
         else if( rc != 0 )
         {
+            ch->source->err = SMX_CHANNEL_ERR_CV;
+            pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, error,
                     "channel conditional wait failed with error '%s'",
                     strerror( rc ) );
+            return NULL;
         }
     }
     switch( ch->type ) {
@@ -408,22 +414,30 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         }
         if( rc == ETIMEDOUT )
         {
+            ch->sink->err = SMX_CHANNEL_ERR_TIMEOUT;
+            pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, debug, "channel write timed out" );
+            smx_msg_destroy( h, msg, true );
+            return -1;
         }
         else if( rc != 0 )
         {
+            ch->source->err = SMX_CHANNEL_ERR_CV;
+            pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, error,
                     "channel conditional wait failed with error '%s'",
                     strerror( rc ) );
+            smx_msg_destroy( h, msg, true );
+            return -1;
         }
     }
     if( ch->sink->state == SMX_CHANNEL_END ) abort = true;
     if( abort )
     {
+        ch->sink->err = SMX_CHANNEL_ERR_NO_TARGET;
         pthread_mutex_unlock( &ch->ch_mutex );
         SMX_LOG_CH( ch, notice, "write aborted: consumer has termninated" );
         smx_msg_destroy( h, msg, true );
-        ch->sink->err = SMX_CHANNEL_ERR_NO_TARGET;
         return -1;
     }
     switch( ch->type )
@@ -450,9 +464,9 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
             smx_d_fifo_write( h, ch, ch->fifo, msg );
             break;
         default:
+            ch->sink->err = SMX_CHANNEL_ERR_UNINITIALISED;
             pthread_mutex_unlock( &ch->ch_mutex );
             SMX_LOG_CH( ch, error, "undefined channel type '%d'", ch->type );
-            ch->sink->err = SMX_CHANNEL_ERR_UNINITIALISED;
             return -1;
     }
     if( ch->collector != NULL && ch->fifo->overwrite == 0 )
@@ -934,5 +948,25 @@ int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
                 (timerfd_settime retuned %d", errno );
         return -1;
     }
+    return 0;
+}
+
+/*****************************************************************************/
+int smx_set_read_timeout( smx_channel_t* ch, long sec, long nsec )
+{
+    if( ch == NULL || ch->source == NULL )
+        return -1;
+    ch->source->timeout.tv_sec = sec;
+    ch->source->timeout.tv_nsec = nsec;
+    return 0;
+}
+
+/*****************************************************************************/
+int smx_set_write_timeout( smx_channel_t* ch, long sec, long nsec )
+{
+    if( ch == NULL || ch->sink == NULL )
+        return -1;
+    ch->sink->timeout.tv_sec = sec;
+    ch->sink->timeout.tv_nsec = nsec;
     return 0;
 }

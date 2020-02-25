@@ -80,6 +80,22 @@
 #define SMX_GET_WRITE_ERROR( h, box_name, ch_name )\
     SMX_CHANNEL_ERR_NO_TARGET
 
+/**
+ * @def SMX_SET_READ_TIMEOUT()
+ *
+ * This macro performs a NOP
+ */
+#define SMX_SET_READ_TIMEOUT( h, box_name, ch_name )\
+    asm( "nop" )
+
+/**
+ * @def SMX_SET_WRITE_TIMEOUT()
+ *
+ * This macro performs a NOP
+ */
+#define SMX_SET_WRITE_TIMEOUT( h, box_name, ch_name )\
+    asm( "nop" )
+
 #endif /* SMX_TESTING */
 
 /**

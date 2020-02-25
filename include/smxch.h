@@ -106,6 +106,55 @@
 #define SMX_GET_WRITE_ERROR( h, box_name, ch_name )\
     smx_get_write_error( SMX_SIG_PORT( h, box_name, ch_name, out ) )
 
+/**
+ * @def SMX_SET_READ_TIMEOUT()
+ *
+ * Set a timeout on the channel source
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the input port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @param sec
+ *  The number of seconds to wait
+ * @param nsec
+ *  The number of nanoseconds to wait
+ * @return
+ *  The error code of the operation. Refer to #smx_channel_err_e for a
+ *  description of the error codes.
+ */
+#define SMX_SET_READ_TIMEOUT( h, box_name, ch_name, sec, nsec )\
+    smx_set_read_timeout( SMX_SIG_PORT( h, box_name, ch_name, in ), sec, nsec )
+
+/**
+ * @def SMX_SET_ERITE_TIMEOUT()
+ *
+ * Set a timeout on the channel sink
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the input port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @param sec
+ *  The number of seconds to wait
+ * @param nsec
+ *  The number of nanoseconds to wait
+ * @return
+ *  The error code of the operation. Refer to #smx_channel_err_e for a
+ *  description of the error codes.
+ */
+#define SMX_SET_WRITE_TIMEOUT( h, box_name, ch_name, sec, nsec )\
+    smx_set_write_timeout( SMX_SIG_PORT( h, box_name, ch_name, in ), sec, nsec )
+
+
 #endif /* SMX_TESTING */
 
 /**
@@ -550,5 +599,33 @@ int smx_guard_write( void* h, smx_channel_t* ch );
  * @return      -1 if message was discarded, 0 otherwise
  */
 int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg );
+
+/**
+ * Set the channel read timeout.
+ *
+ * @param end
+ *  Pointer to the channel end
+ * @param sec
+ *  The second part of the timer
+ * @param nsec
+ *  The nanosecond part of the timer
+ * @return
+ *  The error value indicationg the problem
+ */
+int smx_set_read_timeout( smx_channel_t* ch, long sec, long nsec );
+
+/**
+ * Set the channel write timeout.
+ *
+ * @param end
+ *  Pointer to the channel end
+ * @param sec
+ *  The second part of the timer
+ * @param nsec
+ *  The nanosecond part of the timer
+ * @return
+ *  The error value indicationg the problem
+ */
+int smx_set_write_timeout( smx_channel_t* ch, long sec, long nsec );
 
 #endif /* SMXCH_H */
