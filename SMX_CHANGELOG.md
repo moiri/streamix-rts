@@ -2,6 +2,9 @@
 
 ### Bug Fixes
 
+ - improve log messages
+ - fix config parser
+
 ### Changes
 
  - handle the log config file in a similar way as the app config file (by
