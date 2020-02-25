@@ -55,6 +55,8 @@ enum smx_channel_err_e
     SMX_CHANNEL_ERR_NO_SPACE,      /**< unexpectedly, the channel has no space */
     SMX_CHANNEL_ERR_FILTER,        /**< the msg type does not match the filter */
     SMX_CHANNEL_ERR_UNINITIALISED, /**< the channel was never initialised */
+    SMX_CHANNEL_ERR_TIMEOUT,       /**< the channel operation timed out */
+    SMX_CHANNEL_ERR_CV,            /**< the conditional variable lock failed */
 };
 
 /**
