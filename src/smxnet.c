@@ -170,7 +170,7 @@ bool smx_net_get_boolean_prop( bson_t* conf, const char* name, const char* impl,
     sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_BOOL( &iter ) )
+            && BSON_ITER_HOLDS_BOOL( &child ) )
     {
         return bson_iter_bool( &child );
     }
@@ -210,28 +210,28 @@ int smx_net_get_int_prop( bson_t* conf, const char* name, const char* impl,
     sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_INT32( &iter ) )
+            && BSON_ITER_HOLDS_INT32( &child ) )
     {
         return bson_iter_int32( &child );
     }
     sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_INT32( &iter ) )
+            && BSON_ITER_HOLDS_INT32( &child ) )
     {
         return bson_iter_int32( &child );
     }
     sprintf( search_str, "%s.%s._default.%s", nets, impl, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_INT32( &iter ) )
+            && BSON_ITER_HOLDS_INT32( &child ) )
     {
         return bson_iter_int32( &child );
     }
     sprintf( search_str, "%s._default.%s", nets, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_INT32( &iter ) )
+            && BSON_ITER_HOLDS_INT32( &child ) )
     {
         return bson_iter_int32( &child );
     }
@@ -330,28 +330,28 @@ const char* smx_net_get_string_prop( bson_t* conf, const char* name, const char*
     sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_UTF8( &iter ) )
+            && BSON_ITER_HOLDS_UTF8( &child ) )
     {
         return bson_iter_utf8( &child, NULL );
     }
     sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_UTF8( &iter ) )
+            && BSON_ITER_HOLDS_UTF8( &child ) )
     {
         return bson_iter_utf8( &child, NULL );
     }
     sprintf( search_str, "%s.%s._default.%s", nets, impl, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_UTF8( &iter ) )
+            && BSON_ITER_HOLDS_UTF8( &child ) )
     {
         return bson_iter_utf8( &child, NULL );
     }
     sprintf( search_str, "%s._default.%s", nets, prop );
     if( bson_iter_init( &iter, conf )
             && bson_iter_find_descendant( &iter, search_str, &child )
-            && BSON_ITER_HOLDS_UTF8( &iter ) )
+            && BSON_ITER_HOLDS_UTF8( &child ) )
     {
         return bson_iter_utf8( &child, NULL );
     }
