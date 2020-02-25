@@ -126,11 +126,13 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->impl = impl;
     net->attr = NULL;
     net->conf = bson_new();
+    smx_net_get_json_doc( net, conf, name, impl, id );
     net->has_profiler = smx_net_has_boolean_prop( conf, name, impl, id,
             "profiler" );
     net->has_type_filter = smx_net_has_boolean_prop( conf, name, impl, id,
             "type_filter" );
-    smx_net_get_json_doc( net, conf, name, impl, id );
+    net->conf_port_name = smx_net_get_string_prop( conf, name, impl, id,
+            "dyn_conf_port" );
 
     (*net_cnt)++;
     SMX_LOG_MAIN( net, info, "create net instance %s(%d)", name, id );
@@ -276,6 +278,46 @@ bool smx_net_has_boolean_prop( bson_t* conf, const char* name, const char* impl,
 }
 
 /*****************************************************************************/
+const char* smx_net_get_string_prop( bson_t* conf, const char* name, const char* impl,
+        unsigned int id, const char* prop )
+{
+    bson_iter_t iter;
+    bson_iter_t child;
+    char search_str[1000];
+    const char* nets = "_nets";
+    sprintf( search_str, "%s.%s.%s.%d.%s", nets, impl, name, id, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_UTF8( &iter ) )
+    {
+        return bson_iter_utf8( &child, NULL );
+    }
+    sprintf( search_str, "%s.%s.%s._default.%s", nets, impl, name, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_UTF8( &iter ) )
+    {
+        return bson_iter_utf8( &child, NULL );
+    }
+    sprintf( search_str, "%s.%s._default.%s", nets, impl, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_UTF8( &iter ) )
+    {
+        return bson_iter_utf8( &child, NULL );
+    }
+    sprintf( search_str, "%s._default.%s", nets, prop );
+    if( bson_iter_init( &iter, conf )
+            && bson_iter_find_descendant( &iter, search_str, &child )
+            && BSON_ITER_HOLDS_UTF8( &iter ) )
+    {
+        return bson_iter_utf8( &child, NULL );
+    }
+
+    return false;
+}
+
+/*****************************************************************************/
 void smx_net_init( smx_net_t* h, int indegree, int outdegree )
 {
     int i;
@@ -342,9 +384,13 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         int init( void*, void** ), void cleanup( void*, void* ) )
 {
     double elapsed_wall;
-    int init_res;
     int state = SMX_NET_CONTINUE;
     void* net_state = NULL;
+    smx_channel_t* conf_port;
+    smx_msg_t* msg;
+    bson_t* dyn_conf;
+    bson_error_t err;
+    bool has_init_err = false;
     /* xmlChar* profiler = NULL; */
 
     if( h == NULL )
@@ -358,24 +404,72 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     if( h->has_profiler )
         SMX_LOG_NET( h, notice, "profiler enabled" );
 
-    init_res = init( h, &net_state );
-    pthread_barrier_wait( h->init_done );
-
-    clock_gettime( CLOCK_MONOTONIC, &h->start_wall );
-    if( init_res == 0)
+    if( h->conf_port_name != NULL )
     {
-        SMX_LOG_NET( h, notice, "start net" );
-        while( state == SMX_NET_CONTINUE )
+        conf_port = smx_get_channel_by_name( h->sig->in.ports,
+                h->sig->in.count, h->conf_port_name );
+        if( conf_port == NULL )
         {
-            SMX_LOG_NET( h, info, "start net loop" );
-            h->count++;
-            smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
-            state = impl( h, net_state );
-            state = smx_net_update_state( h, state );
+            SMX_LOG_NET( h, error,
+                    "dynamic configuration port '%s' does not exist",
+                    h->conf_port_name );
+            has_init_err = true;
+            goto smx_barrier;
+        }
+        SMX_LOG_NET( h, notice, "awaiting dynamic configuration" );
+        smx_channel_set_filter( h, conf_port, 1, "json" );
+        smx_set_read_timeout( conf_port, 5, 0 );
+        msg = smx_channel_read( h, conf_port );
+        if( msg == NULL )
+        {
+            SMX_LOG_NET( h, error, "failed to read dynamic configuration" );
+            has_init_err = true;
+            goto smx_barrier;
+        }
+        else
+        {
+            dyn_conf = bson_new_from_json( msg->data, msg->size, &err );
+            if( dyn_conf == NULL )
+            {
+                SMX_LOG( h, error, "unable to parse dynamic configuration" );
+                has_init_err = true;
+                goto smx_barrier;
+            }
+            SMX_LOG( h, debug, "received dynamic configuration: %s",
+                    ( char* )msg->data );
+            bson_destroy( h->conf );
+            h->conf = dyn_conf;
+            SMX_LOG( h, notice, "dynamic configuration received and"
+                    " successfully parsed" );
         }
     }
-    else
+
+    if( init( h, &net_state ) != 0 )
+    {
+        has_init_err = true;
         SMX_LOG_NET( h, error, "initialisation of net failed" );
+    }
+
+smx_barrier:
+    pthread_barrier_wait( h->init_done );
+
+    if( has_init_err )
+    {
+        goto smx_terminate_net;
+    }
+
+    clock_gettime( CLOCK_MONOTONIC, &h->start_wall );
+    SMX_LOG_NET( h, notice, "start net" );
+    while( state == SMX_NET_CONTINUE )
+    {
+        SMX_LOG_NET( h, info, "start net loop" );
+        h->count++;
+        smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
+        state = impl( h, net_state );
+        state = smx_net_update_state( h, state );
+    }
+
+smx_terminate_net:
     clock_gettime( CLOCK_MONOTONIC, &h->end_wall );
     smx_net_terminate( h );
     SMX_LOG_NET( h, notice, "cleanup net" );

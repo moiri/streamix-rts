@@ -249,6 +249,8 @@ struct smx_net_s
     pthread_barrier_t*  init_done;    /**< pointer to the init sync barrier */
     zlog_category_t*    cat;          /**< the log category */
     smx_net_sig_t*      sig;          /**< the net port signature */
+    /** port name on which to receive the dynamic configuration  */
+    const char*         conf_port_name;
     void*               attr;         /**< custom attributes of special nets */
     void*               conf;         /**< pointer to the XML configuration */
     const char*         name;         /**< the name of the net */
