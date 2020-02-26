@@ -1,0 +1,333 @@
+.TH "include/box_smx_tf.h" 3 "Wed Feb 26 2020" "Version v0.5.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/box_smx_tf.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'smxtypes\&.h'\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBnet_smx_tf_t\fP"
+.br
+.RI "The signature of a temporal firewall\&. "
+.ti -1c
+.RI "struct \fBsmx_timer_t\fP"
+.br
+.RI "A Streamix timer structure\&. "
+.ti -1c
+.RI "struct \fBnet_smx_tf_state_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSMX_INDEGREE_smx_tf\fP   0"
+.br
+.ti -1c
+.RI "#define \fBSMX_OUTDEGREE_smx_tf\fP   0"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBsmx_connect_tf\fP (smx_net_t *net, smx_channel_t *ch_in, smx_channel_t *ch_out)"
+.br
+.RI "grow the list of temporal firewalls and connect channels "
+.ti -1c
+.RI "smx_timer_t * \fBsmx_net_create_tf\fP (int sec, int nsec)"
+.br
+.RI "create a periodic timer structure "
+.ti -1c
+.RI "void \fBsmx_net_destroy_tf\fP (smx_net_t *net)"
+.br
+.RI "destroy a timer structure and the list of temporal firewalls inside "
+.ti -1c
+.RI "void \fBsmx_net_finalize_tf\fP (smx_net_t *net)"
+.br
+.ti -1c
+.RI "void \fBsmx_net_init_tf\fP (smx_net_t *net, int sec, int nsec)"
+.br
+.RI "init a timer structure and the list of temporal firewalls inside "
+.ti -1c
+.RI "void \fBsmx_tf_enable\fP (smx_net_t *h)"
+.br
+.RI "enable periodic tt timer "
+.ti -1c
+.RI "void \fBsmx_tf_propagate_msgs\fP (smx_net_t *h, int copy)"
+.br
+.ti -1c
+.RI "void \fBsmx_tf_wait\fP (smx_net_t *h)"
+.br
+.RI "blocking wait on timer "
+.ti -1c
+.RI "int \fBsmx_tf\fP (void *h, void *state)"
+.br
+.RI "the box implementattion of the temporal firewall "
+.ti -1c
+.RI "int \fBsmx_tf_init\fP (void *h, void **state)"
+.br
+.ti -1c
+.RI "void \fBsmx_tf_cleanup\fP (void *h, void *state)"
+.br
+.ti -1c
+.RI "void * \fBstart_routine_smx_tf\fP (void *h)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Temporal firewall box implementation for the runtime system library of Streamix 
+.SH "Data Structure Documentation"
+.PP 
+.SH "struct net_smx_tf_s"
+.PP 
+The signature of a temporal firewall\&. 
+
+\fBnet_smx_tf_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+smx_channel_t * \fIin\fP input channel 
+.br
+.PP
+net_smx_tf_t * \fInext\fP pointer to the next element 
+.br
+.PP
+smx_channel_t * \fIout\fP output channel 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_timer_s"
+.PP 
+A Streamix timer structure\&. 
+
+A timer collects alle temporal firewalls of the same rate
+.PP
+\fBsmx_timer_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+int \fIcount\fP number of port pairs 
+.br
+.PP
+int \fIfd\fP timer file descriptor 
+.br
+.PP
+struct itimerspec \fIitval\fP iteration specifiaction 
+.br
+.PP
+net_smx_tf_t * \fItfs\fP list of temporal firewalls 
+.br
+.PP
+.RE
+.PP
+.SH "struct net_smx_tf_state_s"
+.PP 
+The persistent state to be passed to each iteration\&.
+.PP
+\fBnet_smx_tf_state_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+bool \fIdo_copy\fP config argument to indicate whether msgs are copied 
+.br
+.PP
+.RE
+.PP
+.SH "Function Documentation"
+.PP 
+.SS "void smx_connect_tf (smx_net_t * net, smx_channel_t * ch_in, smx_channel_t * ch_out)"
+
+.PP
+grow the list of temporal firewalls and connect channels 
+.PP
+\fBParameters:\fP
+.RS 4
+\fInet\fP pointer to the timer net handler 
+.br
+\fIch_in\fP input channel to the temporal firewall 
+.br
+\fIch_out\fP output channel from the temporal firewall
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Temporal firewall box implementation for the runtime system library of Streamix 
+.SS "smx_timer_t* smx_net_create_tf (int sec, int nsec)"
+
+.PP
+create a periodic timer structure 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIsec\fP time interval in seconds 
+.br
+\fInsec\fP time interval in nano seconds 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+pointer to the created timer structure 
+.RE
+.PP
+
+.SS "void smx_net_destroy_tf (smx_net_t * net)"
+
+.PP
+destroy a timer structure and the list of temporal firewalls inside 
+.PP
+\fBParameters:\fP
+.RS 4
+\fInet\fP pointer to the temporal firewall 
+.RE
+.PP
+
+.SS "void smx_net_finalize_tf (smx_net_t * net)"
+Allocate net ports and assign connected tf ports to the net ports
+.PP
+\fBParameters:\fP
+.RS 4
+\fInet\fP pointer to the temporal firewall 
+.RE
+.PP
+
+.SS "void smx_net_init_tf (smx_net_t * net, int sec, int nsec)"
+
+.PP
+init a timer structure and the list of temporal firewalls inside 
+.PP
+\fBParameters:\fP
+.RS 4
+\fInet\fP pointer to the temporal firewall 
+.br
+\fIsec\fP time interval in seconds 
+.br
+\fInsec\fP time interval in nano seconds 
+.RE
+.PP
+
+.SS "int smx_tf (void * h, void * state)"
+
+.PP
+the box implementattion of the temporal firewall A temporal firewall peridically reads form producers and writes to consumers\&. All inputs and outputs are decoupled in order to prevent blocking\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP a pointer to the signature 
+.br
+\fIstate\fP a pointer to the persistent state structure 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+returns the progress state of the box
+.RE
+.PP
+To my future self: The time might come when you think it is a good idea to handle the termination process of tf like every other net or that it is a good idea to make the channel state UNINITIALISED blocking\&. Those two things \fBdo not work\fP in the context of a tf because unlike any other net multiple tfs might be combined into one single thread\&. This is why the channel state END is propagated through the tf such that specific connecting nets can terminate individually without having to wait for all connecting nets to terminate\&.
+.PP
+The blocking state UNINITIALISED must be avoided due to potential deadlocks\&. 
+.SS "void smx_tf_cleanup (void * h, void * state)"
+Cleanup the temporal firewall by freeing the state structure\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIstate\fP pointer to the state structure 
+.RE
+.PP
+
+.SS "void smx_tf_enable (smx_net_t * h)"
+
+.PP
+enable periodic tt timer 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP the net handler 
+.RE
+.PP
+
+.SS "int smx_tf_init (void * h, void ** state)"
+Initialises the temporal firewall\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIstate\fP pointer to the state structure 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure 
+.RE
+.PP
+
+.SS "void smx_tf_propagate_msgs (smx_net_t * h, int copy)"
+Read all input channels of a temporal firewall and propagate the messages to the corresponding outputs of the temporal firewall\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIcopy\fP 1 if messages ought to be duplicated, 0 otherwise 
+.RE
+.PP
+
+.SS "void smx_tf_wait (smx_net_t * h)"
+
+.PP
+blocking wait on timer Waits on the specified time interval\&. An error message is printed if the deadline was missed\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP the net handler 
+.RE
+.PP
+
+.SS "void* start_routine_smx_tf (void * h)"
+This function is predefined and must not be changed\&. It will be passed to the net thread upon creation and will be executed as soon as the thread is started\&. This function calls a macro which is define in the RTS and handles the initialisation, the main loop of the net and the cleanup\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP A pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+This function always returns NULL\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.

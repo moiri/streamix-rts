@@ -1,0 +1,157 @@
+.TH "include/smxconfig.h" 3 "Wed Feb 26 2020" "Version v0.5.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxconfig.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <bson\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include 'smxtypes\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "bool \fBsmx_config_get_bool\fP (bson_t *conf, const char *search)"
+.br
+.ti -1c
+.RI "bool \fBsmx_config_get_bool_err\fP (bson_t *conf, const char *search, \fBsmx_config_error_t\fP *err)"
+.br
+.ti -1c
+.RI "int \fBsmx_config_get_int\fP (bson_t *conf, const char *search)"
+.br
+.ti -1c
+.RI "int \fBsmx_config_get_int_err\fP (bson_t *conf, const char *search, \fBsmx_config_error_t\fP *err)"
+.br
+.ti -1c
+.RI "double \fBsmx_config_get_double\fP (bson_t *conf, const char *search)"
+.br
+.ti -1c
+.RI "double \fBsmx_config_get_double_err\fP (bson_t *conf, const char *search, \fBsmx_config_error_t\fP *err)"
+.br
+.ti -1c
+.RI "const char * \fBsmx_config_get_string\fP (bson_t *conf, const char *search, unsigned int *len)"
+.br
+.ti -1c
+.RI "const char * \fBsmx_config_get_string_err\fP (bson_t *conf, const char *search, unsigned int *len, \fBsmx_config_error_t\fP *err)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Helper functions for parsing configuration files of the runtime systemr library of Streamix\&. 
+.SH "Function Documentation"
+.PP 
+.SS "bool smx_config_get_bool (bson_t * conf, const char * search)"
+This is the same as \fBsmx_config_get_bool_err()\fP however without the err output parameter\&.
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Helper functions for parsing configuration files of the runtime systemr library of Streamix\&. 
+.SS "bool smx_config_get_bool_err (bson_t * conf, const char * search, \fBsmx_config_error_t\fP * err)"
+Get a boolean value from the config file\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIconf\fP The pointer to th econfig file\&. 
+.br
+\fIsearch\fP A dot-notation key like 'a\&.b\&.c\&.d'\&. 
+.br
+\fIerr\fP A pointer to a config error flag\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The boolean value read from the file or false if value is not available\&. 
+.RE
+.PP
+
+.SS "double smx_config_get_double (bson_t * conf, const char * search)"
+This is the same as \fBsmx_config_get_double_err()\fP however without the err output parameter\&. 
+.SS "double smx_config_get_double_err (bson_t * conf, const char * search, \fBsmx_config_error_t\fP * err)"
+Get a double value from the config file\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIconf\fP The pointer to th econfig file\&. 
+.br
+\fIsearch\fP A dot-notation key like 'a\&.b\&.c\&.d'\&. 
+.br
+\fIerr\fP A pointer to a config error flag\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The double value read from the file or 0 if value is not available\&. 
+.RE
+.PP
+
+.SS "int smx_config_get_int (bson_t * conf, const char * search)"
+This is the same as \fBsmx_config_get_int_err()\fP however without the err output parameter\&. 
+.SS "int smx_config_get_int_err (bson_t * conf, const char * search, \fBsmx_config_error_t\fP * err)"
+Get an int value from the config file\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIconf\fP The pointer to th econfig file\&. 
+.br
+\fIsearch\fP A dot-notation key like 'a\&.b\&.c\&.d'\&. 
+.br
+\fIerr\fP A pointer to a config error flag\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The int value read from the file or 0 if value is not available\&. 
+.RE
+.PP
+
+.SS "const char* smx_config_get_string (bson_t * conf, const char * search, unsigned int * len)"
+This is the same as \fBsmx_config_get_string_err()\fP however without the err output parameter\&. 
+.SS "const char* smx_config_get_string_err (bson_t * conf, const char * search, unsigned int * len, \fBsmx_config_error_t\fP * err)"
+Get a string value from the config file\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIconf\fP The pointer to th econfig file\&. 
+.br
+\fIsearch\fP A dot-notation key like 'a\&.b\&.c\&.d'\&. 
+.br
+\fIlen\fP An optional autput buffer to store the string length\&. 
+.br
+\fIerr\fP A pointer to a config error flag\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The string value read from the file or NULL if value is not available\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.
