@@ -81,11 +81,13 @@ install:
 	cp -a $(INCLUDES) $(TGT_INCLUDE)/.
 	cp -a $(LOC_LIB_DIR)/$(LLIBNAME).so $(TGT_LIB)/$(SONAME)
 	ln -sf $(SONAME) $(TGT_LIB)/$(VLIBNAME).so
+	ln -sf $(SONAME) $(TGT_LIB)/$(LLIBNAME).so
 
 uninstall:
 	rm $(addprefix $(TGT_INCLUDE)/,$(notdir $(wildcard $(INCLUDES))))
 	rm $(TGT_LIB)/$(SONAME)
 	rm $(TGT_LIB)/$(VLIBNAME).so
+	rm $(TGT_LIB)/$(LLIBNAME).so
 
 clean:
 	rm -rf $(LOC_LIB_DIR)
