@@ -1,0 +1,23 @@
+Source: libsmxrts0.4
+Priority: optional
+Maintainer: Simon Maurer <simon.maurer@humdek.unibe.ch>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.1.2
+Section: libs
+Homepage: https://github.com/moiri/streamix-rts
+
+Package: libsmxrts-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libsmxrts0.4 (= ${binary:Version}), ${misc:Depends}
+Description: Development Package of 'libsmxrts'
+ This is the development package of the library 'libsmxrts'. This library
+ contains the Streamix RTS.
+
+Package: libsmxrts0.4
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Streamix RTS
+ The runtime system (RTS) for the coordination language Streamix.

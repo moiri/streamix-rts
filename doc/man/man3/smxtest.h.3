@@ -1,0 +1,70 @@
+.TH "include/smxtest.h" 3 "Wed Feb 26 2020" "Version v0.4.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxtest.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <bson\&.h>\fP
+.br
+\fC#include 'smxutils\&.h'\fP
+.br
+\fC#include 'smxtypes\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "const bson_value_t * \fBsmx_read_test_data\fP (smx_net_t *h, const char *mode, const char *port_name)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+A test environment that allows to test box implementation without having to run them inside a streamix application\&. 
+.SH "Function Documentation"
+.PP 
+.SS "const bson_value_t* smx_read_test_data (smx_net_t * h, const char * mode, const char * port_name)"
+Read the test data from the configuration file\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP The net handler\&. 
+.br
+\fImode\fP The port mode, either 'in' or 'out'\&. 
+.br
+\fIport_name\fP The name of the port\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+A pointer to the configuration value or NULL on failure\&.
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+A test environment that allows to test box implementation without having to run them inside a streamix application\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.
