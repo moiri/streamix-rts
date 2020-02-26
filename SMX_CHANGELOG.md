@@ -1,4 +1,12 @@
-# `v0.5.0` (latest)
+# `v0.5.1` (latest)
+
+### Bug Fixes
+
+ - fix memory leak
+
+
+-------------------
+# `v0.5.0`
 
 ### Bug Fixes
 
