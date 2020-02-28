@@ -3,6 +3,7 @@
 ### Bug Fixes
 
  - fix memory leak
+ - protect content filter setter with mutex
 
 
 -------------------
