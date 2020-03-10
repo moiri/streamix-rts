@@ -1,4 +1,4 @@
-.TH "include/smxtypes.h" 3 "Wed Feb 26 2020" "Version v0.5.0" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxtypes.h" 3 "Tue Mar 10 2020" "Version v0.5.1" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,6 +11,8 @@ include/smxtypes.h
 \fC#include <pthread\&.h>\fP
 .br
 \fC#include <zlog\&.h>\fP
+.br
+\fC#include <bson\&.h>\fP
 .br
 
 .SS "Data Structures"
@@ -265,7 +267,7 @@ void * \fIattr\fP custom attributes of special nets
 zlog_category_t * \fIcat\fP the log category 
 .br
 .PP
-void * \fIconf\fP pointer to the XML configuration 
+void * \fIconf\fP pointer to the net configuration 
 .br
 .PP
 const char * \fIconf_port_name\fP port name on which to receive the dynamic configuration 
@@ -275,6 +277,9 @@ int \fIconf_port_timeout\fP read timeout on dynamic conf port in milliseconds
 .br
 .PP
 unsigned long \fIcount\fP loop counter 
+.br
+.PP
+bson_t * \fIdyn_conf\fP pointer to the dynamic configuration 
 .br
 .PP
 struct timespec \fIend_wall\fP end time of a net (befoer cleanup) 
@@ -305,6 +310,9 @@ smx_net_sig_t * \fIsig\fP the net port signature
 .br
 .PP
 struct timespec \fIstart_wall\fP start time of a net (after init) 
+.br
+.PP
+bson_t * \fIstatic_conf\fP pointer to the static configuration 
 .br
 .PP
 .RE
