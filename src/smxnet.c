@@ -126,9 +126,8 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->name = name;
     net->impl = impl;
     net->attr = NULL;
-    net->static_conf = bson_new();
+    net->static_conf = NULL;
     net->dyn_conf = NULL;
-    net->conf = net->static_conf;
     smx_net_get_json_doc( net, conf, name, impl, id );
     net->has_profiler = smx_net_get_boolean_prop( conf, name, impl, id,
             "profiler" );
@@ -151,7 +150,7 @@ void smx_net_destroy( smx_net_t* h )
     {
         if( h->static_conf != NULL )
         {
-            bson_free( h->static_conf );
+            bson_destroy( h->static_conf );
         }
         if( h->dyn_conf != NULL )
         {
@@ -294,7 +293,8 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
                 search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &child ) )
     {
         bson_iter_document( &child, &len, &nets );
-        bson_init_static( h->conf, nets, len );
+        h->static_conf = bson_new_from_data( nets, len );
+        h->conf = h->static_conf;
         SMX_LOG_NET( h, notice, "load configuration '%s'", search_str );
         return 0;
     }
@@ -310,7 +310,9 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
             return -1;
         }
 
-        rc = bson_json_reader_read( reader, h->conf, &error );
+        h->static_conf = bson_new();
+        rc = bson_json_reader_read( reader, h->static_conf, &error );
+        h->conf = h->static_conf;
         if( rc < 0 )
         {
             SMX_LOG_NET( h, error,
