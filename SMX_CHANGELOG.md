@@ -1,4 +1,13 @@
-# `v0.5.0` (latest)
+# `v0.5.1` (latest)
+
+### Bug Fixes
+
+ - fix memory leak
+ - protect content filter setter with mutex
+
+
+-------------------
+# `v0.5.0`
 
 ### Bug Fixes
 

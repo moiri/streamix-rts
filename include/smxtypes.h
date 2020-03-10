@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <zlog.h>
+#include <bson.h>
 
 #ifndef SMXTYPES_H
 #define SMXTYPES_H
@@ -254,7 +255,9 @@ struct smx_net_s
     /** read timeout on dynamic conf port in milliseconds */
     int                 conf_port_timeout;
     void*               attr;         /**< custom attributes of special nets */
-    void*               conf;         /**< pointer to the XML configuration */
+    void*               conf;         /**< pointer to the net configuration */
+    bson_t*             dyn_conf;     /**< pointer to the dynamic configuration */
+    bson_t*             static_conf;  /**< pointer to the static configuration */
     const char*         name;         /**< the name of the net */
     const char*         impl;         /**< the name of the box implementation */
     struct timespec     start_wall;   /**< start time of a net (after init) */

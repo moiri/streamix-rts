@@ -279,7 +279,9 @@ bool smx_channel_set_content_filter( smx_channel_t* ch,
     if( ch == NULL || ch->sink == NULL || filter == NULL )
         return false;
     SMX_LOG_CH( ch, notice, "adding message content filter" );
+    pthread_mutex_lock( &ch->ch_mutex );
     ch->sink->content_filter = filter;
+    pthread_mutex_unlock( &ch->ch_mutex );
     return true;
 }
 

@@ -14,6 +14,7 @@
 #include "smxch.h"
 #include "smxconfig.h"
 #include "smxnet.h"
+#include "smxmsg.h"
 #include "smxprofiler.h"
 #include "smxutils.h"
 
@@ -125,7 +126,8 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->name = name;
     net->impl = impl;
     net->attr = NULL;
-    net->conf = bson_new();
+    net->static_conf = NULL;
+    net->dyn_conf = NULL;
     smx_net_get_json_doc( net, conf, name, impl, id );
     net->has_profiler = smx_net_get_boolean_prop( conf, name, impl, id,
             "profiler" );
@@ -146,7 +148,14 @@ void smx_net_destroy( smx_net_t* h )
 {
     if( h != NULL )
     {
-        bson_free( h->conf );
+        if( h->static_conf != NULL )
+        {
+            bson_destroy( h->static_conf );
+        }
+        if( h->dyn_conf != NULL )
+        {
+            bson_destroy( h->dyn_conf );
+        }
         if( h->sig != NULL )
         {
             if( h->sig->in.ports != NULL )
@@ -284,7 +293,8 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
                 search_str, &child ) && BSON_ITER_HOLDS_DOCUMENT( &child ) )
     {
         bson_iter_document( &child, &len, &nets );
-        bson_init_static( h->conf, nets, len );
+        h->static_conf = bson_new_from_data( nets, len );
+        h->conf = h->static_conf;
         SMX_LOG_NET( h, notice, "load configuration '%s'", search_str );
         return 0;
     }
@@ -300,7 +310,9 @@ int smx_net_get_json_doc_item( smx_net_t* h, bson_t* conf,
             return -1;
         }
 
-        rc = bson_json_reader_read( reader, h->conf, &error );
+        h->static_conf = bson_new();
+        rc = bson_json_reader_read( reader, h->static_conf, &error );
+        h->conf = h->static_conf;
         if( rc < 0 )
         {
             SMX_LOG_NET( h, error,
@@ -431,7 +443,6 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
     smx_channel_t* conf_port;
     smx_channel_err_t c_err;
     smx_msg_t* msg;
-    bson_t* dyn_conf;
     bson_error_t b_err;
     bool has_init_err = false;
     /* xmlChar* profiler = NULL; */
@@ -478,8 +489,8 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         }
         else
         {
-            dyn_conf = bson_new_from_json( msg->data, msg->size, &b_err );
-            if( dyn_conf == NULL )
+            h->dyn_conf = bson_new_from_json( msg->data, msg->size, &b_err );
+            if( h->dyn_conf == NULL )
             {
                 SMX_LOG( h, error, "unable to parse dynamic configuration" );
                 has_init_err = true;
@@ -487,11 +498,11 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
             }
             SMX_LOG( h, debug, "received dynamic configuration: %s",
                     ( char* )msg->data );
-            bson_destroy( h->conf );
-            h->conf = dyn_conf;
+            h->conf = h->dyn_conf;
             SMX_LOG( h, notice, "dynamic configuration received and"
                     " successfully parsed" );
         }
+        SMX_MSG_DESTROY( h, msg );
     }
 
     if( init( h, &net_state ) != 0 )
