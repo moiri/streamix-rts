@@ -1,4 +1,4 @@
-.TH "include/smxtypes.h" 3 "Tue Mar 10 2020" "Version v0.5.1" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxtypes.h" 3 "Thu Mar 12 2020" "Version v0.5.2" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -294,13 +294,13 @@ bool \fIhas_type_filter\fP is type filter enabled?
 unsigned int \fIid\fP a unique net id 
 .br
 .PP
-const char * \fIimpl\fP the name of the box implementation 
+char * \fIimpl\fP the name of the box implementation 
 .br
 .PP
 pthread_barrier_t * \fIinit_done\fP pointer to the init sync barrier 
 .br
 .PP
-const char * \fIname\fP the name of the net 
+char * \fIname\fP the name of the net 
 .br
 .PP
 int \fIpriority\fP the thread priority of the net\&. 0 means ET, >0 means TT 
