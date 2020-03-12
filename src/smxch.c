@@ -87,7 +87,7 @@ smx_channel_t* smx_channel_create( int* ch_cnt, int len,
     ch->fifo = smx_fifo_create( len );
     ch->collector = NULL;
     ch->guard = NULL;
-    ch->name = name;
+    ch->name = ( name == NULL ) ? NULL : strdup( name );
     ch->cat = zlog_get_category( cat_name );
     ch->sink = smx_channel_create_end();
     ch->source = smx_channel_create_end();
@@ -133,6 +133,8 @@ void smx_channel_destroy( smx_channel_t* ch )
         return;
     SMX_LOG_MAIN( ch, debug, "destroy channel '%s(%d)' (msg count: %d)",
             ch->name, ch->id, ch->fifo->count );
+    if( ch->name != NULL )
+        free( ch->name );
     smx_guard_destroy( ch->guard );
     smx_fifo_destroy( ch->fifo );
     smx_channel_destroy_end( ch->sink );

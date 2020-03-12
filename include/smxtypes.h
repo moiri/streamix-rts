@@ -138,7 +138,7 @@ struct smx_channel_s
 {
     int                 id;         /**< the id of the channel */
     smx_channel_type_t  type;       /**< type of the channel */
-    const char*         name;       /**< name of the channel */
+    char*               name;       /**< name of the channel */
     smx_fifo_t*         fifo;       /**< ::smx_fifo_s */
     smx_guard_t*        guard;      /**< ::smx_guard_s */
     smx_collector_t*    collector;  /**< ::smx_collector_s, collect signals */
