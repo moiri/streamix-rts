@@ -1,4 +1,12 @@
-# `v0.5.2` (latest)
+# `v0.5.3` (latest)
+
+### Changes
+
+ - allocate/free channel name
+
+
+-------------------
+# `v0.5.2`
 
 ### Changes
 
