@@ -1,4 +1,12 @@
-# `v0.5.1` (latest)
+# `v0.5.2` (latest)
+
+### Changes
+
+ - allocate/free net and impl name
+
+
+-------------------
+# `v0.5.1`
 
 ### Bug Fixes
 
