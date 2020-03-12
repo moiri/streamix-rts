@@ -123,8 +123,8 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->priority = prio;
     net->init_done = init_done;
     net->cat = zlog_get_category( cat_name );
-    net->name = name;
-    net->impl = impl;
+    net->name = ( name == NULL ) ? NULL : strdup( name );
+    net->impl = ( impl == NULL ) ? NULL : strdup( impl );
     net->attr = NULL;
     net->static_conf = NULL;
     net->dyn_conf = NULL;
@@ -148,6 +148,10 @@ void smx_net_destroy( smx_net_t* h )
 {
     if( h != NULL )
     {
+        if( h->name != NULL )
+            free( h->name );
+        if( h->impl != NULL )
+            free( h->impl );
         if( h->static_conf != NULL )
         {
             bson_destroy( h->static_conf );
