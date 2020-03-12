@@ -258,8 +258,8 @@ struct smx_net_s
     void*               conf;         /**< pointer to the net configuration */
     bson_t*             dyn_conf;     /**< pointer to the dynamic configuration */
     bson_t*             static_conf;  /**< pointer to the static configuration */
-    const char*         name;         /**< the name of the net */
-    const char*         impl;         /**< the name of the box implementation */
+    char*               name;         /**< the name of the net */
+    char*               impl;         /**< the name of the box implementation */
     struct timespec     start_wall;   /**< start time of a net (after init) */
     struct timespec     end_wall;     /**< end time of a net (befoer cleanup) */
 };
