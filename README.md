@@ -38,6 +38,10 @@ Requires
     resulting software must be published under
     [LGPL-v2.1](https://choosealicense.com/licenses/lgpl-2.1/).
 
+    **Impotant Note:** In the context of a TPF installation do **not** use this
+    submodule but refer to the zlog dependency package on the internal
+    [GitLab](http://phhum-a209-cp.unibe.ch:10012/SMX/SMX-deps/SMX-zlog).
+
  - [`libbson`](http://mongoc.org/libbson/current/index.html)
 
     ```
