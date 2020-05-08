@@ -528,8 +528,8 @@ smx_barrier:
     SMX_LOG_NET( h, notice, "start net" );
     while( state == SMX_NET_CONTINUE )
     {
-        SMX_LOG_NET( h, info, "start net loop" );
         h->count++;
+        SMX_LOG_NET( h, info, "start net loop %ld", h->count );
         smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
         state = impl( h, net_state );
         state = smx_net_update_state( h, state );
