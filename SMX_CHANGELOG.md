@@ -1,3 +1,15 @@
+# `v0.5.4` (latest)
+
+### Bug Fixes
+
+ - fix test dataset indexing
+
+### Changes
+
+ - log net execution count
+
+
+-------------------
 # `v0.5.3` (latest)
 
 ### Changes
