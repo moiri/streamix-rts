@@ -17,16 +17,14 @@ const bson_value_t* smx_read_test_data( smx_net_t* h, const char* mode,
         const char* port_name )
 {
     char search_str[1000];
-    static int idx = 0;
     bson_iter_t iter;
     bson_iter_t child;
     sprintf( search_str, "test_data.%s.%s.%d", mode, port_name,
-            idx );
+            (int)h->count - 1 );
     if( bson_iter_init( &iter, h->conf ) && bson_iter_find_descendant( &iter,
                 search_str, &child ) )
     {
         SMX_LOG_NET( h, debug, "reading test data from config node '%s'", search_str );
-        idx++;
         return bson_iter_value( &child );
     }
     else
