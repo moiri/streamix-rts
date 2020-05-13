@@ -3,6 +3,7 @@
 ### Bug Fixes
 
  - fix test dataset indexing
+ - fix test channel write macro
 
 ### Changes
 

@@ -62,7 +62,7 @@
  */
 #define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
     box_name ## _out_data_conversion( h, smx_read_test_data( h, "out", #ch_name ),\
-            SMX_SIG_PORT_IDX( box_name, ch_name, in ), data )
+            SMX_SIG_PORT_IDX( box_name, ch_name, out ), data )
 
 /**
  * @def SMX_GET_READ_ERROR()
