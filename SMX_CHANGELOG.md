@@ -1,4 +1,12 @@
-# `v0.5.4` (latest)
+# `v0.5.5` (latest)
+
+### Bug Fixes
+
+ - fix test channel write macro
+
+
+-------------------
+# `v0.5.4`
 
 ### Bug Fixes
 
@@ -10,7 +18,7 @@
 
 
 -------------------
-# `v0.5.3` (latest)
+# `v0.5.3`
 
 ### Changes
 
