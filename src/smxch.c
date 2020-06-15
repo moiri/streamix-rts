@@ -936,7 +936,7 @@ int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         return -1;
     }
     if( ( itval.it_value.tv_sec != 0 ) || ( itval.it_value.tv_nsec != 0 ) ) {
-        SMX_LOG_CH( ch, notice, "rate_control: discard message '%lu'",
+        SMX_LOG_CH( ch, info, "rate_control: discard message '%lu'",
                 msg->id );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_DISMISS,
                 ch->fifo->count );
