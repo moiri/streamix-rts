@@ -573,6 +573,15 @@ void smx_connect_in( smx_channel_t** dest, smx_channel_t* src, smx_net_t* net,
 }
 
 /*****************************************************************************/
+void smx_connect_open( int* count, int static_count )
+{
+    while( *count < static_count )
+    {
+        ( *count )++;
+    }
+}
+
+/*****************************************************************************/
 void smx_connect_out( smx_channel_t** dest, smx_channel_t* src, smx_net_t* net,
         const char* mode, int* count )
 {
@@ -831,7 +840,7 @@ smx_channel_t* smx_get_channel_by_name( smx_channel_t** ports, int count,
 {
     int i;
     for( i = 0; i < count; i++ )
-        if( 0 == strcmp( ports[i]->name, name ) )
+        if( ports[i] && ( 0 == strcmp( ports[i]->name, name ) ) )
             return ports[i];
     return NULL;
 }
@@ -936,7 +945,7 @@ int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         return -1;
     }
     if( ( itval.it_value.tv_sec != 0 ) || ( itval.it_value.tv_nsec != 0 ) ) {
-        SMX_LOG_CH( ch, notice, "rate_control: discard message '%lu'",
+        SMX_LOG_CH( ch, info, "rate_control: discard message '%lu'",
                 msg->id );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_DISMISS,
                 ch->fifo->count );

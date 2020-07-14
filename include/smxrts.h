@@ -89,6 +89,15 @@ struct smx_rts_s
             smx_guard_create( iats, iatns, rts->chs[id] ) )
 
 /**
+ * Macro to accomodate for open ports.
+ */
+#define SMX_CONNECT_OPEN( net_id, box_name, mode )\
+    smx_connect_open(\
+            SMX_SIG_PORT_COUNT( rts->nets[net_id], SMX_MODE_LOW_ ## mode ),\
+            SMX_ ## mode ## DEGREE_ ## box_name\
+    )
+
+/**
  * Macro to connect a collector to a routing node net.
  */
 #define SMX_CONNECT_RN( net_id, ch_id )\
@@ -137,8 +146,8 @@ struct smx_rts_s
  */
 #define SMX_NET_INIT( id, indegree, outdegree, box_name )\
     smx_net_init( rts->nets[id],\
-            SMX_MAX( indegree, SMX_INDEGREE_ ## box_name ),\
-            SMX_MAX( outdegree, SMX_OUTDEGREE_ ## box_name ) )
+            indegree + SMX_INDEGREE_ ## box_name,\
+            outdegree + SMX_OUTDEGREE_ ## box_name )
 
 /**
  * Allocate the necessary space for a routing node structure.

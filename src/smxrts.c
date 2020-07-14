@@ -42,7 +42,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf )
 
     int rc = smx_log_init( log_conf );
 
-    if( rc ) {
+    if( rc < 0 ) {
         fprintf( stderr, "error: failed to initialise zlog, aborting\n" );
         exit( 0 );
     }

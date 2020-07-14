@@ -26,6 +26,24 @@
 #define SMX_MODE_out    "<-"
 
 /**
+ * Transfrom input mode to uppercase
+ */
+#define SMX_MODE_UPP_in  IN
+/**
+ * Transfrom output mode to uppercase
+ */
+#define SMX_MODE_UPP_out OUT
+
+/**
+ * Transfrom input mode to lowercase
+ */
+#define SMX_MODE_LOW_IN  in
+/**
+ * Transfrom output mode to lowercase
+ */
+#define SMX_MODE_LOW_OUT out
+
+/**
  * Macro to check whether a net signature is defined.
  */
 #define SMX_NO_SIG( h )\

@@ -29,7 +29,7 @@ int smx_log_init( const char* log_conf )
 
     int rc = zlog_init( log_conf );
 
-    if( rc ) {
+    if( rc < 0 ) {
         fprintf( stderr,
                 "error: failed to init zlog with configuration file: '%s'\n",
                 log_conf );

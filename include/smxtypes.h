@@ -17,6 +17,19 @@
 #ifndef SMXTYPES_H
 #define SMXTYPES_H
 
+#define SMX_MSG_RAW_TYPE 0
+#define SMX_MSG_RAW_TYPE_STR "raw"
+#define SMX_MSG_INT_TYPE 1
+#define SMX_MSG_INT_TYPE_STR "int"
+#define SMX_MSG_DOUBLE_TYPE 2
+#define SMX_MSG_DOUBLE_TYPE_STR "double"
+#define SMX_MSG_BOOL_TYPE 3
+#define SMX_MSG_BOOL_TYPE_STR "bool"
+#define SMX_MSG_STRING_TYPE 4
+#define SMX_MSG_STRING_TYPE_STR "string"
+#define SMX_MSG_JSON_TYPE 5
+#define SMX_MSG_JSON_TYPE_STR "json"
+
 /**
  * The streamix channel error type. Refer to the error enumeration definition
  * for more details #smx_channel_err_e.

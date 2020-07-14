@@ -433,6 +433,18 @@ void smx_connect_in( smx_channel_t** dest, smx_channel_t* src, smx_net_t* net,
         const char* mode, int* count );
 
 /**
+ * Increment the port counter to take into account any non-declared open port.
+ * This helps to avoid missaligned connections if an open port was ommitted in
+ * the STreamix decalration.
+ *
+ * @param count
+ *  A pointer to the current port counter.
+ * @param static_count
+ *  The number of static ports.
+ */
+void smx_connect_open( int* count, int static_count );
+
+/**
  * Connect a channel to an output of a net.
  *
  * @param dest        a pointer to the destination

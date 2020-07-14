@@ -474,7 +474,7 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
             has_init_err = true;
             goto smx_barrier;
         }
-        SMX_LOG_NET( h, notice, "awaiting dynamic configuration" );
+        SMX_LOG_NET( h, notice, "awaiting dynamic configuration..." );
         smx_channel_set_filter( h, conf_port, 1, "json" );
         smx_set_read_timeout( conf_port, h->conf_port_timeout / 1000,
                 ( h->conf_port_timeout % 1000 ) * 1000000 );
