@@ -1,4 +1,18 @@
-# `v0.5.5` (latest)
+# `v0.5.6` (latest)
+
+### Bug Fixes
+
+ - fix open port connection problem when open port is omitted in Streamix
+ - fix zlog initialisation check
+
+### Changes
+
+ - reduce log level for rate-controller messages from notice to info
+ - add base message type definitions
+
+
+-------------------
+# `v0.5.5`
 
 ### Bug Fixes
 
