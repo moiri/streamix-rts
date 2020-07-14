@@ -1,4 +1,4 @@
-.TH "include/smxrts.h" 3 "Thu May 14 2020" "Version v0.5.5" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxrts.h" 3 "Tue Jul 14 2020" "Version v0.5.6" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -62,6 +62,9 @@ include/smxrts.h
 .br
 .ti -1c
 .RI "#define \fBSMX_CONNECT_GUARD\fP(id,  iats,  iatns)"
+.br
+.ti -1c
+.RI "#define \fBSMX_CONNECT_OPEN\fP(net_id,  box_name,  mode)"
 .br
 .ti -1c
 .RI "#define \fBSMX_CONNECT_RN\fP(net_id,  ch_id)   \fBsmx_connect_rn\fP( rts\->chs[ch_id], rts\->nets[net_id] )"
@@ -216,6 +219,16 @@ smx_connect_guard( rts->chs[id],\
             smx_guard_create( iats, iatns, rts->chs[id] ) )
 .fi
 Macro to connect a rate control guard to a streamix channel\&. 
+.SS "#define SMX_CONNECT_OPEN(net_id, box_name, mode)"
+\fBValue:\fP
+.PP
+.nf
+smx_connect_open(\
+            SMX_SIG_PORT_COUNT( rts->nets[net_id], SMX_MODE_LOW_ ## mode ),\
+            SMX_ ## mode ## DEGREE_ ## box_name\
+    )
+.fi
+Macro to accomodate for open ports\&. 
 .SS "#define SMX_CONNECT_RN(net_id, ch_id)   \fBsmx_connect_rn\fP( rts\->chs[ch_id], rts\->nets[net_id] )"
 Macro to connect a collector to a routing node net\&. 
 .SS "#define SMX_CONNECT_TF(net_id, ch_in_id, ch_out_id, ch_name)   \fBsmx_connect_tf\fP( rts\->nets[net_id], rts\->chs[ch_in_id], rts\->chs[ch_out_id] )"
@@ -242,8 +255,8 @@ Macro to interconnect temporal fierwalls with neighbouring nets\&.
 .PP
 .nf
 smx_net_init( rts->nets[id],\
-            SMX_MAX( indegree, SMX_INDEGREE_ ## box_name ),\
-            SMX_MAX( outdegree, SMX_OUTDEGREE_ ## box_name ) )
+            indegree + SMX_INDEGREE_ ## box_name,\
+            outdegree + SMX_OUTDEGREE_ ## box_name )
 .fi
 Allocate the necessary space for a net structure\&. 
 .SS "#define SMX_NET_INIT_RN(id)   \fBsmx_net_init_rn\fP( rts\->nets[id] )"

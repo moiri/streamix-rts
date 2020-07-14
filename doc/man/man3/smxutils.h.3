@@ -1,4 +1,4 @@
-.TH "include/smxutils.h" 3 "Thu May 14 2020" "Version v0.5.5" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxutils.h" 3 "Tue Jul 14 2020" "Version v0.5.6" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -20,6 +20,18 @@ include/smxutils.h
 .br
 .ti -1c
 .RI "#define \fBSMX_MODE_out\fP   '<\-'"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_UPP_in\fP   IN"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_UPP_out\fP   OUT"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_LOW_IN\fP   in"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_LOW_OUT\fP   out"
 .br
 .ti -1c
 .RI "#define \fBSMX_NO_SIG\fP(h)   ( \fBSMX_SIG\fP( h ) == NULL )"
@@ -108,8 +120,16 @@ Utility functions for the runtime system library of Streamix
 .PP 
 .SS "#define SMX_MODE_in   '\->'"
 ASCII definition of an input port 
+.SS "#define SMX_MODE_LOW_IN   in"
+Transfrom input mode to lowercase 
+.SS "#define SMX_MODE_LOW_OUT   out"
+Transfrom output mode to lowercase 
 .SS "#define SMX_MODE_out   '<\-'"
 ASCII definition of an output port 
+.SS "#define SMX_MODE_UPP_in   IN"
+Transfrom input mode to uppercase 
+.SS "#define SMX_MODE_UPP_out   OUT"
+Transfrom output mode to uppercase 
 .SS "#define SMX_NO_SIG(h)   ( \fBSMX_SIG\fP( h ) == NULL )"
 Macro to check whether a net signature is defined\&. 
 .SS "#define SMX_NO_SIG_PORT(h, box_name, port_name, mode)   \fBSMX_SIG_PORT_LEN_NC\fP( h, mode ) <= \fBSMX_SIG_PORT_IDX\fP( box_name, port_name, mode )"

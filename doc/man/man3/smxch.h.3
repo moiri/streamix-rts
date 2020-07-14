@@ -1,4 +1,4 @@
-.TH "include/smxch.h" 3 "Thu May 14 2020" "Version v0.5.5" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxch.h" 3 "Tue Jul 14 2020" "Version v0.5.6" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -112,6 +112,9 @@ include/smxch.h
 .br
 .ti -1c
 .RI "void \fBsmx_connect_in\fP (smx_channel_t **dest, smx_channel_t *src, smx_net_t *net, const char *mode, int *count)"
+.br
+.ti -1c
+.RI "void \fBsmx_connect_open\fP (int *count, int static_count)"
 .br
 .ti -1c
 .RI "void \fBsmx_connect_out\fP (smx_channel_t **dest, smx_channel_t *src, smx_net_t *net, const char *mode, int *count)"
@@ -646,6 +649,17 @@ Connect a channel to an input of a net\&.
 \fImode\fP the direction of the connection 
 .br
 \fIcount\fP pointer to th econnected port counter 
+.RE
+.PP
+
+.SS "void smx_connect_open (int * count, int static_count)"
+Increment the port counter to take into account any non-declared open port\&. This helps to avoid missaligned connections if an open port was ommitted in the STreamix decalration\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcount\fP A pointer to the current port counter\&. 
+.br
+\fIstatic_count\fP The number of static ports\&. 
 .RE
 .PP
 
