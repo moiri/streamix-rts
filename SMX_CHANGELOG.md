@@ -1,3 +1,11 @@
+# `v0.5.6` (in progress)
+
+### Changes
+
+ - Change type of message ID from `unsigned long` to `unsigned long long`.
+
+
+-------------------
 # `v0.5.6` (latest)
 
 ### Bug Fixes
