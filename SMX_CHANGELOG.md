@@ -1,4 +1,4 @@
-# `v0.5.6` (in progress)
+# `v0.6.0` (in progress)
 
 ### Changes
 
