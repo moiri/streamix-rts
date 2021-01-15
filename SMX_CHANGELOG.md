@@ -1,8 +1,9 @@
-# `v0.5.7` (latest)
+# `v0.6.0` (in progress)
 
 ### Changes
 
- - accumulate overwrite fifo messages to avoid log bursts
+ - Accumulate overwrite fifo messages to avoid log bursts.
+ - Change type of message ID from `unsigned long` to `unsigned long long`.
 
 
 -------------------
