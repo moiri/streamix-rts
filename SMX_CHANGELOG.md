@@ -1,4 +1,4 @@
-# `v0.6.0` (in progress)
+# `v0.6.0` (latest)
 
 ### Changes
 
@@ -7,7 +7,7 @@
 
 
 -------------------
-# `v0.5.6` (latest)
+# `v0.5.6`
 
 ### Bug Fixes
 
