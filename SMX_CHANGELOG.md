@@ -1,3 +1,11 @@
+# `v0.5.7` (latest)
+
+### Changes
+
+ - accumulate overwrite fifo messages to avoid log bursts
+
+
+-------------------
 # `v0.5.6` (latest)
 
 ### Bug Fixes

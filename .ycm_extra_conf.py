@@ -60,7 +60,7 @@ flags = [
 '-isystem', '/usr/local/include',
 '-isystem', '/usr/target/include',
 '-isystem', '/usr/include',
-'-isystem', '/usr/include/libxml2',
+'-isystem', '/usr/include/smx',
 '-isystem', '/usr/include/libmongoc-1.0',
 '-isystem', '/usr/include/libbson-1.0',
 '-I', '.',
