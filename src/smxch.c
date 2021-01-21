@@ -173,7 +173,7 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
     if( ch == NULL )
         return NULL;
 
-    if( ch->source ==  NULL )
+    if( ch->source == NULL )
     {
         SMX_LOG_MAIN( main, fatal, "channel not initialised" );
         return NULL;

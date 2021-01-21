@@ -19,8 +19,6 @@
  */
 #define SMX_MAX_CHS 10000
 
-#ifndef SMX_TESTING
-
 /**
  * @def SMX_CHANNEL_READ()
  *
@@ -63,6 +61,8 @@
  */
 #define SMX_CHANNEL_WRITE( h, box_name, ch_name, data )\
     smx_channel_write( h, SMX_SIG_PORT( h, box_name, ch_name, out ), data )
+
+#ifndef SMX_TESTING
 
 /**
  * @def SMX_GET_READ_ERROR()

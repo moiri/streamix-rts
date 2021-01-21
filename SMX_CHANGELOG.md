@@ -1,9 +1,17 @@
 # `v0.6.0` (latest)
 
+### Bug Fixes
+
+ - Fix the counting mechanism in the test functions to allow for multiple reads
+   or writes in one net execution iteration.
+
 ### Changes
 
  - Accumulate overwrite fifo messages to avoid log bursts.
  - Change type of message ID from `unsigned long` to `unsigned long long`.
+ - In order to catch all test read and write operations the test file in the box
+   implementation must now overwrite the RTS versions. The redefinitions in the
+   RTS have been removed.
 
 
 -------------------

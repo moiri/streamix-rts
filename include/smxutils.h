@@ -150,6 +150,20 @@
         ? NULL : &SMX_SIG_PORT_NC( h, box_name, port_name, mode ) )
 
 /**
+ * Macro to get the channel end which is connected to an output port.
+ */
+#define SMX_SIG_PORT_WRITE_END( h, box_name, port_name )\
+    SMX_NO_SIG_PORT( h, box_name, port_name, out )\
+        ? NULL : SMX_SIG_PORT_NC( h, box_name, port_name, out )->sink
+
+/**
+ * Macro to get the channel end which is connected to an input port.
+ */
+#define SMX_SIG_PORT_READ_END( h, box_name, port_name )\
+    SMX_NO_SIG_PORT( h, box_name, port_name, in )\
+        ? NULL : SMX_SIG_PORT_NC( h, box_name, port_name, in )->source
+
+/**
  * Macro to get the port signature structure.
  */
 #define SMX_SIG_PORTS( h, mode )\
