@@ -164,6 +164,8 @@ void smx_channel_destroy_end( smx_channel_end_t* end )
     free( end );
 }
 
+#ifndef SMX_TESTING
+
 /*****************************************************************************/
 smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
 {
@@ -236,6 +238,8 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
     pthread_mutex_unlock( &ch->ch_mutex );
     return msg;
 }
+
+#endif /* SMX_TESTING */
 
 /*****************************************************************************/
 int smx_channel_ready_to_read( smx_channel_t* ch )
@@ -337,6 +341,8 @@ void smx_channel_terminate_source( smx_channel_t* ch )
     smx_channel_change_read_state( ch, SMX_CHANNEL_END );
     pthread_mutex_unlock( &ch->ch_mutex );
 }
+
+#ifndef SMX_TESTING
 
 /*****************************************************************************/
 int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
@@ -495,6 +501,8 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     pthread_mutex_unlock( &ch->ch_mutex );
     return 0;
 }
+
+#endif /* SMX_TESTING */
 
 /*****************************************************************************/
 smx_collector_t* smx_collector_create()
