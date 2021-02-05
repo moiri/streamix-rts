@@ -126,6 +126,7 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->name = ( name == NULL ) ? NULL : strdup( name );
     net->impl = ( impl == NULL ) ? NULL : strdup( impl );
     net->attr = NULL;
+    net->conf = NULL;
     net->static_conf = NULL;
     net->dyn_conf = NULL;
     smx_net_get_json_doc( net, conf, name, impl, id );
@@ -509,7 +510,7 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         SMX_MSG_DESTROY( h, msg );
     }
 
-    if( init( h, &net_state ) != 0 )
+    if( h->conf == NULL || init( h, &net_state ) != 0 )
     {
         has_init_err = true;
         SMX_LOG_NET( h, error, "initialisation of net failed" );
