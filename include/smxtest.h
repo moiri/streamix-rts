@@ -55,6 +55,7 @@
 
 /**
  * Read the test data from the configuration file.
+ * @deprecated
  *
  * @param h
  *  The net handler.
@@ -70,4 +71,23 @@
 const bson_value_t* smx_read_test_data( smx_net_t* h, const char* mode,
         const char* port_name, smx_channel_end_t* end );
 
+/**
+ * Read the current test value from the configuration file.
+ *
+ * @param h
+ *  The net handler.
+ * @param mode
+ *  The port mode, either "in" or "out".
+ * @param port_name
+ *  The name of the port.
+ * @param end
+ *  A pointer to the channel end which is connected to the port.
+ * @param data
+ *  An ouptut param where the data will be stored. This has to be freed after
+ *  usage.
+ * @return
+ *  0 on success and -1 on failure.
+ */
+int smx_read_test_value( smx_net_t* h, const char* mode,
+        const char* port_name, smx_channel_end_t* end, bson_value_t* data );
 #endif /* SMXTEST_H */

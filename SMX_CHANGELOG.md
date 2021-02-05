@@ -4,6 +4,8 @@
 
  - Fix the counting mechanism in the test functions to allow for multiple reads
    or writes in one net execution iteration.
+ - Provide a test data reader which is memory save. The old one is kept for
+   legacy reasons.
 
 ### Changes
 
