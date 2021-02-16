@@ -1,0 +1,68 @@
+.TH "smx_msg_t" 3 "Tue Feb 16 2021" "Version v0.6.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+smx_msg_t \- A Streamix message structure\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <smxtypes\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned long long \fBid\fP"
+.br
+.ti -1c
+.RI "char * \fBtype\fP"
+.br
+.ti -1c
+.RI "bool \fBprevent_backup\fP"
+.br
+.ti -1c
+.RI "void * \fBdata\fP"
+.br
+.ti -1c
+.RI "int \fBsize\fP"
+.br
+.ti -1c
+.RI "void *(* \fBcopy\fP )(void *, size_t)"
+.br
+.ti -1c
+.RI "void(* \fBdestroy\fP )(void *)"
+.br
+.ti -1c
+.RI "void *(* \fBunpack\fP )(void *)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+A Streamix message structure\&. 
+
+The structure contains handlers that can be used to manipulate data\&. These handlers are provided by the box implementation\&.
+.PP
+The streamix message type\&. Refer to the structure definition for more information \fBsmx_msg_s\fP\&. 
+.SH "Field Documentation"
+.PP 
+.SS "void*(* smx_msg_t::copy) (void *, size_t)"
+pointer to a fct making a deep copy 
+.SS "void* smx_msg_t::data"
+pointer to the data 
+.SS "void(* smx_msg_t::destroy) (void *)"
+pointer to a fct that frees data 
+.SS "unsigned long long smx_msg_t::id"
+the unique message id 
+.SS "bool smx_msg_t::prevent_backup"
+prevents msg backups from being created 
+.SS "int smx_msg_t::size"
+size of the data 
+.SS "char* smx_msg_t::type"
+an optional string indicating the msg data type 
+.SS "void*(* smx_msg_t::unpack) (void *)"
+pointer to a fct that unpacks data 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.

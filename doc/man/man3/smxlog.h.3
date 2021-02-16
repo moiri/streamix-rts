@@ -1,0 +1,175 @@
+.TH "include/smxlog.h" 3 "Tue Feb 16 2021" "Version v0.6.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxlog.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <zlog\&.h>\fP
+.br
+\fC#include <pthread\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBZLOG_LEVEL_EVENT\fP   50"
+.br
+.ti -1c
+.RI "#define \fBzlog_event\fP(cat,  format, \&.\&.\&.)"
+.br
+.ti -1c
+.RI "#define \fBSMX_LOG_INTERN\fP   \fBSMX_LOG_LOCK\fP"
+.br
+.ti -1c
+.RI "#define \fBSMX_LOG_CH\fP(ch,  level,  format, \&.\&.\&.)   \fBSMX_LOG_INTERN\fP( level, ch\->cat, format,  ##__VA_ARGS__ )"
+.br
+.ti -1c
+.RI "#define \fBSMX_LOG_LOCK\fP(level,  cat,  format, \&.\&.\&.)"
+.br
+.ti -1c
+.RI "#define \fBSMX_LOG_FREE\fP(level,  cat,  format, \&.\&.\&.)   zlog_ ## level( cat, format, ##__VA_ARGS__ )"
+.br
+.ti -1c
+.RI "#define \fBSMX_LOG_MAIN\fP(cat,  level,  format, \&.\&.\&.)   \fBSMX_LOG_INTERN\fP( level, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ )"
+.br
+.ti -1c
+.RI "#define \fBSMX_LOG_NET\fP(net,  level,  format, \&.\&.\&.)   \fBSMX_LOG_INTERN\fP( level, \fBSMX_SIG_CAT\fP( net ), format, ##__VA_ARGS__ )"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBsmx_log_init\fP (const char *log_conf)"
+.br
+.ti -1c
+.RI "void \fBsmx_log_cleanup\fP ()"
+.br
+.ti -1c
+.RI "pthread_mutex_t * \fBsmx_get_mlog\fP ()"
+.br
+.ti -1c
+.RI "zlog_category_t * \fBsmx_get_zcat_ch\fP ()"
+.br
+.ti -1c
+.RI "zlog_category_t * \fBsmx_get_zcat_main\fP ()"
+.br
+.ti -1c
+.RI "zlog_category_t * \fBsmx_get_zcat_msg\fP ()"
+.br
+.ti -1c
+.RI "zlog_category_t * \fBsmx_get_zcat_net\fP ()"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Log definitions for the runtime system library of Streamix 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define SMX_LOG_CH(ch, level, format,  \&.\&.\&.)   \fBSMX_LOG_INTERN\fP( level, ch\->cat, format,  ##__VA_ARGS__ )"
+The logger macro for channel-specific logs\&. 
+.SS "#define SMX_LOG_FREE(level, cat, format,  \&.\&.\&.)   zlog_ ## level( cat, format, ##__VA_ARGS__ )"
+The logger macro without locking\&. 
+.SS "#define SMX_LOG_INTERN   \fBSMX_LOG_LOCK\fP"
+The logger macro for all types of logs\&. 
+.SS "#define SMX_LOG_LOCK(level, cat, format,  \&.\&.\&.)"
+\fBValue:\fP
+.PP
+.nf
+do {\
+    pthread_mutex_lock( smx_get_mlog() );\
+    zlog_ ## level( cat, format, ##__VA_ARGS__ );\
+    pthread_mutex_unlock( smx_get_mlog() ); } while( 0 )
+.fi
+The logger macro performing a mutex lock/unlock before logging to prevent any issue of priority inversion\&. 
+.SS "#define SMX_LOG_MAIN(cat, level, format,  \&.\&.\&.)   \fBSMX_LOG_INTERN\fP( level, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ )"
+A macro to log to a globally defined category \fCcat\fP on log level \fClevel\fP\&. 
+.SS "#define SMX_LOG_NET(net, level, format,  \&.\&.\&.)   \fBSMX_LOG_INTERN\fP( level, \fBSMX_SIG_CAT\fP( net ), format, ##__VA_ARGS__ )"
+Refer top \fBSMX_LOG()\fP for more information\&. 
+.SS "#define zlog_event(cat, format,  \&.\&.\&.)"
+\fBValue:\fP
+.PP
+.nf
+zlog( cat, __FILE__, sizeof( __FILE__ )-1, \
+    __func__, sizeof( __func__ )-1, __LINE__, \
+    ZLOG_LEVEL_EVENT, format, ## __VA_ARGS__ )
+.fi
+The macro to use the custom zlog level 'event'\&. 
+.SS "#define ZLOG_LEVEL_EVENT   50"
+The custom zlog level 'event' 
+.SH "Function Documentation"
+.PP 
+.SS "pthread_mutex_t* smx_get_mlog ()"
+Get the global zlog mutex handler
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the mutex variable 
+.RE
+.PP
+
+.SS "zlog_category_t* smx_get_zcat_ch ()"
+Get the global zlog channel category
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the zlog category 
+.RE
+.PP
+
+.SS "zlog_category_t* smx_get_zcat_main ()"
+Get the global zlog main category
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the zlog category 
+.RE
+.PP
+
+.SS "zlog_category_t* smx_get_zcat_msg ()"
+Get the global zlog mssage category
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the zlog category 
+.RE
+.PP
+
+.SS "zlog_category_t* smx_get_zcat_net ()"
+Get the global zlog net category
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to the zlog category 
+.RE
+.PP
+
+.SS "void smx_log_cleanup ()"
+Cleanup zlog 
+.SS "int smx_log_init (const char * log_conf)"
+Define mutex protection and main categories for zlog\&. Further, initialise zlog with the configuration file\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIlog_conf\fP A pointer to the zlog configuration file\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.

@@ -1,0 +1,591 @@
+.TH "include/smxtypes.h" 3 "Tue Feb 16 2021" "Version v0.6.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxtypes.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include <pthread\&.h>\fP
+.br
+\fC#include <zlog\&.h>\fP
+.br
+\fC#include <bson\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBsmx_channel_t\fP"
+.br
+.RI "A generic Streamix channel\&. "
+.ti -1c
+.RI "struct \fBsmx_channel_end_t\fP"
+.br
+.ti -1c
+.RI "struct \fBsmx_collector_t\fP"
+.br
+.RI "Collect channel counts\&. "
+.ti -1c
+.RI "struct \fBsmx_fifo_t\fP"
+.br
+.RI "Streamix fifo structure\&. "
+.ti -1c
+.RI "struct \fBsmx_fifo_item_t\fP"
+.br
+.RI "A single FIFO item of a circular double-linked-list\&. "
+.ti -1c
+.RI "struct \fBsmx_guard_t\fP"
+.br
+.RI "timed guard to limit communication rate "
+.ti -1c
+.RI "struct \fBsmx_msg_t\fP"
+.br
+.RI "A Streamix message structure\&. "
+.ti -1c
+.RI "struct \fBsmx_net_t\fP"
+.br
+.ti -1c
+.RI "struct \fBsmx_net_sig_t\fP"
+.br
+.ti -1c
+.RI "struct \fBsmx_channel_end_s\&.filter\fP"
+.br
+.ti -1c
+.RI "struct \fBsmx_net_sig_s\&.in\fP"
+.br
+.ti -1c
+.RI "struct \fBsmx_net_sig_s\&.out\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSMX_MSG_RAW_TYPE\fP   0"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_RAW_TYPE_STR\fP   'raw'"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_INT_TYPE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_INT_TYPE_STR\fP   'int'"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_DOUBLE_TYPE\fP   2"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_DOUBLE_TYPE_STR\fP   'double'"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_BOOL_TYPE\fP   3"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_BOOL_TYPE_STR\fP   'bool'"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_STRING_TYPE\fP   4"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_STRING_TYPE_STR\fP   'string'"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_JSON_TYPE\fP   5"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_JSON_TYPE_STR\fP   'json'"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef enum \fBsmx_channel_err_e\fP \fBsmx_channel_err_t\fP"
+.br
+.ti -1c
+.RI "typedef enum \fBsmx_channel_state_e\fP \fBsmx_channel_state_t\fP"
+.br
+.ti -1c
+.RI "typedef enum \fBsmx_channel_type_e\fP \fBsmx_channel_type_t\fP"
+.br
+.ti -1c
+.RI "typedef enum \fBsmx_config_error_e\fP \fBsmx_config_error_t\fP"
+.br
+.ti -1c
+.RI "typedef enum \fBsmx_profiler_action_e\fP \fBsmx_profiler_action_t\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBsmx_channel_err_e\fP { \fBSMX_CHANNEL_ERR_NONE\fP = 0, \fBSMX_CHANNEL_ERR_NO_DEFAULT\fP, \fBSMX_CHANNEL_ERR_NO_TARGET\fP, \fBSMX_CHANNEL_ERR_DL_MISS\fP, \fBSMX_CHANNEL_ERR_NO_DATA\fP, \fBSMX_CHANNEL_ERR_NO_SPACE\fP, \fBSMX_CHANNEL_ERR_FILTER\fP, \fBSMX_CHANNEL_ERR_UNINITIALISED\fP, \fBSMX_CHANNEL_ERR_TIMEOUT\fP, \fBSMX_CHANNEL_ERR_CV\fP }"
+.br
+.ti -1c
+.RI "enum \fBsmx_channel_state_e\fP { \fBSMX_CHANNEL_UNINITIALISED\fP, \fBSMX_CHANNEL_PENDING\fP, \fBSMX_CHANNEL_READY\fP, \fBSMX_CHANNEL_END\fP }
+.RI "Channel state\&. ""
+.br
+.ti -1c
+.RI "enum \fBsmx_channel_type_e\fP { \fBSMX_FIFO\fP, \fBSMX_FIFO_D\fP, \fBSMX_D_FIFO\fP, \fBSMX_D_FIFO_D\fP }
+.RI "Streamix channel (buffer) types\&. ""
+.br
+.ti -1c
+.RI "enum \fBsmx_config_error_e\fP { \fBSMX_CONFIG_ERROR_NO_ERROR\fP, \fBSMX_CONFIG_ERROR_BAD_TYPE\fP, \fBSMX_CONFIG_ERROR_NO_VALUE\fP }"
+.br
+.ti -1c
+.RI "enum \fBsmx_profiler_action_e\fP { \fBSMX_PROFILER_ACTION_START\fP, \fBSMX_PROFILER_ACTION_CREATE\fP, \fBSMX_PROFILER_ACTION_DESTROY\fP, \fBSMX_PROFILER_ACTION_COPY\fP, \fBSMX_PROFILER_ACTION_READ\fP, \fBSMX_PROFILER_ACTION_READ_COLLECTOR\fP, \fBSMX_PROFILER_ACTION_WRITE\fP, \fBSMX_PROFILER_ACTION_WRITE_COLLECTOR\fP, \fBSMX_PROFILER_ACTION_OVERWRITE\fP, \fBSMX_PROFILER_ACTION_DISMISS\fP, \fBSMX_PROFILER_ACTION_DUPLICATE\fP, \fBSMX_PROFILER_ACTION_DL_MISS_SRC\fP, \fBSMX_PROFILER_ACTION_DL_MISS_SRC_CP\fP, \fBSMX_PROFILER_ACTION_TT_MISS_SRC\fP, \fBSMX_PROFILER_ACTION_TT_MISS_SRC_CP\fP, \fBSMX_PROFILER_ACTION_DL_MISS_SINK\fP, \fBSMX_PROFILER_ACTION_TT_MISS_SINK\fP }"
+.br
+.ti -1c
+.RI "enum \fBsmx_thread_state_e\fP { \fBSMX_NET_RETURN\fP = 0, \fBSMX_NET_CONTINUE\fP, \fBSMX_NET_END\fP }"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Type definitions for the runtime system library of Streamix 
+.SH "Data Structure Documentation"
+.PP 
+.SH "struct smx_channel_s"
+.PP 
+A generic Streamix channel\&. 
+
+\fBsmx_channel_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+zlog_category_t * \fIcat\fP zlog category of a channel end 
+.br
+.PP
+pthread_mutex_t \fIch_mutex\fP mutual exclusion 
+.br
+.PP
+smx_collector_t * \fIcollector\fP \fBsmx_collector_s\fP, collect signals 
+.br
+.PP
+smx_fifo_t * \fIfifo\fP \fBsmx_fifo_s\fP 
+.br
+.PP
+smx_guard_t * \fIguard\fP \fBsmx_guard_s\fP 
+.br
+.PP
+int \fIid\fP the id of the channel 
+.br
+.PP
+char * \fIname\fP name of the channel 
+.br
+.PP
+smx_channel_end_t * \fIsink\fP \fBsmx_channel_end_s\fP 
+.br
+.PP
+smx_channel_end_t * \fIsource\fP \fBsmx_channel_end_s\fP 
+.br
+.PP
+\fBsmx_channel_type_t\fP \fItype\fP type of the channel 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_collector_s"
+.PP 
+Collect channel counts\&. 
+
+This is used to nondeterministically merge channels with a copy synchronyzer that has multiple inputs\&.
+.PP
+\fBsmx_collector_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+pthread_cond_t \fIcol_cv\fP conditional variable to trigger box 
+.br
+.PP
+pthread_mutex_t \fIcol_mutex\fP mutual exclusion 
+.br
+.PP
+int \fIcount\fP collection of channel counts 
+.br
+.PP
+\fBsmx_channel_state_t\fP \fIstate\fP state of the channel 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_fifo_s"
+.PP 
+Streamix fifo structure\&. 
+
+The fifo structure is blocking on write if all buffers are occupied and blocking on read if all buffer spaces are empty\&. The blocking pattern can be changed by decoupling either the input, the output or both\&.
+.PP
+\fBsmx_fifo_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+smx_msg_t * \fIbackup\fP \fBsmx_msg_s\fP, msg space for decoupling 
+.br
+.PP
+int \fIcopy\fP counts number of copy operations 
+.br
+.PP
+int \fIcount\fP counts occupied space 
+.br
+.PP
+smx_fifo_item_t * \fIhead\fP pointer to the heda of the FIFO 
+.br
+.PP
+int \fIlength\fP size of the FIFO 
+.br
+.PP
+int \fIoverwrite\fP counts number of overwrite operations 
+.br
+.PP
+smx_fifo_item_t * \fItail\fP pointer to the tail of the FIFO 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_fifo_item_s"
+.PP 
+A single FIFO item of a circular double-linked-list\&. 
+
+\fBsmx_fifo_item_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+smx_msg_t * \fImsg\fP \fBsmx_msg_s\fP 
+.br
+.PP
+smx_fifo_item_t * \fInext\fP pointer to the next item 
+.br
+.PP
+smx_fifo_item_t * \fIprev\fP pointer to the previous item 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_guard_s"
+.PP 
+timed guard to limit communication rate 
+
+\fBsmx_guard_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+int \fIfd\fP file descriptor pointing to timer 
+.br
+.PP
+struct timespec \fIiat\fP minumum inter-arrival-time 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_net_s"
+.PP 
+Common fields of a streamix net\&.
+.PP
+\fBsmx_net_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+void * \fIattr\fP custom attributes of special nets 
+.br
+.PP
+zlog_category_t * \fIcat\fP the log category 
+.br
+.PP
+void * \fIconf\fP pointer to the net configuration 
+.br
+.PP
+const char * \fIconf_port_name\fP port name on which to receive the dynamic configuration 
+.br
+.PP
+int \fIconf_port_timeout\fP read timeout on dynamic conf port in milliseconds 
+.br
+.PP
+unsigned long \fIcount\fP loop counter 
+.br
+.PP
+bson_t * \fIdyn_conf\fP pointer to the dynamic configuration 
+.br
+.PP
+struct timespec \fIend_wall\fP end time of a net (befoer cleanup) 
+.br
+.PP
+bool \fIhas_profiler\fP is profiler enabled? 
+.br
+.PP
+bool \fIhas_type_filter\fP is type filter enabled? 
+.br
+.PP
+unsigned int \fIid\fP a unique net id 
+.br
+.PP
+char * \fIimpl\fP the name of the box implementation 
+.br
+.PP
+pthread_barrier_t * \fIinit_done\fP pointer to the init sync barrier 
+.br
+.PP
+char * \fIname\fP the name of the net 
+.br
+.PP
+int \fIpriority\fP the thread priority of the net\&. 0 means ET, >0 means TT 
+.br
+.PP
+smx_net_sig_t * \fIsig\fP the net port signature 
+.br
+.PP
+struct timespec \fIstart_wall\fP start time of a net (after init) 
+.br
+.PP
+bson_t * \fIstatic_conf\fP pointer to the static configuration 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_net_sig_s"
+.PP 
+The signature of a net
+.PP
+\fBsmx_net_sig_s\fP 
+.PP
+\fBData Fields:\fP
+.RS 4
+struct \fBsmx_net_sig_s\fP \fIin\fP input channels 
+.br
+.PP
+struct \fBsmx_net_sig_s\fP \fIout\fP output channels 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_channel_end_s\&.filter"
+.PP 
+\fBData Fields:\fP
+.RS 4
+int \fIcount\fP 
+.br
+.PP
+char ** \fIitems\fP 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_net_sig_s\&.in"
+.PP 
+\fBData Fields:\fP
+.RS 4
+int \fIcount\fP the number of connected input ports 
+.br
+.PP
+int \fIlen\fP the number of input ports 
+.br
+.PP
+smx_channel_t ** \fIports\fP an array of channel pointers 
+.br
+.PP
+.RE
+.PP
+.SH "struct smx_net_sig_s\&.out"
+.PP 
+\fBData Fields:\fP
+.RS 4
+int \fIcount\fP the number of connected output ports 
+.br
+.PP
+int \fIlen\fP the number of output ports 
+.br
+.PP
+smx_channel_t ** \fIports\fP an array of channel pointers 
+.br
+.PP
+.RE
+.PP
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef enum \fBsmx_channel_err_e\fP \fBsmx_channel_err_t\fP"
+The streamix channel error type\&. Refer to the error enumeration definition for more details \fBsmx_channel_err_e\fP\&. 
+.SS "typedef enum \fBsmx_channel_state_e\fP \fBsmx_channel_state_t\fP"
+\fBsmx_channel_state_e\fP 
+.SS "typedef enum \fBsmx_channel_type_e\fP \fBsmx_channel_type_t\fP"
+\fBsmx_channel_type_e\fP 
+.SS "typedef enum \fBsmx_config_error_e\fP \fBsmx_config_error_t\fP"
+\fBsmx_config_error_e\fP 
+.SS "typedef enum \fBsmx_profiler_action_e\fP \fBsmx_profiler_action_t\fP"
+\fBsmx_profiler_action_e\fP 
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBsmx_channel_err_e\fP"
+The error state of a channel end 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fISMX_CHANNEL_ERR_NONE \fP\fP
+no error 
+.TP
+\fB\fISMX_CHANNEL_ERR_NO_DEFAULT \fP\fP
+no default message for decoupled read 
+.TP
+\fB\fISMX_CHANNEL_ERR_NO_TARGET \fP\fP
+connecting net has terminated 
+.TP
+\fB\fISMX_CHANNEL_ERR_DL_MISS \fP\fP
+connecting net missed its deadline 
+.TP
+\fB\fISMX_CHANNEL_ERR_NO_DATA \fP\fP
+unexpectedly, the channel has no data 
+.TP
+\fB\fISMX_CHANNEL_ERR_NO_SPACE \fP\fP
+unexpectedly, the channel has no space 
+.TP
+\fB\fISMX_CHANNEL_ERR_FILTER \fP\fP
+the msg type does not match the filter 
+.TP
+\fB\fISMX_CHANNEL_ERR_UNINITIALISED \fP\fP
+the channel was never initialised 
+.TP
+\fB\fISMX_CHANNEL_ERR_TIMEOUT \fP\fP
+the channel operation timed out 
+.TP
+\fB\fISMX_CHANNEL_ERR_CV \fP\fP
+the conditional variable lock failed 
+.SS "enum \fBsmx_channel_state_e\fP"
+
+.PP
+Channel state\&. This allows to indicate wheter a producer connected to the channel has terminated and wheter data is available to read\&. The second point is important in combination with copy synchronizers\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fISMX_CHANNEL_UNINITIALISED \fP\fP
+decoupled channel was never written to 
+.TP
+\fB\fISMX_CHANNEL_PENDING \fP\fP
+channel is waiting for a signal 
+.TP
+\fB\fISMX_CHANNEL_READY \fP\fP
+channel is ready to read from 
+.TP
+\fB\fISMX_CHANNEL_END \fP\fP
+net connected to channel end has terminated 
+.SS "enum \fBsmx_channel_type_e\fP"
+
+.PP
+Streamix channel (buffer) types\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fISMX_FIFO \fP\fP
+a simple FIFO 
+.TP
+\fB\fISMX_FIFO_D \fP\fP
+a FIFO with decoupled output 
+.TP
+\fB\fISMX_D_FIFO \fP\fP
+a FIFO with decoupled input 
+.TP
+\fB\fISMX_D_FIFO_D \fP\fP
+a FIFO with decoupled input and output 
+.SS "enum \fBsmx_config_error_e\fP"
+The list of config read errors\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fISMX_CONFIG_ERROR_NO_ERROR \fP\fP
+No error 
+.TP
+\fB\fISMX_CONFIG_ERROR_BAD_TYPE \fP\fP
+The item exists but the type does not match 
+.TP
+\fB\fISMX_CONFIG_ERROR_NO_VALUE \fP\fP
+The item does not exist 
+.SS "enum \fBsmx_profiler_action_e\fP"
+The different actions a profiler can log\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fISMX_PROFILER_ACTION_START \fP\fP
+start a net\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_CREATE \fP\fP
+create a msg, channel, or net\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_DESTROY \fP\fP
+destroy a msg, channel, or net\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_COPY \fP\fP
+copy a message\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_READ \fP\fP
+read from a channel\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_READ_COLLECTOR \fP\fP
+read from a collector\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_WRITE \fP\fP
+write to a channel\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_WRITE_COLLECTOR \fP\fP
+write to a collector\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_OVERWRITE \fP\fP
+overwrite a message in a channel\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_DISMISS \fP\fP
+dismiss a message in a channel\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_DUPLICATE \fP\fP
+duplicate a message in a channel\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_DL_MISS_SRC \fP\fP
+rt producer missed a deadline\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_DL_MISS_SRC_CP \fP\fP
+rt producer missed a deadline, msg duplicated\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_TT_MISS_SRC \fP\fP
+non-rt producer missed a tt interval\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_TT_MISS_SRC_CP \fP\fP
+non-rt producer missed a tt interval, msg duplicated\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_DL_MISS_SINK \fP\fP
+rt consumer missed a deadline\&. 
+.TP
+\fB\fISMX_PROFILER_ACTION_TT_MISS_SINK \fP\fP
+non-rt consumer missed a tt interval\&. 
+.SS "enum \fBsmx_thread_state_e\fP"
+Constants to indicate wheter a thread should terminate or continue\&. Use one of these values to return from the main box implemenation funtion\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fISMX_NET_RETURN \fP\fP
+decide automatically wheather to end or go on 
+.TP
+\fB\fISMX_NET_CONTINUE \fP\fP
+continue to call the box implementation fct 
+.TP
+\fB\fISMX_NET_END \fP\fP
+end thread 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.

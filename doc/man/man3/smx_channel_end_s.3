@@ -1,0 +1,74 @@
+.TH "smx_channel_end_t" 3 "Tue Feb 16 2021" "Version v0.6.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+smx_channel_end_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <smxtypes\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "\fBsmx_channel_state_t\fP \fBstate\fP"
+.br
+.ti -1c
+.RI "\fBsmx_channel_err_t\fP \fBerr\fP"
+.br
+.ti -1c
+.RI "pthread_cond_t \fBch_cv\fP"
+.br
+.ti -1c
+.RI "unsigned long \fBcount\fP"
+.br
+.ti -1c
+.RI "smx_net_t * \fBnet\fP"
+.br
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "char ** \fBitems\fP"
+.br
+.ti -1c
+.RI "int \fBcount\fP"
+.br
+.ti -1c
+.RI "} \fBfilter\fP"
+.br
+.ti -1c
+.RI "bool(* \fBcontent_filter\fP )(smx_msg_t *msg)"
+.br
+.ti -1c
+.RI "struct timespec \fBtimeout\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+The end of a channel
+.PP
+\fBsmx_channel_end_s\fP 
+.SH "Field Documentation"
+.PP 
+.SS "pthread_cond_t smx_channel_end_t::ch_cv"
+conditional variable to trigger producer 
+.SS "bool( * smx_channel_end_t::content_filter) (smx_msg_t *msg)"
+A pointer to the filter function\&. 
+.SS "unsigned long smx_channel_end_t::count"
+access counter 
+.SS "\fBsmx_channel_err_t\fP smx_channel_end_t::err"
+error on the channel end 
+.SS "struct { \&.\&.\&. }   smx_channel_end_t::filter"
+All message types allowed on this channel 
+.SS "smx_net_t* smx_channel_end_t::net"
+pointer to the connecting net 
+.SS "\fBsmx_channel_state_t\fP smx_channel_end_t::state"
+state of the channel end 
+.SS "struct timespec smx_channel_end_t::timeout"
+channel-blocking timeout 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.

@@ -1,0 +1,235 @@
+.TH "include/smxutils.h" 3 "Tue Feb 16 2021" "Version v0.6.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxutils.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdlib\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSMX_MAX\fP(X,  Y)   (((X) > (Y)) ? (X) : (Y))"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_in\fP   '\->'"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_out\fP   '<\-'"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_UPP_in\fP   IN"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_UPP_out\fP   OUT"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_LOW_IN\fP   in"
+.br
+.ti -1c
+.RI "#define \fBSMX_MODE_LOW_OUT\fP   out"
+.br
+.ti -1c
+.RI "#define \fBSMX_NO_SIG\fP(h)   ( \fBSMX_SIG\fP( h ) == NULL )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NO_SIG_PORT\fP(h,  box_name,  port_name,  mode)   \fBSMX_SIG_PORT_LEN_NC\fP( h, mode ) <= \fBSMX_SIG_PORT_IDX\fP( box_name, port_name, mode )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG\fP(h)   ( ( h == NULL ) ? NULL : \fBSMX_SIG_NC\fP( h ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_NC\fP(h)   ( ( smx_net_sig_t* )( ( smx_net_t* )h )\->sig )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_CAT\fP(h)   ( h == NULL ) ? zlog_get_category( 'undef' ) : SMX_SIG_CAT_NC( h )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_CAT_NC\fP(h)   ( ( smx_net_t* )h )\->cat"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT\fP(h,  box_name,  port_name,  mode)"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_ARR\fP(h,  box_name,  port_name,  mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : \fBSMX_SIG_PORT_ARR_NC\fP( h, mode ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_ARR_NC\fP(h,  mode)   \fBSMX_SIG_PORTS_NC\fP( h, mode )[\fBSMX_SIG_PORT_COUNT_NC\fP( h, mode )]"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_ARR_PTR\fP(h,  mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : &\fBSMX_SIG_PORT_ARR_NC\fP( h, mode ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_LEN\fP(h,  mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : &\fBSMX_SIG_PORT_LEN_NC\fP( h, mode ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_LEN_NC\fP(h,  mode)   \fBSMX_SIG_NC\fP( h )\->mode\&.len"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_COUNT\fP(h,  mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : &\fBSMX_SIG_PORT_COUNT_NC\fP( h, mode ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_COUNT_NC\fP(h,  mode)   \fBSMX_SIG_NC\fP( h )\->mode\&.count"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_IDX\fP(box_name,  port_name,  mode)   SMX_PORT_IDX_ ## box_name ## _ ## mode ## _ ## port_name"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_NC\fP(h,  box_name,  port_name,  mode)   \fBSMX_SIG_PORTS_NC\fP( h, mode )[\fBSMX_SIG_PORT_IDX\fP( box_name, port_name, mode )]"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_PTR\fP(h,  box_name,  port_name,  mode)"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_WRITE_END\fP(h,  box_name,  port_name)"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORT_READ_END\fP(h,  box_name,  port_name)"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORTS\fP(h,  mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : \fBSMX_SIG_PORTS_NC\fP( h, mode ) )"
+.br
+.ti -1c
+.RI "#define \fBSMX_SIG_PORTS_NC\fP(h,  mode)   ( ( smx_channel_t** )\fBSMX_SIG_NC\fP( h )\->mode\&.ports )"
+.br
+.ti -1c
+.RI "#define \fBSTRINGIFY\fP(x)   #x"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void * \fBsmx_malloc\fP (size_t size)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Utility functions for the runtime system library of Streamix 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define SMX_MODE_in   '\->'"
+ASCII definition of an input port 
+.SS "#define SMX_MODE_LOW_IN   in"
+Transfrom input mode to lowercase 
+.SS "#define SMX_MODE_LOW_OUT   out"
+Transfrom output mode to lowercase 
+.SS "#define SMX_MODE_out   '<\-'"
+ASCII definition of an output port 
+.SS "#define SMX_MODE_UPP_in   IN"
+Transfrom input mode to uppercase 
+.SS "#define SMX_MODE_UPP_out   OUT"
+Transfrom output mode to uppercase 
+.SS "#define SMX_NO_SIG(h)   ( \fBSMX_SIG\fP( h ) == NULL )"
+Macro to check whether a net signature is defined\&. 
+.SS "#define SMX_NO_SIG_PORT(h, box_name, port_name, mode)   \fBSMX_SIG_PORT_LEN_NC\fP( h, mode ) <= \fBSMX_SIG_PORT_IDX\fP( box_name, port_name, mode )"
+Macro to check whether a port is defined\&. 
+.SS "#define SMX_SIG(h)   ( ( h == NULL ) ? NULL : \fBSMX_SIG_NC\fP( h ) )"
+Macro to get a net signature\&. 
+.SS "#define SMX_SIG_CAT(h)   ( h == NULL ) ? zlog_get_category( 'undef' ) : SMX_SIG_CAT_NC( h )"
+Macro to get the net logger category\&. 
+.SS "#define SMX_SIG_CAT_NC(h)   ( ( smx_net_t* )h )\->cat"
+Macro to get the net logger category without sanity checks\&. 
+.SS "#define SMX_SIG_NC(h)   ( ( smx_net_sig_t* )( ( smx_net_t* )h )\->sig )"
+Macro to access a net signature without sanity checks\&. 
+.SS "#define SMX_SIG_PORT(h, box_name, port_name, mode)"
+\fBValue:\fP
+.PP
+.nf
+( ( SMX_NO_SIG( h ) || SMX_NO_SIG_PORT( h, box_name, port_name, mode ) )\
+        ? NULL : SMX_SIG_PORT_NC( h, box_name, port_name, mode ) )
+.fi
+Macro to get the port signature of a net\&. 
+.SS "#define SMX_SIG_PORT_ARR(h, box_name, port_name, mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : \fBSMX_SIG_PORT_ARR_NC\fP( h, mode ) )"
+Macro to get the port array of a net\&. 
+.SS "#define SMX_SIG_PORT_ARR_NC(h, mode)   \fBSMX_SIG_PORTS_NC\fP( h, mode )[\fBSMX_SIG_PORT_COUNT_NC\fP( h, mode )]"
+Macro to get the port array of a net without sanity checks\&. 
+.SS "#define SMX_SIG_PORT_ARR_PTR(h, mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : &\fBSMX_SIG_PORT_ARR_NC\fP( h, mode ) )"
+Macro to get the port array pointer of a net\&. 
+.SS "#define SMX_SIG_PORT_COUNT(h, mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : &\fBSMX_SIG_PORT_COUNT_NC\fP( h, mode ) )"
+Macro to get a pointer to the port array count of a net\&. 
+.SS "#define SMX_SIG_PORT_COUNT_NC(h, mode)   \fBSMX_SIG_NC\fP( h )\->mode\&.count"
+Macro to get a pointer to the port array count of a net without sanity checks\&. 
+.SS "#define SMX_SIG_PORT_IDX(box_name, port_name, mode)   SMX_PORT_IDX_ ## box_name ## _ ## mode ## _ ## port_name"
+Macro to get the index of a port\&. 
+.SS "#define SMX_SIG_PORT_LEN(h, mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : &\fBSMX_SIG_PORT_LEN_NC\fP( h, mode ) )"
+Macro to get a pointer to the port array length of a net\&. 
+.SS "#define SMX_SIG_PORT_LEN_NC(h, mode)   \fBSMX_SIG_NC\fP( h )\->mode\&.len"
+Macro to get a pointer to the port array length of a net without sanity checks\&. 
+.SS "#define SMX_SIG_PORT_NC(h, box_name, port_name, mode)   \fBSMX_SIG_PORTS_NC\fP( h, mode )[\fBSMX_SIG_PORT_IDX\fP( box_name, port_name, mode )]"
+Macro to get the port signature of a net without sanity checks\&. 
+.SS "#define SMX_SIG_PORT_PTR(h, box_name, port_name, mode)"
+\fBValue:\fP
+.PP
+.nf
+( ( SMX_NO_SIG( h ) || SMX_NO_SIG_PORT( h, box_name, port_name, mode ) )\
+        ? NULL : &SMX_SIG_PORT_NC( h, box_name, port_name, mode ) )
+.fi
+Macro to get a pointer to the port signature of a net\&. 
+.SS "#define SMX_SIG_PORT_READ_END(h, box_name, port_name)"
+\fBValue:\fP
+.PP
+.nf
+SMX_NO_SIG_PORT( h, box_name, port_name, in )\
+        ? NULL : SMX_SIG_PORT_NC( h, box_name, port_name, in )->source
+.fi
+Macro to get the channel end which is connected to an input port\&. 
+.SS "#define SMX_SIG_PORT_WRITE_END(h, box_name, port_name)"
+\fBValue:\fP
+.PP
+.nf
+SMX_NO_SIG_PORT( h, box_name, port_name, out )\
+        ? NULL : SMX_SIG_PORT_NC( h, box_name, port_name, out )->sink
+.fi
+Macro to get the channel end which is connected to an output port\&. 
+.SS "#define SMX_SIG_PORTS(h, mode)   ( \fBSMX_NO_SIG\fP( h ) ? NULL : \fBSMX_SIG_PORTS_NC\fP( h, mode ) )"
+Macro to get the port signature structure\&. 
+.SS "#define SMX_SIG_PORTS_NC(h, mode)   ( ( smx_channel_t** )\fBSMX_SIG_NC\fP( h )\->mode\&.ports )"
+Macro to get the port signature structure without sanity checks\&. 
+.SS "#define STRINGIFY(x)   #x"
+Helper macro to create a string out of an expression\&. 
+.SH "Function Documentation"
+.PP 
+.SS "void* smx_malloc (size_t size)"
+Allocate space with malloc and log an error if malloc fails
+.PP
+\fBParameters:\fP
+.RS 4
+\fIsize\fP the memory size to allocate 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a void pointer to the allocated memory
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Utility functions for the runtime system library of Streamix 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.
