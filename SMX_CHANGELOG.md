@@ -1,4 +1,12 @@
-# `v0.6.0` (latest)
+# `v0.6.1` (latest)
+
+### Changes
+
+ - Pass net pointer to the content filter.
+
+
+-------------------
+# `v0.6.0`
 
 ### Bug Fixes
 
