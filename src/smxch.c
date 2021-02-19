@@ -403,7 +403,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     }
 
     if( ch->sink->content_filter != NULL
-            && !ch->sink->content_filter( ch->sink->net, msg ) )
+            && !ch->sink->content_filter( ch->source->net, msg ) )
     {
         SMX_LOG_CH( ch, debug, "msg content filter failed, dismissing msg" );
         smx_msg_destroy( h, msg, true );
