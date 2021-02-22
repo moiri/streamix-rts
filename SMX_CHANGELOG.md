@@ -3,6 +3,7 @@
 ### Changes
 
  - Pass net pointer to the content filter.
+ - Only log failed write channel access to terminated consumer once.
 
 
 -------------------
