@@ -1,4 +1,13 @@
-# `v0.6.0` (latest)
+# `v0.6.1` (latest)
+
+### Changes
+
+ - Pass net pointer to the content filter.
+ - Only log failed write channel access to terminated consumer once.
+
+
+-------------------
+# `v0.6.0`
 
 ### Bug Fixes
 

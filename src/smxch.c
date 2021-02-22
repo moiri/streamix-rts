@@ -285,7 +285,7 @@ int smx_channel_ready_to_write( smx_channel_t* ch )
 
 /*****************************************************************************/
 bool smx_channel_set_content_filter( smx_channel_t* ch,
-        bool filter( smx_msg_t* ) )
+        bool filter( smx_net_t*, smx_msg_t* ) )
 {
     if( ch == NULL || ch->sink == NULL || filter == NULL )
         return false;
@@ -402,7 +402,8 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         }
     }
 
-    if( ch->sink->content_filter != NULL && !ch->sink->content_filter( msg ) )
+    if( ch->sink->content_filter != NULL
+            && !ch->sink->content_filter( ch->source->net, msg ) )
     {
         SMX_LOG_CH( ch, debug, "msg content filter failed, dismissing msg" );
         smx_msg_destroy( h, msg, true );
@@ -449,9 +450,14 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     if( ch->sink->state == SMX_CHANNEL_END ) abort = true;
     if( abort )
     {
-        ch->sink->err = SMX_CHANNEL_ERR_NO_TARGET;
+        if( ch->sink->err != SMX_CHANNEL_ERR_NO_TARGET )
+        {
+            ch->sink->err = SMX_CHANNEL_ERR_NO_TARGET;
+            SMX_LOG_CH( ch, warn,
+                    "write aborted: consumer '%s(%d)' has terminated",
+                    ch->sink->net->name, ch->sink->net->id );
+        }
         pthread_mutex_unlock( &ch->ch_mutex );
-        SMX_LOG_CH( ch, notice, "write aborted: consumer has termninated" );
         smx_msg_destroy( h, msg, true );
         return -1;
     }

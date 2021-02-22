@@ -329,7 +329,7 @@ int smx_channel_ready_to_write( smx_channel_t* ch );
  *  true on success or false on failure.
  */
 bool smx_channel_set_content_filter( smx_channel_t* ch,
-        bool filter( smx_msg_t* ) );
+        bool filter( smx_net_t*, smx_msg_t* ) );
 
 /**
  * Set the channel filter to only allow messages of a certain type to be
