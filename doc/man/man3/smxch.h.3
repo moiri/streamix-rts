@@ -1,4 +1,4 @@
-.TH "include/smxch.h" 3 "Tue Feb 16 2021" "Version v0.6.0" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxch.h" 3 "Mon Feb 22 2021" "Version v0.6.1" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -80,7 +80,7 @@ include/smxch.h
 .br
 .RI "Returns the number of available space in a channel\&. "
 .ti -1c
-.RI "bool \fBsmx_channel_set_content_filter\fP (smx_channel_t *ch, bool filter(smx_msg_t *))"
+.RI "bool \fBsmx_channel_set_content_filter\fP (smx_channel_t *ch, bool filter(smx_net_t *, smx_msg_t *))"
 .br
 .ti -1c
 .RI "bool \fBsmx_channel_set_filter\fP (smx_net_t *h, smx_channel_t *ch, int count,\&.\&.\&.)"
@@ -504,7 +504,7 @@ number of available space in a channel or -1 on failure
 .RE
 .PP
 
-.SS "bool smx_channel_set_content_filter (smx_channel_t * ch, bool  filtersmx_msg_t *)"
+.SS "bool smx_channel_set_content_filter (smx_channel_t * ch, bool  filtersmx_net_t *, smx_msg_t *)"
 Set a channel filter to only allow messages of a certain content to be written to this channel\&.
 .PP
 \fBParameters:\fP

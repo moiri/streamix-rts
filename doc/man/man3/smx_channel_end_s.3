@@ -1,4 +1,4 @@
-.TH "smx_channel_end_t" 3 "Tue Feb 16 2021" "Version v0.6.0" "libsmxrts" \" -*- nroff -*-
+.TH "smx_channel_end_t" 3 "Mon Feb 22 2021" "Version v0.6.1" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -39,7 +39,7 @@ smx_channel_end_t
 .RI "} \fBfilter\fP"
 .br
 .ti -1c
-.RI "bool(* \fBcontent_filter\fP )(smx_msg_t *msg)"
+.RI "bool(* \fBcontent_filter\fP )(smx_net_t *\fBnet\fP, smx_msg_t *msg)"
 .br
 .ti -1c
 .RI "struct timespec \fBtimeout\fP"
@@ -54,7 +54,7 @@ The end of a channel
 .PP 
 .SS "pthread_cond_t smx_channel_end_t::ch_cv"
 conditional variable to trigger producer 
-.SS "bool( * smx_channel_end_t::content_filter) (smx_msg_t *msg)"
+.SS "bool( * smx_channel_end_t::content_filter) (smx_net_t *\fBnet\fP, smx_msg_t *msg)"
 A pointer to the filter function\&. 
 .SS "unsigned long smx_channel_end_t::count"
 access counter 
