@@ -1,3 +1,11 @@
+libsmxrts0.6 (0.6.1-1) bionic; urgency=medium
+
+  * pass net pointer to content filter
+  * pass connecting source net to filter instead of sink
+  * only log failed write channel access to terminated consumer once
+
+ -- Simon Maurer <simon.maurer@humdek.unibe.ch>  Mon, 22 Feb 2021 10:04:45 +0100
+
 libsmxrts0.6 (0.6.0-1) bionic; urgency=medium
 
   * Initial release
