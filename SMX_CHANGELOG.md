@@ -1,4 +1,13 @@
-# `v0.6.1` (latest)
+# `v0.6.2` (latest)
+
+### Changes
+
+ - Log a write warning if a fifo buffer was filled (and length is bigger than
+   1).
+
+
+-------------------
+# `v0.6.1`
 
 ### Changes
 
