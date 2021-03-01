@@ -804,6 +804,9 @@ int smx_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         }
         new_count = fifo->count;
 
+        if( new_count > 1 && new_count == fifo->length ) {
+            SMX_LOG_CH( ch, warn, "fifo full (new count: %d)", new_count );
+        }
         SMX_LOG_CH( ch, info, "write to fifo (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE, new_count );
     }
@@ -841,6 +844,9 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         }
         fifo->overwrite = 0;
 
+        if( new_count > 1 && new_count == fifo->length ) {
+            SMX_LOG_CH( ch, warn, "fifo_d full (new count: %d)", new_count );
+        }
         SMX_LOG_CH( ch, info, "write to fifo_d (new count: %d)", new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE, new_count );
     }
