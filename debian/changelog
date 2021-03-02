@@ -1,3 +1,24 @@
+libsmxrts0.6 (0.6.3-1) bionic; urgency=medium
+
+  * remove ycm config from repo
+  * add config option expected_rate which allows to log warning if the net rate is lower or higher than expected
+
+ -- Simon Maurer <simon.maurer@humdek.unibe.ch>  Tue, 02 Mar 2021 16:04:29 +0100
+
+libsmxrts0.6 (0.6.2-1) bionic; urgency=medium
+
+  * add write warning if fifo is full (but len > 1)
+
+ -- Simon Maurer <simon.maurer@humdek.unibe.ch>  Mon, 01 Mar 2021 16:30:52 +0100
+
+libsmxrts0.6 (0.6.1-1) bionic; urgency=medium
+
+  * pass net pointer to content filter
+  * pass connecting source net to filter instead of sink
+  * only log failed write channel access to terminated consumer once
+
+ -- Simon Maurer <simon.maurer@humdek.unibe.ch>  Mon, 22 Feb 2021 10:04:45 +0100
+
 libsmxrts0.6 (0.6.0-1) bionic; urgency=medium
 
   * Initial release
