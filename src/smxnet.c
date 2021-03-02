@@ -107,6 +107,8 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
         free( net );
         return NULL;
     }
+    net->last_count_wall.tv_sec = 0;
+    net->last_count_wall.tv_nsec = 0;
     net->start_wall.tv_sec = 0;
     net->start_wall.tv_nsec = 0;
     net->end_wall.tv_sec = 0;
@@ -138,6 +140,8 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
             "dyn_conf_port" );
     net->conf_port_timeout = smx_net_get_int_prop( conf, name, impl, id,
             "dyn_conf_timeout" );
+    net->expected_rate = smx_net_get_int_prop( conf, name, impl, id,
+            "expected_rate" );
 
     (*net_cnt)++;
     SMX_LOG_MAIN( net, info, "create net instance %s(%d)", name, id );
@@ -395,6 +399,29 @@ void smx_net_init( smx_net_t* h, int indegree, int outdegree )
 }
 
 /*****************************************************************************/
+void smx_net_report_rate_warning( smx_net_t* h )
+{
+    struct timespec now;
+    int sec;
+    int nsec;
+    double rate;
+    const double delta = 0.2;
+
+    clock_gettime( CLOCK_MONOTONIC, &now );
+    sec = now.tv_sec - h->last_count_wall.tv_sec;
+    nsec = now.tv_nsec - h->last_count_wall.tv_nsec;
+    rate = sec + ( nsec  / 1000000000.0 );
+    if( rate > ( 1 + delta ) || rate < ( 1 - delta ) )
+    {
+        SMX_LOG_NET( h, warn,
+                "net rate at %.0f%% of the expected rate (%d)",
+                1 / rate * 100, h->expected_rate );
+    }
+    h->last_count_wall.tv_nsec = now.tv_nsec;
+    h->last_count_wall.tv_sec = now.tv_sec;
+}
+
+/*****************************************************************************/
 int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h )
 {
     smx_net_t* net = h;
@@ -526,11 +553,18 @@ smx_barrier:
     }
 
     clock_gettime( CLOCK_MONOTONIC, &h->start_wall );
+    h->last_count_wall.tv_nsec = h->start_wall.tv_nsec;
+    h->last_count_wall.tv_sec = h->start_wall.tv_sec;
     SMX_LOG_NET( h, notice, "start net" );
     while( state == SMX_NET_CONTINUE )
     {
         h->count++;
         SMX_LOG_NET( h, info, "start net loop %ld", h->count );
+        if( ( h->expected_rate > 0 )
+                && ( ( h->count % h->expected_rate ) == 0 ) )
+        {
+            smx_net_report_rate_warning( h );
+        }
         smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
         state = impl( h, net_state );
         state = smx_net_update_state( h, state );

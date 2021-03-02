@@ -260,6 +260,8 @@ struct smx_net_s
     int                 priority;
     unsigned int        id;           /**< a unique net id */
     unsigned long       count;        /**< loop counter */
+    /** The expected loop rate per second. */
+    int                 expected_rate;
     pthread_barrier_t*  init_done;    /**< pointer to the init sync barrier */
     zlog_category_t*    cat;          /**< the log category */
     smx_net_sig_t*      sig;          /**< the net port signature */
@@ -273,6 +275,7 @@ struct smx_net_s
     bson_t*             static_conf;  /**< pointer to the static configuration */
     char*               name;         /**< the name of the net */
     char*               impl;         /**< the name of the box implementation */
+    struct timespec     last_count_wall;   /**< start time of a net (after init) */
     struct timespec     start_wall;   /**< start time of a net (after init) */
     struct timespec     end_wall;     /**< end time of a net (befoer cleanup) */
 };
