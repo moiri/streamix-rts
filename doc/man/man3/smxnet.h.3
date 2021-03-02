@@ -1,4 +1,4 @@
-.TH "include/smxnet.h" 3 "Mon Mar 1 2021" "Version v0.6.2" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxnet.h" 3 "Tue Mar 2 2021" "Version v0.6.3" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -72,6 +72,9 @@ include/smxnet.h
 .br
 .ti -1c
 .RI "void \fBsmx_net_init\fP (smx_net_t *h, int indegree, int outdegree)"
+.br
+.ti -1c
+.RI "void \fBsmx_net_report_rate_warning\fP (smx_net_t *h)"
 .br
 .ti -1c
 .RI "int \fBsmx_net_run\fP (pthread_t *ths, int idx, void *box_impl(void *arg), void *h)"
@@ -458,6 +461,15 @@ Initialise a net
 \fIindegree\fP number of input ports 
 .br
 \fIoutdegree\fP number of output ports 
+.RE
+.PP
+
+.SS "void smx_net_report_rate_warning (smx_net_t * h)"
+Logs a warning if the net rate is lower or higher that the expected net rate by 20%\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIh\fP A pointer to the net handler\&. 
 .RE
 .PP
 

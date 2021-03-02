@@ -1,4 +1,4 @@
-.TH "include/smxtypes.h" 3 "Mon Mar 1 2021" "Version v0.6.2" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxtypes.h" 3 "Tue Mar 2 2021" "Version v0.6.3" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -325,6 +325,9 @@ bson_t * \fIdyn_conf\fP pointer to the dynamic configuration
 struct timespec \fIend_wall\fP end time of a net (befoer cleanup) 
 .br
 .PP
+int \fIexpected_rate\fP The expected loop rate per second\&. 
+.br
+.PP
 bool \fIhas_profiler\fP is profiler enabled? 
 .br
 .PP
@@ -338,6 +341,9 @@ char * \fIimpl\fP the name of the box implementation
 .br
 .PP
 pthread_barrier_t * \fIinit_done\fP pointer to the init sync barrier 
+.br
+.PP
+struct timespec \fIlast_count_wall\fP start time of a net (after init) 
 .br
 .PP
 char * \fIname\fP the name of the net 

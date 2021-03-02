@@ -186,6 +186,7 @@ doc/man/man3/smx_net_init_rn.3
 doc/man/man3/SMX_NET_INIT_RN.3
 doc/man/man3/smx_net_init_tf.3
 doc/man/man3/SMX_NET_INIT_TF.3
+doc/man/man3/smx_net_report_rate_warning.3
 doc/man/man3/SMX_NET_RETURN.3
 doc/man/man3/smx_net_run.3
 doc/man/man3/SMX_NET_RUN.3
