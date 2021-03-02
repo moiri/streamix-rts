@@ -1,4 +1,4 @@
-# `v0.6.3` (latest)
+# `v0.7.0` (latest)
 
 ### New Features
 
