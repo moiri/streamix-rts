@@ -1,4 +1,13 @@
-# `v0.6.2` (latest)
+# `v0.6.3` (latest)
+
+### New Features
+
+ - Add net config option `expected_rate` which allows to log warning if the
+   net rate is lower or higher than expected.
+
+
+-------------------
+# `v0.6.2`
 
 ### Changes
 
