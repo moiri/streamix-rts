@@ -288,6 +288,15 @@ const char* smx_net_get_string_prop( bson_t* conf, const char* name, const char*
 void smx_net_init( smx_net_t* h, int indegree, int outdegree );
 
 /**
+ * Logs a warning if the net rate is lower or higher that the expected net rate
+ * by 20%.
+ *
+ * @param h
+ *  A pointer to the net handler.
+ */
+void smx_net_report_rate_warning( smx_net_t* h );
+
+/**
  * @brief create pthred of net
  *
  * @param ths               the target array to store the thread id
