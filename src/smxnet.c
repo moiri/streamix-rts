@@ -7,10 +7,12 @@
  *
  * Net definitions for the runtime system library of Streamix
  */
+#define _GNU_SOURCE
 
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
+#include <pthread.h>
 #include "smxch.h"
 #include "smxconfig.h"
 #include "smxnet.h"
@@ -429,6 +431,7 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h )
     struct sched_param fifo_param;
     pthread_t thread;
     int min_fifo, max_fifo;
+    char id_str[16];
 
     if( idx >= SMX_MAX_NETS )
     {
@@ -461,6 +464,8 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h )
                 strerror( errno ) );
         return -1;
     }
+    sprintf( id_str, "%du", net->id );
+    pthread_setname_np( thread, id_str );
     ths[idx] = thread;
     return 0;
 }
