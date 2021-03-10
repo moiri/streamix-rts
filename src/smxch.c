@@ -499,7 +499,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         pthread_mutex_unlock( &ch->collector->col_mutex );
         SMX_LOG_CH( ch, info, "write to collector (new count: %d)",
                 new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE_COLLECTOR,
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE_COLLECTOR,
                 new_count );
     }
     // notify consumer that messages are available
@@ -688,7 +688,8 @@ smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         new_count = fifo->count;
 
         SMX_LOG_CH( ch, info, "read from fifo (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ,
+                new_count );
     }
     else if( ch->source->state != SMX_CHANNEL_END )
     {
@@ -734,7 +735,8 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
 
         smx_msg_destroy( h, old_backup, true );
         SMX_LOG_CH( ch, info, "read from fifo_d (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ,
+                new_count );
     }
     else
     {
@@ -744,7 +746,8 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
             fifo->copy++;
 
             SMX_LOG_CH( ch, info, "fifo_d is empty, duplicate backup" );
-            smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_DUPLICATE, 0 );
+            smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_DUPLICATE,
+                    0 );
         }
         else
         {
@@ -776,7 +779,8 @@ smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         new_count = fifo->count;
 
         SMX_LOG_CH( ch, info, "read from fifo_dd (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_READ, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ,
+                new_count );
     }
     else if( ch->source->state != SMX_CHANNEL_END )
         ch->source->err = SMX_CHANNEL_ERR_DL_MISS;
@@ -808,7 +812,8 @@ int smx_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
             SMX_LOG_CH( ch, warn, "fifo full (new count: %d)", new_count );
         }
         SMX_LOG_CH( ch, info, "write to fifo (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE,
+                new_count );
     }
     else
     {
@@ -848,7 +853,8 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
             SMX_LOG_CH( ch, warn, "fifo_d full (new count: %d)", new_count );
         }
         SMX_LOG_CH( ch, info, "write to fifo_d (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_WRITE, new_count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE,
+                new_count );
     }
     else
     {
@@ -861,7 +867,7 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         {
             SMX_LOG_CH( ch, notice, "overwrite tail of fifo" );
         }
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_OVERWRITE,
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_OVERWRITE,
                 fifo->length );
     }
     return 0;
@@ -980,7 +986,7 @@ int smx_d_guard_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     if( ( itval.it_value.tv_sec != 0 ) || ( itval.it_value.tv_nsec != 0 ) ) {
         SMX_LOG_CH( ch, info, "rate_control: discard message '%llu'",
                 msg->id );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_DISMISS,
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_DISMISS,
                 ch->fifo->count );
         smx_msg_destroy( h, msg, true );
         return 1;

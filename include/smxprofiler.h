@@ -24,7 +24,7 @@
  * @param val       the current message count held in the channel.
  */
 void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
-        smx_profiler_action_t action, int val );
+        smx_profiler_action_ch_t action, int val );
 
 /**
  * The function to log profiler messages related to a smx message.
@@ -34,7 +34,7 @@ void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
  * @param action    the message action.
  */
 void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
-        smx_profiler_action_t action );
+        smx_profiler_action_msg_t action );
 
 /**
  * The function to log profiler messages related to a smx net.
@@ -42,6 +42,6 @@ void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
  * @param net       a pointer to the net handler which logs the event.
  * @param action    the net action.
  */
-void smx_profiler_log_net( smx_net_t* net, smx_profiler_action_t action );
+void smx_profiler_log_net( smx_net_t* net, smx_profiler_action_net_t action );
 
 #endif /* SMXPROFILER_H */

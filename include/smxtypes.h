@@ -40,7 +40,9 @@ typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e *
 /** #smx_config_error_e */
 typedef enum smx_config_error_e smx_config_error_t;
 /** #smx_profiler_action_e */
-typedef enum smx_profiler_action_e smx_profiler_action_t;
+typedef enum smx_profiler_action_ch_e smx_profiler_action_ch_t;
+typedef enum smx_profiler_action_msg_e smx_profiler_action_msg_t;
+typedef enum smx_profiler_action_net_e smx_profiler_action_net_t;
 
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
 typedef struct smx_channel_end_s smx_channel_end_t;   /**< ::smx_channel_end_s */
@@ -112,25 +114,43 @@ enum smx_config_error_e
 /**
  * The different actions a profiler can log.
  */
-enum smx_profiler_action_e
+enum smx_profiler_action_ch_e
 {
-    SMX_PROFILER_ACTION_START,          /**< start a net. */
-    SMX_PROFILER_ACTION_CREATE,         /**< create a msg, channel, or net. */
-    SMX_PROFILER_ACTION_DESTROY,        /**< destroy a msg, channel, or net. */
-    SMX_PROFILER_ACTION_COPY,           /**< copy a message. */
-    SMX_PROFILER_ACTION_READ,           /**< read from a channel. */
-    SMX_PROFILER_ACTION_READ_COLLECTOR, /**< read from a collector. */
-    SMX_PROFILER_ACTION_WRITE,          /**< write to a channel. */
-    SMX_PROFILER_ACTION_WRITE_COLLECTOR,/**< write to a collector. */
-    SMX_PROFILER_ACTION_OVERWRITE,      /**< overwrite a message in a channel. */
-    SMX_PROFILER_ACTION_DISMISS,        /**< dismiss a message in a channel. */
-    SMX_PROFILER_ACTION_DUPLICATE,      /**< duplicate a message in a channel. */
-    SMX_PROFILER_ACTION_DL_MISS_SRC,    /**< rt producer missed a deadline. */
-    SMX_PROFILER_ACTION_DL_MISS_SRC_CP, /**< rt producer missed a deadline, msg duplicated. */
-    SMX_PROFILER_ACTION_TT_MISS_SRC,    /**< non-rt producer missed a tt interval. */
-    SMX_PROFILER_ACTION_TT_MISS_SRC_CP, /**< non-rt producer missed a tt interval, msg duplicated. */
-    SMX_PROFILER_ACTION_DL_MISS_SINK,   /**< rt consumer missed a deadline. */
-    SMX_PROFILER_ACTION_TT_MISS_SINK    /**< non-rt consumer missed a tt interval. */
+    SMX_PROFILER_ACTION_CH_READ,           /**< read from a channel. */
+    SMX_PROFILER_ACTION_CH_READ_COLLECTOR, /**< read from a collector. */
+    SMX_PROFILER_ACTION_CH_WRITE,          /**< write to a channel. */
+    SMX_PROFILER_ACTION_CH_WRITE_COLLECTOR,/**< write to a collector. */
+    SMX_PROFILER_ACTION_CH_OVERWRITE,      /**< overwrite a message in a channel. */
+    SMX_PROFILER_ACTION_CH_DISMISS,        /**< dismiss a message in a channel. */
+    SMX_PROFILER_ACTION_CH_DUPLICATE,      /**< duplicate a message in a channel. */
+    SMX_PROFILER_ACTION_CH_DL_MISS_SRC,    /**< rt producer missed a deadline. */
+    SMX_PROFILER_ACTION_CH_DL_MISS_SRC_CP, /**< rt producer missed a deadline, msg duplicated. */
+    SMX_PROFILER_ACTION_CH_TT_MISS_SRC,    /**< non-rt producer missed a tt interval. */
+    SMX_PROFILER_ACTION_CH_TT_MISS_SRC_CP, /**< non-rt producer missed a tt interval, msg duplicated. */
+    SMX_PROFILER_ACTION_CH_DL_MISS_SINK,   /**< rt consumer missed a deadline. */
+    SMX_PROFILER_ACTION_CH_TT_MISS_SINK    /**< non-rt consumer missed a tt interval. */
+};
+
+/**
+ * The different actions a profiler can log.
+ */
+enum smx_profiler_action_msg_e
+{
+    SMX_PROFILER_ACTION_MSG_CREATE,         /**< create a msg. */
+    SMX_PROFILER_ACTION_MSG_DESTROY,        /**< destroy a msg. */
+    SMX_PROFILER_ACTION_MSG_COPY_START,     /**< copy a message. */
+    SMX_PROFILER_ACTION_MSG_COPY_END        /**< copy a message. */
+};
+
+/**
+ * The different actions a profiler can log.
+ */
+enum smx_profiler_action_net_e
+{
+    SMX_PROFILER_ACTION_NET_START,      /**< start a net loop. */
+    SMX_PROFILER_ACTION_NET_START_IMPL, /**< start a net implementation. */
+    SMX_PROFILER_ACTION_NET_END_IMPL,   /**< end a net implementation. */
+    SMX_PROFILER_ACTION_NET_END         /**< end a net loop. */
 };
 
 /**

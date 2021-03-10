@@ -183,7 +183,7 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
                         "rt net '%s(%d)' missed deadline to produce: no message"
                         " produced", producer->name, producer->id );
                 smx_profiler_log_ch( h, ch_in[i], NULL,
-                        SMX_PROFILER_ACTION_DL_MISS_SRC, 0 );
+                        SMX_PROFILER_ACTION_CH_DL_MISS_SRC, 0 );
             }
             if( ch_in[i]->fifo->copy )
             {
@@ -191,7 +191,7 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
                         "rt net '%s(%d)' missed deadline to produce: previous"
                         " message duplicated", producer->name, producer->id );
                 smx_profiler_log_ch( h, ch_in[i], NULL,
-                        SMX_PROFILER_ACTION_DL_MISS_SRC_CP, 0 );
+                        SMX_PROFILER_ACTION_CH_DL_MISS_SRC_CP, 0 );
             }
         }
         else
@@ -202,7 +202,7 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
                         "non-rt net '%s(%d)' missed tt interval to produce:"
                         " no message produced", producer->name, producer->id );
                 smx_profiler_log_ch( h, ch_in[i], NULL,
-                        SMX_PROFILER_ACTION_TT_MISS_SRC, 0 );
+                        SMX_PROFILER_ACTION_CH_TT_MISS_SRC, 0 );
             }
             if( ch_in[i]->fifo->copy )
             {
@@ -211,7 +211,7 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
                         " previous message duplicated", producer->name,
                         producer->id );
                 smx_profiler_log_ch( h, ch_in[i], NULL,
-                        SMX_PROFILER_ACTION_TT_MISS_SRC_CP, 0 );
+                        SMX_PROFILER_ACTION_CH_TT_MISS_SRC_CP, 0 );
             }
         }
 
@@ -229,7 +229,7 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
                             "rt net '%s(%d)' missed deadline to consume",
                             consumer->name, consumer->id );
                     smx_profiler_log_ch( h, ch_out[i], NULL,
-                            SMX_PROFILER_ACTION_DL_MISS_SINK, 0 );
+                            SMX_PROFILER_ACTION_CH_DL_MISS_SINK, 0 );
                 }
                 else
                 {
@@ -237,7 +237,7 @@ void smx_tf_propagate_msgs( smx_net_t* h, int copy )
                             "non-rt '%s(%d)' net missed tt interval to consume",
                             consumer->name, consumer->id );
                     smx_profiler_log_ch( h, ch_out[i], NULL,
-                            SMX_PROFILER_ACTION_TT_MISS_SINK, 0 );
+                            SMX_PROFILER_ACTION_CH_TT_MISS_SINK, 0 );
                 }
             }
         }

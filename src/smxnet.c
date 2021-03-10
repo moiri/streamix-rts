@@ -9,6 +9,9 @@
  */
 #define _GNU_SOURCE
 
+#define _GNU_SOURCE
+
+#include <pthread.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -82,8 +85,9 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
         }
         SMX_LOG_NET( h, info, "read from collector (new count: %d)",
                 cur_count - 1 );
-        smx_profiler_log_net( h, SMX_PROFILER_ACTION_READ_COLLECTOR );
         msg = smx_channel_read( h, ch );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ_COLLECTOR,
+                cur_count - 1 );
     }
     return msg;
 }
@@ -563,6 +567,7 @@ smx_barrier:
     SMX_LOG_NET( h, notice, "start net" );
     while( state == SMX_NET_CONTINUE )
     {
+        smx_profiler_log_net( h, SMX_PROFILER_ACTION_NET_START );
         h->count++;
         SMX_LOG_NET( h, info, "start net loop %ld", h->count );
         if( ( h->expected_rate > 0 )
@@ -570,9 +575,11 @@ smx_barrier:
         {
             smx_net_report_rate_warning( h );
         }
-        smx_profiler_log_net( h, SMX_PROFILER_ACTION_START );
+        smx_profiler_log_net( h, SMX_PROFILER_ACTION_NET_START_IMPL );
         state = impl( h, net_state );
+        smx_profiler_log_net( h, SMX_PROFILER_ACTION_NET_END_IMPL );
         state = smx_net_update_state( h, state );
+        smx_profiler_log_net( h, SMX_PROFILER_ACTION_NET_END );
     }
 
 smx_terminate_net:

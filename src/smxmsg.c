@@ -23,13 +23,14 @@ smx_msg_t* smx_msg_copy( void* h, smx_msg_t* msg )
 
     SMX_LOG_MAIN( msg, info, "copy message '%llu' in net '%s(%d)'", msg->id,
             SMX_NET_GET_NAME( h ), SMX_NET_GET_ID( h ) );
-    smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_COPY );
+    smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_MSG_COPY_START );
     smx_msg_t* copy = smx_msg_create( h, msg->copy( msg->data, msg->size ),
             msg->size, msg->copy, msg->destroy, msg->unpack );
     if( msg->type != NULL )
         smx_msg_set_type( copy, msg->type );
     if( msg->prevent_backup )
         smx_msg_prevent_backup( copy );
+    smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_MSG_COPY_END );
     return copy;
 }
 
@@ -46,7 +47,7 @@ smx_msg_t* smx_msg_create( void* h, void* data, size_t size,
     msg->id = msg_count++;
     SMX_LOG_MAIN( msg, info, "create message '%llu' in '%s(%d)'", msg->id,
             SMX_NET_GET_NAME( h ), SMX_NET_GET_ID( h ) );
-    smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_CREATE );
+    smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_MSG_CREATE );
     msg->type = NULL;
     msg->data = data;
     msg->size = size;
@@ -94,7 +95,7 @@ void smx_msg_destroy( void* h, smx_msg_t* msg, int deep )
 
     SMX_LOG_MAIN( msg, info, "destroy message '%llu' in '%s(%d)'", msg->id,
             SMX_NET_GET_NAME( h ), SMX_NET_GET_ID( h ) );
-    smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_DESTROY );
+    smx_profiler_log_msg( h, msg, SMX_PROFILER_ACTION_MSG_DESTROY );
     if( deep )
         msg->destroy( msg->data );
     if( msg->type != NULL )

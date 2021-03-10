@@ -9,7 +9,7 @@
  */
 
 #undef TRACEPOINT_PROVIDER
-#define TRACEPOINT_PROVIDER tpf_lttng_smx
+#define TRACEPOINT_PROVIDER smx_lttng
 
 #undef TRACEPOINT_INCLUDE
 #define TRACEPOINT_INCLUDE "./lttng_tp.h"
@@ -20,7 +20,7 @@
 #include <lttng/tracepoint.h>
 
 TRACEPOINT_EVENT_CLASS(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_msg,
     TP_ARGS(
         int, id_msg,
@@ -33,7 +33,7 @@ TRACEPOINT_EVENT_CLASS(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_msg,
     msg_create,
     TP_ARGS(
@@ -43,9 +43,9 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_msg,
-    msg_copy,
+    msg_copy_start,
     TP_ARGS(
         int, id_msg,
         const char*, name_net
@@ -53,7 +53,17 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
+    smx_msg,
+    msg_copy_end,
+    TP_ARGS(
+        int, id_msg,
+        const char*, name_net
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    smx_lttng,
     smx_msg,
     msg_destroy,
     TP_ARGS(
@@ -63,7 +73,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_CLASS(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     TP_ARGS(
         int, id_ch,
@@ -82,33 +92,7 @@ TRACEPOINT_EVENT_CLASS(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
-    smx_ch,
-    ch_create,
-    TP_ARGS(
-        int, id_ch,
-        int, id_net,
-        const char*, name_ch,
-        int, id_msg,
-        int, count
-    )
-)
-
-TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
-    smx_ch,
-    ch_destroy,
-    TP_ARGS(
-        int, id_ch,
-        int, id_net,
-        const char*, name_ch,
-        int, id_msg,
-        int, count
-    )
-)
-
-TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_read,
     TP_ARGS(
@@ -121,7 +105,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_read_collector,
     TP_ARGS(
@@ -134,7 +118,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_write,
     TP_ARGS(
@@ -147,7 +131,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_write_collector,
     TP_ARGS(
@@ -160,7 +144,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_overwrite,
     TP_ARGS(
@@ -173,7 +157,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_dismiss,
     TP_ARGS(
@@ -186,7 +170,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_duplicate,
     TP_ARGS(
@@ -199,7 +183,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_dl_miss_src,
     TP_ARGS(
@@ -212,7 +196,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_dl_miss_src_cp,
     TP_ARGS(
@@ -225,7 +209,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_dl_miss_sink,
     TP_ARGS(
@@ -238,7 +222,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_tt_miss_src,
     TP_ARGS(
@@ -251,7 +235,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_tt_miss_src_cp,
     TP_ARGS(
@@ -264,7 +248,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_ch,
     ch_tt_miss_sink,
     TP_ARGS(
@@ -277,7 +261,7 @@ TRACEPOINT_EVENT_INSTANCE(
 )
 
 TRACEPOINT_EVENT_CLASS(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_net,
     TP_ARGS(
         int, id_net,
@@ -290,29 +274,39 @@ TRACEPOINT_EVENT_CLASS(
 )
 
 TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
-    smx_net,
-    net_create,
-    TP_ARGS(
-        int, id_net,
-        const char*, name_net
-    )
-)
-
-TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
-    smx_net,
-    net_destroy,
-    TP_ARGS(
-        int, id_net,
-        const char*, name_net
-    )
-)
-
-TRACEPOINT_EVENT_INSTANCE(
-    tpf_lttng_smx,
+    smx_lttng,
     smx_net,
     net_start,
+    TP_ARGS(
+        int, id_net,
+        const char*, name_net
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    smx_lttng,
+    smx_net,
+    net_start_impl,
+    TP_ARGS(
+        int, id_net,
+        const char*, name_net
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    smx_lttng,
+    smx_net,
+    net_end_impl,
+    TP_ARGS(
+        int, id_net,
+        const char*, name_net
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    smx_lttng,
+    smx_net,
+    net_end,
     TP_ARGS(
         int, id_net,
         const char*, name_net
