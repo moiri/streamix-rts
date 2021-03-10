@@ -585,19 +585,20 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
                     sizeof( struct smx_rts_shared_state_s ) );
             h->rts->shared_state[h->rts->shared_state_cnt]->key = shared_state_key;
             h->rts->shared_state[h->rts->shared_state_cnt]->cleanup = cleanup_shared;
-            h->shared_state = h->rts->shared_state[h->rts->shared_state_cnt]->state;
-            h->rts->shared_state_cnt++;
+            h->rts->shared_state[h->rts->shared_state_cnt]->state = NULL;
             rc = init_shared( h, &h->shared_state );
+            h->rts->shared_state[h->rts->shared_state_cnt]->state = h->shared_state;
+            SMX_LOG_NET( h, notice, "shared state allocated with key '%s' at"
+                    " position '%d'", shared_state_key,
+                    h->rts->shared_state_cnt );
+            h->rts->shared_state_cnt++;
             if( rc < 0 )
             {
                 SMX_LOG_NET( h, error, "pre initialisation of net failed" );
-                h->rts->shared_state_cnt--;
-                free( h->rts->shared_state[h->rts->shared_state_cnt] );
                 pthread_barrier_wait( &h->rts->pre_init_done );
                 pthread_barrier_wait( &h->rts->init_done );
                 goto smx_terminate_net;
             }
-            SMX_LOG_NET( h, notice, "shared state allocated" );
         }
         pthread_mutex_unlock( &h->rts->net_mutex );
     }
