@@ -27,28 +27,6 @@
 #ifndef SMXRTS_H
 #define SMXRTS_H
 
-// TYPEDEFS -------------------------------------------------------------------
-
-typedef struct smx_rts_s smx_rts_t; /**< ::smx_rts_s */
-
-// STRUCTS --------------------------------------------------------------------
-
-/**
- * The main RTS structure holding information about the streamix network.
- */
-struct smx_rts_s
-{
-    int ch_cnt;                     /**< the number of channels of the system */
-    int net_cnt;                    /**< the number of nets of the system */
-    pthread_barrier_t init_done;    /**< the barrier for syncing initialisation */
-    void* conf;                     /**< the application configuration */
-    pthread_t ths[SMX_MAX_NETS];    /**< the array holding all thread ids */
-    smx_channel_t* chs[SMX_MAX_CHS];/**< the array holding all channel pointers */
-    smx_net_t* nets[SMX_MAX_NETS];  /**< the array holdaing all net pointers */
-    struct timespec start_wall;     /**< the walltime of the application start */
-    struct timespec end_wall;       /**< the walltime of the application end. */
-};
-
 // RTS MACROS ------------------------------------------------------------------
 
 /**
@@ -113,9 +91,8 @@ struct smx_rts_s
  * Macro to create a streamix net.
  */
 #define SMX_NET_CREATE( id, net_name, box_name, prio )\
-    rts->nets[id] = smx_net_create( &rts->net_cnt, id, #net_name, #box_name,\
-            STRINGIFY( net_ ## net_name ## _ ## id ), rts->conf,\
-            &rts->init_done, prio )
+    rts->nets[id] = smx_net_create( id, #net_name, #box_name,\
+            STRINGIFY( net_ ## net_name ## _ ## id ), rts, prio )
 
 /**
  * Macro to destroy a streamix net.
@@ -172,6 +149,13 @@ struct smx_rts_s
  */
 #define SMX_NET_WAIT_END( id )\
     smx_net_wait_end( rts->ths[id] )
+
+/**
+ * Macro to wait for cleanup of all nets to complete before running the
+ * post cleanup functions.
+ */
+#define SMX_PROGRAM_INIT_CLEANUP()\
+    smx_program_init_cleanup( rts )
 
 /**
  * Macro to wait for initialisation of all nets to complete before running the

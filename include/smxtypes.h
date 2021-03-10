@@ -31,6 +31,16 @@
 #define SMX_MSG_JSON_TYPE_STR "json"
 
 /**
+ * The number of maximal allowed nets in one streamix application.
+ */
+#define SMX_MAX_NETS 1000
+
+/**
+ * The number of maximal allowed channel in one streamix application.
+ */
+#define SMX_MAX_CHS 10000
+
+/**
  * The streamix channel error type. Refer to the error enumeration definition
  * for more details #smx_channel_err_e.
  */
@@ -44,6 +54,8 @@ typedef enum smx_profiler_action_ch_e smx_profiler_action_ch_t;
 typedef enum smx_profiler_action_msg_e smx_profiler_action_msg_t;
 typedef enum smx_profiler_action_net_e smx_profiler_action_net_t;
 
+typedef struct smx_rts_s smx_rts_t; /**< ::smx_rts_s */
+typedef struct smx_rts_shared_state_s smx_rts_shared_state_t; /**< ::smx_rts_shared_state_s */
 typedef struct smx_channel_s smx_channel_t;           /**< ::smx_channel_s */
 typedef struct smx_channel_end_s smx_channel_end_t;   /**< ::smx_channel_end_s */
 typedef struct smx_collector_s smx_collector_t;       /**< ::smx_collector_s */
@@ -285,7 +297,6 @@ struct smx_net_s
     unsigned long       count;        /**< loop counter */
     /** The expected loop rate per second. */
     int                 expected_rate;
-    pthread_barrier_t*  init_done;    /**< pointer to the init sync barrier */
     zlog_category_t*    cat;          /**< the log category */
     smx_net_sig_t*      sig;          /**< the net port signature */
     /** port name on which to receive the dynamic configuration  */
@@ -298,6 +309,9 @@ struct smx_net_s
     bson_t*             static_conf;  /**< pointer to the static configuration */
     char*               name;         /**< the name of the net */
     char*               impl;         /**< the name of the box implementation */
+    void*               state;
+    void*               shared_state;
+    smx_rts_t*          rts;
     struct timespec     last_count_wall;   /**< start time of a net (after init) */
     struct timespec     start_wall;   /**< start time of a net (after init) */
     struct timespec     end_wall;     /**< end time of a net (befoer cleanup) */
@@ -318,6 +332,45 @@ struct smx_net_sig_s
         int len;                    /**< the number of output ports */
         smx_channel_t** ports;      /**< an array of channel pointers */
     } out;                          /**< output channels */
+};
+
+/**
+ * A shared state item
+ */
+struct smx_rts_shared_state_s
+{
+    /**
+     * The name of the shared state item. This is used to reference the item.
+     */
+    const char* key;
+    /**
+     * The actual state.
+     */
+    void* state;
+    /**
+     * The cleanup function to free the shared state item.
+     */
+    void ( *cleanup )( void* );
+};
+
+/**
+ * The main RTS structure holding information about the streamix network.
+ */
+struct smx_rts_s
+{
+    int ch_cnt;                     /**< the number of channels of the system */
+    int net_cnt;                    /**< the number of nets of the system */
+    int shared_state_cnt;
+    pthread_barrier_t pre_init_done;/**< the barrier for syncing pre initialisation */
+    pthread_barrier_t init_done;    /**< the barrier for syncing initialisation */
+    void* conf;                     /**< the application configuration */
+    pthread_t ths[SMX_MAX_NETS];    /**< the array holding all thread ids */
+    smx_channel_t* chs[SMX_MAX_CHS];/**< the array holding all channel pointers */
+    smx_net_t* nets[SMX_MAX_NETS];  /**< the array holdaing all net pointers */
+    struct timespec start_wall;     /**< the walltime of the application start */
+    struct timespec end_wall;       /**< the walltime of the application end. */
+    smx_rts_shared_state_t* shared_state[SMX_MAX_NETS];
+    pthread_mutex_t net_mutex;      /**< mutual exclusion */
 };
 
 #endif /* SMXTYPES_H */

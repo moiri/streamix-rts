@@ -95,9 +95,8 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
 }
 
 /*****************************************************************************/
-smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
-        const char* impl, const char* cat_name, void* conf,
-        pthread_barrier_t* init_done, int prio )
+smx_net_t* smx_net_create( unsigned int id, const char* name,
+        const char* impl, const char* cat_name, smx_rts_t* rts, int prio )
 {
     if( id >= SMX_MAX_NETS )
     {
@@ -129,9 +128,11 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->sig->out.count = 0;
     net->sig->out.len = 0;
 
+    net->rts = rts;
+    net->state = NULL;
+    net->shared_state = NULL;
     net->id = id;
     net->priority = prio;
-    net->init_done = init_done;
     net->cat = zlog_get_category( cat_name );
     net->name = ( name == NULL ) ? NULL : strdup( name );
     net->impl = ( impl == NULL ) ? NULL : strdup( impl );
@@ -139,19 +140,19 @@ smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
     net->conf = NULL;
     net->static_conf = NULL;
     net->dyn_conf = NULL;
-    smx_net_get_json_doc( net, conf, name, impl, id );
-    net->has_profiler = smx_net_get_boolean_prop( conf, name, impl, id,
+    smx_net_get_json_doc( net, rts->conf, name, impl, id );
+    net->has_profiler = smx_net_get_boolean_prop( rts->conf, name, impl, id,
             "profiler" );
-    net->has_type_filter = smx_net_get_boolean_prop( conf, name, impl, id,
+    net->has_type_filter = smx_net_get_boolean_prop( rts->conf, name, impl, id,
             "type_filter" );
-    net->conf_port_name = smx_net_get_string_prop( conf, name, impl, id,
+    net->conf_port_name = smx_net_get_string_prop( rts->conf, name, impl, id,
             "dyn_conf_port" );
-    net->conf_port_timeout = smx_net_get_int_prop( conf, name, impl, id,
+    net->conf_port_timeout = smx_net_get_int_prop( rts->conf, name, impl, id,
             "dyn_conf_timeout" );
-    net->expected_rate = smx_net_get_int_prop( conf, name, impl, id,
+    net->expected_rate = smx_net_get_int_prop( rts->conf, name, impl, id,
             "expected_rate" );
 
-    (*net_cnt)++;
+    rts->net_cnt++;
     SMX_LOG_MAIN( net, info, "create net instance %s(%d)", name, id );
     return net;
 }
@@ -480,23 +481,30 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h )
 void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         int init( void*, void** ), void cleanup( void*, void* ) )
 {
+    return smx_net_start_routine_with_shared_state( h, impl, init,
+            cleanup, NULL, NULL, NULL );
+}
+
+/*****************************************************************************/
+void* smx_net_start_routine_with_shared_state( smx_net_t* h,
+        int impl( void*, void* ), int init( void*, void** ),
+        void cleanup( void*, void* ), int pre_init( void*, void** ),
+        void post_cleanup( void* ), const char* shared_state_key )
+{
     double elapsed_wall;
     int state = SMX_NET_CONTINUE;
-    void* net_state = NULL;
+    int rc;
+    int i;
     smx_channel_t* conf_port;
     smx_channel_err_t c_err;
     smx_msg_t* msg;
     bson_error_t b_err;
-    bool has_init_err = false;
-    /* xmlChar* profiler = NULL; */
 
     if( h == NULL )
     {
         SMX_LOG_MAIN( main, fatal, "unable to start net: not initialised" );
         return NULL;
     }
-
-    SMX_LOG_NET( h, notice, "init net" );
 
     if( h->has_profiler )
         SMX_LOG_NET( h, notice, "profiler enabled" );
@@ -510,8 +518,9 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
             SMX_LOG_NET( h, error,
                     "dynamic configuration port '%s' does not exist",
                     h->conf_port_name );
-            has_init_err = true;
-            goto smx_barrier;
+            pthread_barrier_wait( &h->rts->pre_init_done );
+            pthread_barrier_wait( &h->rts->init_done );
+            goto smx_terminate_net;
         }
         SMX_LOG_NET( h, notice, "awaiting dynamic configuration..." );
         smx_channel_set_filter( h, conf_port, 1, "json" );
@@ -527,8 +536,9 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
                         " port '%s' timed out", h->conf_port_name );
             }
             SMX_LOG_NET( h, error, "failed to read dynamic configuration" );
-            has_init_err = true;
-            goto smx_barrier;
+            pthread_barrier_wait( &h->rts->pre_init_done );
+            pthread_barrier_wait( &h->rts->init_done );
+            goto smx_terminate_net;
         }
         else
         {
@@ -536,8 +546,9 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
             if( h->dyn_conf == NULL )
             {
                 SMX_LOG( h, error, "unable to parse dynamic configuration" );
-                has_init_err = true;
-                goto smx_barrier;
+                pthread_barrier_wait( &h->rts->pre_init_done );
+                pthread_barrier_wait( &h->rts->init_done );
+                goto smx_terminate_net;
             }
             SMX_LOG( h, debug, "received dynamic configuration: %s",
                     ( char* )msg->data );
@@ -548,20 +559,62 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         SMX_MSG_DESTROY( h, msg );
     }
 
-    if( h->conf == NULL || init( h, &net_state ) != 0 )
+    if( h->conf == NULL )
     {
-        has_init_err = true;
-        SMX_LOG_NET( h, error, "initialisation of net failed" );
-    }
-
-smx_barrier:
-    SMX_LOG_NET( h, notice, "init done" );
-    pthread_barrier_wait( h->init_done );
-
-    if( has_init_err )
-    {
+        SMX_LOG_NET( h, error, "no net configuration available" );
+        pthread_barrier_wait( &h->rts->pre_init_done );
+        pthread_barrier_wait( &h->rts->init_done );
         goto smx_terminate_net;
     }
+
+    if( pre_init != NULL && post_cleanup != NULL )
+    {
+        SMX_LOG_NET( h, notice, "pre init net" );
+        pthread_mutex_lock( &h->rts->net_mutex );
+        for( i = 0; i < h->rts->shared_state_cnt; i++ )
+        {
+            if( strcmp( h->rts->shared_state[i]->key, shared_state_key ) == 0 )
+            {
+                h->shared_state = h->rts->shared_state[i];
+                break;
+            }
+        }
+        if( h->shared_state == NULL )
+        {
+            h->rts->shared_state[h->rts->shared_state_cnt] = smx_malloc(
+                    sizeof( struct smx_rts_shared_state_s ) );
+            h->rts->shared_state[h->rts->shared_state_cnt]->key = shared_state_key;
+            h->rts->shared_state[h->rts->shared_state_cnt]->cleanup = post_cleanup;
+            h->shared_state = h->rts->shared_state[h->rts->shared_state_cnt]->state;
+            h->rts->shared_state_cnt++;
+            rc = pre_init( h, &h->shared_state );
+            if( rc < 0 )
+            {
+                SMX_LOG_NET( h, error, "pre initialisation of net failed" );
+                h->rts->shared_state_cnt--;
+                free( h->rts->shared_state[h->rts->shared_state_cnt] );
+                pthread_barrier_wait( &h->rts->pre_init_done );
+                pthread_barrier_wait( &h->rts->init_done );
+                goto smx_terminate_net;
+            }
+        }
+        pthread_mutex_unlock( &h->rts->net_mutex );
+    }
+
+    SMX_LOG_NET( h, notice, "pre init done" );
+    pthread_barrier_wait( &h->rts->pre_init_done );
+
+    SMX_LOG_NET( h, notice, "init net" );
+    rc = init( h, &h->state );
+    if( rc < 0 )
+    {
+        SMX_LOG_NET( h, error, "initialisation of net failed" );
+        pthread_barrier_wait( &h->rts->init_done );
+        goto smx_terminate_net;
+    }
+
+    SMX_LOG_NET( h, notice, "init done" );
+    pthread_barrier_wait( &h->rts->init_done );
 
     clock_gettime( CLOCK_MONOTONIC, &h->start_wall );
     h->last_count_wall.tv_nsec = h->start_wall.tv_nsec;
@@ -578,7 +631,7 @@ smx_barrier:
             smx_net_report_rate_warning( h );
         }
         smx_profiler_log_net( h, SMX_PROFILER_ACTION_NET_START_IMPL );
-        state = impl( h, net_state );
+        state = impl( h, h->state );
         smx_profiler_log_net( h, SMX_PROFILER_ACTION_NET_END_IMPL );
         state = smx_net_update_state( h, state );
         smx_profiler_log_net( h, SMX_PROFILER_ACTION_NET_END );
@@ -588,12 +641,11 @@ smx_terminate_net:
     clock_gettime( CLOCK_MONOTONIC, &h->end_wall );
     smx_net_terminate( h );
     SMX_LOG_NET( h, notice, "cleanup net" );
-    cleanup( h, net_state );
+    cleanup( h, h->state );
     elapsed_wall = ( h->end_wall.tv_sec - h->start_wall.tv_sec );
     elapsed_wall += ( h->end_wall.tv_nsec - h->start_wall.tv_nsec) / 1000000000.0;
     SMX_LOG_NET( h, notice, "terminate net (loop count: %ld, loop rate: %d, wall time: %f)",
             h->count, (int)(h->count/elapsed_wall), elapsed_wall );
-    /* xmlFree( profiler ); */
     return NULL;
 }
 

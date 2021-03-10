@@ -19,7 +19,14 @@
 /*****************************************************************************/
 void smx_program_cleanup( smx_rts_t* rts )
 {
+    int i;
     double elapsed_wall;
+    for( i = 0; i < rts->shared_state_cnt; i++ )
+    {
+        rts->shared_state[i]->cleanup( rts->shared_state[i]->state );
+        free( rts->shared_state[i] );
+    }
+    pthread_mutex_destroy( &rts->net_mutex );
     bson_destroy( rts->conf );
     pthread_barrier_destroy( &rts->init_done );
     clock_gettime( CLOCK_MONOTONIC, &rts->end_wall );
@@ -38,6 +45,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf )
     bson_error_t error;
     bson_t* doc = bson_new();
     bson_iter_t iter;
+    pthread_mutexattr_t mutexattr_prioinherit;
     uint32_t len;
 
     int rc = smx_log_init( log_conf );
@@ -103,6 +111,10 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf )
     rts->end_wall.tv_sec = 0;
     rts->end_wall.tv_nsec = 0;
     rts->conf = doc;
+    pthread_mutexattr_init( &mutexattr_prioinherit );
+    pthread_mutexattr_setprotocol( &mutexattr_prioinherit,
+            PTHREAD_PRIO_INHERIT );
+    pthread_mutex_init( &rts->net_mutex, &mutexattr_prioinherit );
     clock_gettime( CLOCK_MONOTONIC, &rts->start_wall );
 
     SMX_LOG_MAIN( main, notice, "using libsmxrtl version: %s",
@@ -121,6 +133,12 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf )
 /*****************************************************************************/
 void smx_program_init_run( smx_rts_t* rts )
 {
+    SMX_LOG_MAIN( main, notice, "waiting for all %d nets to finish"
+            " pre initialisation", rts->net_cnt );
+    if( pthread_barrier_init( &rts->pre_init_done, NULL, rts->net_cnt ) != 0 )
+    {
+        SMX_LOG_MAIN( main, error, "barrier pre initialisation failed" );
+    }
     SMX_LOG_MAIN( main, notice, "waiting for all %d nets to finish"
             " initialisation", rts->net_cnt );
     if( pthread_barrier_init( &rts->init_done, NULL, rts->net_cnt ) != 0 )

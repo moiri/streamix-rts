@@ -15,11 +15,6 @@
 #define SMXCH_H
 
 /**
- * The number of maximal allowed channel in one streamix application.
- */
-#define SMX_MAX_CHS 10000
-
-/**
  * @def SMX_CHANNEL_READ()
  *
  * Read from a streamix channel by accessing a net input port.

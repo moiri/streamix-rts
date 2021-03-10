@@ -18,11 +18,6 @@
 #define SMXNET_H
 
 /**
- * The number of maximal allowed nets in one streamix application.
- */
-#define SMX_MAX_NETS 1000
-
-/**
  * @def SMX_LOG()
  *
  * This macro allows to log events to the log file.
@@ -127,20 +122,16 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
  *  - assigning the net-specifix XML configuartion
  *  - assigning the net signature
  *
- * @param net_cnt   pointer to the net counter (is increased by one after net
- *                  creation)
  * @param id        a unique net identifier
  * @param name      the name of the net
  * @param impl      the name of the box implementation
  * @param cat_name  the name of the zlog category
- * @param conf      a pointer to the net configuration structure
- * @param init_done a pointer to the init sync barrier
+ * @param rts       a pointer to the main rts structure
  * @param prio      the RT thread priority (0 means no rt thread)
  * @return          a pointer to the ctreated net or NULL
  */
-smx_net_t* smx_net_create( int* net_cnt, unsigned int id, const char* name,
-        const char* impl, const char* cat_name, void* conf,
-        pthread_barrier_t* init_done, int prio );
+smx_net_t* smx_net_create( unsigned int id, const char* name,
+        const char* impl, const char* cat_name, smx_rts_t* rts, int prio );
 
 /**
  * Destroy a net
@@ -321,6 +312,11 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h )
  */
 void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         int init( void*, void** ), void cleanup( void*, void* ) );
+
+void* smx_net_start_routine_with_shared_state( smx_net_t* h,
+        int impl( void*, void* ), int init( void*, void** ),
+        void cleanup( void*, void* ), int pre_init( void*, void** ),
+        void post_cleanup( void* ), const char* shared_state_key );
 
 /**
  * @brief Set all channel states to end and send termination signal to all
