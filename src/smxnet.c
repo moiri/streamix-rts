@@ -597,6 +597,7 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
                 pthread_barrier_wait( &h->rts->init_done );
                 goto smx_terminate_net;
             }
+            SMX_LOG_NET( h, notice, "shared state allocated" );
         }
         pthread_mutex_unlock( &h->rts->net_mutex );
     }
