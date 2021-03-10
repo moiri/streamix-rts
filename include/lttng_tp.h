@@ -107,6 +107,19 @@ TRACEPOINT_EVENT_INSTANCE(
 TRACEPOINT_EVENT_INSTANCE(
     smx_lttng,
     smx_ch,
+    ch_read_block,
+    TP_ARGS(
+        int, id_ch,
+        int, id_net,
+        const char*, name_ch,
+        int, id_msg,
+        int, count
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    smx_lttng,
+    smx_ch,
     ch_read_collector,
     TP_ARGS(
         int, id_ch,
@@ -120,7 +133,33 @@ TRACEPOINT_EVENT_INSTANCE(
 TRACEPOINT_EVENT_INSTANCE(
     smx_lttng,
     smx_ch,
+    ch_read_collector_block,
+    TP_ARGS(
+        int, id_ch,
+        int, id_net,
+        const char*, name_ch,
+        int, id_msg,
+        int, count
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    smx_lttng,
+    smx_ch,
     ch_write,
+    TP_ARGS(
+        int, id_ch,
+        int, id_net,
+        const char*, name_ch,
+        int, id_msg,
+        int, count
+    )
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+    smx_lttng,
+    smx_ch,
+    ch_write_block,
     TP_ARGS(
         int, id_ch,
         int, id_net,

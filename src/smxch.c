@@ -184,6 +184,8 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
     pthread_mutex_lock( &ch->ch_mutex);
     while( ch->source->state == SMX_CHANNEL_PENDING && rc == 0 )
     {
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ_BLOCK,
+                ch->fifo->count );
         SMX_LOG_CH( ch, debug, "waiting for message" );
         if( ch->source->timeout.tv_sec == 0
                 && ch->source->timeout.tv_nsec == 0 )
@@ -235,6 +237,8 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
     }
     // notify producer that space is available
     smx_channel_change_write_state( ch, SMX_CHANNEL_READY );
+    smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ,
+            ch->fifo->count );
     pthread_mutex_unlock( &ch->ch_mutex );
     return msg;
 }
@@ -413,6 +417,8 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
     pthread_mutex_lock( &ch->ch_mutex );
     while( ch->sink->state == SMX_CHANNEL_PENDING && rc == 0 )
     {
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE_BLOCK,
+                ch->fifo->count );
         SMX_LOG_CH( ch, debug, "waiting for free space" );
         if( ch->sink->timeout.tv_sec == 0 && ch->sink->timeout.tv_nsec == 0 )
         {
@@ -496,14 +502,16 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         ch->collector->count++;
         new_count = ch->collector->count;
         smx_channel_change_collector_state( ch, SMX_CHANNEL_READY );
-        pthread_mutex_unlock( &ch->collector->col_mutex );
-        SMX_LOG_CH( ch, info, "write to collector (new count: %d)",
-                new_count );
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE_COLLECTOR,
                 new_count );
+        SMX_LOG_CH( ch, info, "write to collector (new count: %d)",
+                new_count );
+        pthread_mutex_unlock( &ch->collector->col_mutex );
     }
     // notify consumer that messages are available
     smx_channel_change_read_state( ch, SMX_CHANNEL_READY );
+    smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE,
+            ch->fifo->count );
     pthread_mutex_unlock( &ch->ch_mutex );
     return 0;
 }
@@ -667,6 +675,7 @@ void smx_fifo_destroy( smx_fifo_t* fifo )
 /*****************************************************************************/
 smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
 {
+    ( void )( h );
     smx_msg_t* msg = NULL;
     int new_count;
     if( ch == NULL || fifo == NULL )
@@ -688,8 +697,6 @@ smx_msg_t* smx_fifo_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         new_count = fifo->count;
 
         SMX_LOG_CH( ch, info, "read from fifo (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ,
-                new_count );
     }
     else if( ch->source->state != SMX_CHANNEL_END )
     {
@@ -735,8 +742,6 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
 
         smx_msg_destroy( h, old_backup, true );
         SMX_LOG_CH( ch, info, "read from fifo_d (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ,
-                new_count );
     }
     else
     {
@@ -762,6 +767,7 @@ smx_msg_t* smx_fifo_d_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
 /*****************************************************************************/
 smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
 {
+    ( void )( h );
     smx_msg_t* msg = NULL;
     int new_count;
     if( ch == NULL || fifo == NULL )
@@ -779,8 +785,6 @@ smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
         new_count = fifo->count;
 
         SMX_LOG_CH( ch, info, "read from fifo_dd (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ,
-                new_count );
     }
     else if( ch->source->state != SMX_CHANNEL_END )
         ch->source->err = SMX_CHANNEL_ERR_DL_MISS;
@@ -793,6 +797,7 @@ smx_msg_t* smx_fifo_dd_read( void* h, smx_channel_t* ch, smx_fifo_t* fifo )
 int smx_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         smx_msg_t* msg )
 {
+    ( void )( h );
     int new_count;
     if( ch == NULL || fifo == NULL || msg == NULL )
         return -1;
@@ -812,8 +817,6 @@ int smx_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
             SMX_LOG_CH( ch, warn, "fifo full (new count: %d)", new_count );
         }
         SMX_LOG_CH( ch, info, "write to fifo (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE,
-                new_count );
     }
     else
     {
@@ -853,8 +856,6 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
             SMX_LOG_CH( ch, warn, "fifo_d full (new count: %d)", new_count );
         }
         SMX_LOG_CH( ch, info, "write to fifo_d (new count: %d)", new_count );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE,
-                new_count );
     }
     else
     {

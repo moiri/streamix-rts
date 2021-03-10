@@ -24,12 +24,16 @@
 #include "smxutils.h"
 
 /*****************************************************************************/
-int smx_net_collector_check_avaliable( void* h, smx_collector_t* collector )
+int smx_net_collector_check_avaliable( void* h, smx_collector_t* collector,
+        smx_channel_t* ch )
 {
     int cur_count;
     pthread_mutex_lock( &collector->col_mutex );
     while( collector->state == SMX_CHANNEL_PENDING )
     {
+        smx_profiler_log_ch( h, ch, NULL,
+                SMX_PROFILER_ACTION_CH_READ_COLLECTOR_BLOCK,
+                collector->count );
         SMX_LOG_NET( h, debug, "waiting for message on collector" );
         pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
     }
@@ -56,7 +60,7 @@ smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
     smx_msg_t* msg = NULL;
     smx_channel_t* ch = NULL;
 
-    cur_count = smx_net_collector_check_avaliable( h, collector );
+    cur_count = smx_net_collector_check_avaliable( h, collector, in[0] );
 
     if( cur_count > 0 )
     {

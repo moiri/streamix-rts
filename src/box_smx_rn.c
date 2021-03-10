@@ -89,7 +89,7 @@ int smx_rn_init( void* h, void** state )
     if( *state == NULL )
         return -1;
 
-    *( int* )( *state ) = -1;
+    *( int* )( *state ) = 0;
     return 0;
 }
 

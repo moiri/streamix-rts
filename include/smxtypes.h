@@ -117,8 +117,11 @@ enum smx_config_error_e
 enum smx_profiler_action_ch_e
 {
     SMX_PROFILER_ACTION_CH_READ,           /**< read from a channel. */
+    SMX_PROFILER_ACTION_CH_READ_BLOCK,     /**< blocking at read from a channel. */
     SMX_PROFILER_ACTION_CH_READ_COLLECTOR, /**< read from a collector. */
+    SMX_PROFILER_ACTION_CH_READ_COLLECTOR_BLOCK,      /**< blocking at collector read. */
     SMX_PROFILER_ACTION_CH_WRITE,          /**< write to a channel. */
+    SMX_PROFILER_ACTION_CH_WRITE_BLOCK,    /**< blocking at write to a channel. */
     SMX_PROFILER_ACTION_CH_WRITE_COLLECTOR,/**< write to a collector. */
     SMX_PROFILER_ACTION_CH_OVERWRITE,      /**< overwrite a message in a channel. */
     SMX_PROFILER_ACTION_CH_DISMISS,        /**< dismiss a message in a channel. */

@@ -27,15 +27,25 @@ void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
     switch(action)
     {
         case SMX_PROFILER_ACTION_CH_READ:
-            ch->sink->count++;
+            if( msg != NULL )
+                ch->sink->count++;
             tracepoint_ch(ch_read);
+            break;
+        case SMX_PROFILER_ACTION_CH_READ_BLOCK:
+            tracepoint_ch(ch_read_block);
             break;
         case SMX_PROFILER_ACTION_CH_READ_COLLECTOR:
             tracepoint_ch(ch_read_collector);
             break;
+        case SMX_PROFILER_ACTION_CH_READ_COLLECTOR_BLOCK:
+            tracepoint_ch(ch_read_collector_block);
+            break;
         case SMX_PROFILER_ACTION_CH_WRITE:
             ch->source->count++;
             tracepoint_ch(ch_write);
+            break;
+        case SMX_PROFILER_ACTION_CH_WRITE_BLOCK:
+            tracepoint_ch(ch_write_block);
             break;
         case SMX_PROFILER_ACTION_CH_WRITE_COLLECTOR:
             tracepoint_ch(ch_write_collector);
