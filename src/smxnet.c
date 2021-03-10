@@ -9,8 +9,6 @@
  */
 #define _GNU_SOURCE
 
-#define _GNU_SOURCE
-
 #include <pthread.h>
 #include <errno.h>
 #include <stdbool.h>
