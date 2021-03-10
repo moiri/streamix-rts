@@ -509,6 +509,45 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
     if( h->has_profiler )
         SMX_LOG_NET( h, notice, "profiler enabled" );
 
+    if( init_shared != NULL && cleanup_shared != NULL )
+    {
+        SMX_LOG_NET( h, notice, "pre init net" );
+        pthread_mutex_lock( &h->rts->net_mutex );
+        for( i = 0; i < h->rts->shared_state_cnt; i++ )
+        {
+            if( strcmp( h->rts->shared_state[i]->key, shared_state_key ) == 0 )
+            {
+                h->shared_state = h->rts->shared_state[i];
+                break;
+            }
+        }
+        if( h->shared_state == NULL )
+        {
+            h->rts->shared_state[h->rts->shared_state_cnt] = smx_malloc(
+                    sizeof( struct smx_rts_shared_state_s ) );
+            h->rts->shared_state[h->rts->shared_state_cnt]->key = shared_state_key;
+            h->rts->shared_state[h->rts->shared_state_cnt]->cleanup = cleanup_shared;
+            h->rts->shared_state[h->rts->shared_state_cnt]->state = NULL;
+            rc = init_shared( h, &h->shared_state );
+            h->rts->shared_state[h->rts->shared_state_cnt]->state = h->shared_state;
+            SMX_LOG_NET( h, notice, "shared state allocated with key '%s' at"
+                    " position '%d'", shared_state_key,
+                    h->rts->shared_state_cnt );
+            h->rts->shared_state_cnt++;
+            if( rc < 0 )
+            {
+                SMX_LOG_NET( h, error, "pre initialisation of net failed" );
+                pthread_barrier_wait( &h->rts->pre_init_done );
+                pthread_barrier_wait( &h->rts->init_done );
+                goto smx_terminate_net;
+            }
+        }
+        pthread_mutex_unlock( &h->rts->net_mutex );
+    }
+
+    SMX_LOG_NET( h, notice, "pre init done" );
+    pthread_barrier_wait( &h->rts->pre_init_done );
+
     if( h->conf_port_name != NULL )
     {
         conf_port = smx_get_channel_by_name( h->sig->in.ports,
@@ -566,45 +605,6 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
         pthread_barrier_wait( &h->rts->init_done );
         goto smx_terminate_net;
     }
-
-    if( init_shared != NULL && cleanup_shared != NULL )
-    {
-        SMX_LOG_NET( h, notice, "pre init net" );
-        pthread_mutex_lock( &h->rts->net_mutex );
-        for( i = 0; i < h->rts->shared_state_cnt; i++ )
-        {
-            if( strcmp( h->rts->shared_state[i]->key, shared_state_key ) == 0 )
-            {
-                h->shared_state = h->rts->shared_state[i];
-                break;
-            }
-        }
-        if( h->shared_state == NULL )
-        {
-            h->rts->shared_state[h->rts->shared_state_cnt] = smx_malloc(
-                    sizeof( struct smx_rts_shared_state_s ) );
-            h->rts->shared_state[h->rts->shared_state_cnt]->key = shared_state_key;
-            h->rts->shared_state[h->rts->shared_state_cnt]->cleanup = cleanup_shared;
-            h->rts->shared_state[h->rts->shared_state_cnt]->state = NULL;
-            rc = init_shared( h, &h->shared_state );
-            h->rts->shared_state[h->rts->shared_state_cnt]->state = h->shared_state;
-            SMX_LOG_NET( h, notice, "shared state allocated with key '%s' at"
-                    " position '%d'", shared_state_key,
-                    h->rts->shared_state_cnt );
-            h->rts->shared_state_cnt++;
-            if( rc < 0 )
-            {
-                SMX_LOG_NET( h, error, "pre initialisation of net failed" );
-                pthread_barrier_wait( &h->rts->pre_init_done );
-                pthread_barrier_wait( &h->rts->init_done );
-                goto smx_terminate_net;
-            }
-        }
-        pthread_mutex_unlock( &h->rts->net_mutex );
-    }
-
-    SMX_LOG_NET( h, notice, "pre init done" );
-    pthread_barrier_wait( &h->rts->pre_init_done );
 
     SMX_LOG_NET( h, notice, "init net" );
     rc = init( h, &h->state );
