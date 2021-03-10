@@ -1,5 +1,9 @@
 # `v0.7.0` (latest)
 
+### Changes
+
+ - Add more lttng probes to allow for tracing blocking operations.
+
 ### New Features
 
  - Add net config option `expected_rate` which allows to log warning if the
