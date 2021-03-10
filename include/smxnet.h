@@ -53,7 +53,8 @@
  * @return
  *  The net configuration structure of type `bson_t`.
  */
-#define SMX_NET_GET_CONF( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf )
+#define SMX_NET_GET_CONF( h )\
+    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf )
 
 /**
  * @def SMX_NET_GET_ID()
@@ -77,7 +78,8 @@
  * @return
  *  A pointer to the net name of type `const char*`.
  */
-#define SMX_NET_GET_NAME( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->name )
+#define SMX_NET_GET_NAME( h )\
+    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->name )
 
 /**
  * @def SMX_NET_GET_IMPL()
@@ -89,7 +91,34 @@
  * @return
  *  A pointer to the box implementation name of type `const char*`.
  */
-#define SMX_NET_GET_IMPL( h ) ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->impl )
+#define SMX_NET_GET_IMPL( h )\
+    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->impl )
+
+/**
+ * @def SMX_NET_GET_STATE()
+ *
+ * Get the allocated state of the net instance.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  A pointer to the state or NULL.
+ */
+#define SMX_NET_GET_STATE( h )\
+    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->state )
+
+/**
+ * @def SMX_NET_GET_SHARED_STATE()
+ *
+ * Get the allocated shared state of the net instance.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  A pointer to the shared state or NULL.
+ */
+#define SMX_NET_GET_SHARED_STATE( h )\
+    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->shared_state )
 
 /**
  * Check whether messages are available on the collector and block until a
