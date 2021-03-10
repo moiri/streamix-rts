@@ -488,8 +488,8 @@ void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
 /*****************************************************************************/
 void* smx_net_start_routine_with_shared_state( smx_net_t* h,
         int impl( void*, void* ), int init( void*, void** ),
-        void cleanup( void*, void* ), int pre_init( void*, void** ),
-        void post_cleanup( void* ), const char* shared_state_key )
+        void cleanup( void*, void* ), int init_shared( void*, void** ),
+        void cleanup_shared( void* ), const char* shared_state_key )
 {
     double elapsed_wall;
     int state = SMX_NET_CONTINUE;
@@ -567,7 +567,7 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
         goto smx_terminate_net;
     }
 
-    if( pre_init != NULL && post_cleanup != NULL )
+    if( init_shared != NULL && cleanup_shared != NULL )
     {
         SMX_LOG_NET( h, notice, "pre init net" );
         pthread_mutex_lock( &h->rts->net_mutex );
@@ -584,10 +584,10 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
             h->rts->shared_state[h->rts->shared_state_cnt] = smx_malloc(
                     sizeof( struct smx_rts_shared_state_s ) );
             h->rts->shared_state[h->rts->shared_state_cnt]->key = shared_state_key;
-            h->rts->shared_state[h->rts->shared_state_cnt]->cleanup = post_cleanup;
+            h->rts->shared_state[h->rts->shared_state_cnt]->cleanup = cleanup_shared;
             h->shared_state = h->rts->shared_state[h->rts->shared_state_cnt]->state;
             h->rts->shared_state_cnt++;
-            rc = pre_init( h, &h->shared_state );
+            rc = init_shared( h, &h->shared_state );
             if( rc < 0 )
             {
                 SMX_LOG_NET( h, error, "pre initialisation of net failed" );

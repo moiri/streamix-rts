@@ -342,10 +342,32 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h )
 void* smx_net_start_routine( smx_net_t* h, int impl( void*, void* ),
         int init( void*, void** ), void cleanup( void*, void* ) );
 
+
+/**
+ * The same as smx_net_start_routine() but this includes handlers to initialize
+ * and cleanup shared state.
+ *
+ * @param h
+ *  A pointer to the net handler
+ * @param impl( arg )
+ *  A pointer to the net implementation function
+ * @param init( arg )
+ *  A pointer to the net intitialisation function
+ * @param cleanup( arg )
+ *  A pointer to the net cleanup function
+ * @param init_shared( arg )
+ *  A pointer to the shared state intitialisation function
+ * @param cleanup_shared( arg )
+ *  A pointer to the shared state cleanup function
+ * @param shared_state_key
+ *  The key under which the shared state will be stored.
+ * @return
+ *  returns NULL
+ */
 void* smx_net_start_routine_with_shared_state( smx_net_t* h,
         int impl( void*, void* ), int init( void*, void** ),
-        void cleanup( void*, void* ), int pre_init( void*, void** ),
-        void post_cleanup( void* ), const char* shared_state_key );
+        void cleanup( void*, void* ), int init_shared( void*, void** ),
+        void cleanup_shared( void* ), const char* shared_state_key );
 
 /**
  * @brief Set all channel states to end and send termination signal to all

@@ -165,10 +165,18 @@
     smx_program_init_run( rts )
 
 /**
- * The start routing to be passed to the pthread.
+ * The start routine to be passed to the pthread.
  */
 #define START_ROUTINE_NET( h, box_name )\
     smx_net_start_routine( h, box_name, box_name ## _init, box_name ## _cleanup )
+
+/**
+ * The start routine to be passed to the pthread. Using shared state
+ */
+#define START_ROUTINE_NET_WITH_SHARED_STATE( h, box_name, key )\
+    smx_net_start_routine_with_shared_state( h, box_name, box_name ## _init,\
+            box_name ## _cleanup, box_name ## _init_shared,\
+            box_name ## _cleanup_shared, key )
 
 // FUNCTIONS ------------------------------------------------------------------
 
