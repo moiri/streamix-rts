@@ -24,11 +24,11 @@ TRACEPOINT_EVENT_CLASS(
     smx_msg,
     TP_ARGS(
         int, id_msg,
-        const char*, name_net
+        int, id_net
     ),
     TP_FIELDS(
         ctf_integer(int, id_msg, id_msg)
-        ctf_string(name_net, name_net)
+        ctf_integer(int, id_net, id_net)
     )
 )
 
@@ -38,7 +38,7 @@ TRACEPOINT_EVENT_INSTANCE(
     msg_create,
     TP_ARGS(
         int, id_msg,
-        const char*, name_net
+        int, id_net
     )
 )
 
@@ -48,7 +48,7 @@ TRACEPOINT_EVENT_INSTANCE(
     msg_copy_start,
     TP_ARGS(
         int, id_msg,
-        const char*, name_net
+        int, id_net
     )
 )
 
@@ -58,7 +58,7 @@ TRACEPOINT_EVENT_INSTANCE(
     msg_copy_end,
     TP_ARGS(
         int, id_msg,
-        const char*, name_net
+        int, id_net
     )
 )
 
@@ -68,7 +68,7 @@ TRACEPOINT_EVENT_INSTANCE(
     msg_destroy,
     TP_ARGS(
         int, id_msg,
-        const char*, name_net
+        int, id_net
     )
 )
 

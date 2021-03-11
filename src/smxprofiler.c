@@ -81,7 +81,7 @@ void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
 }
 
 #define tracepoint_msg(action)\
-    tracepoint(smx_lttng, action, msg->id, net->name)
+    tracepoint(smx_lttng, action, msg->id, net->id)
 
 /*****************************************************************************/
 void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
