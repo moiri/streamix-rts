@@ -557,7 +557,6 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
             SMX_LOG_NET( h, error,
                     "dynamic configuration port '%s' does not exist",
                     h->conf_port_name );
-            pthread_barrier_wait( &h->rts->pre_init_done );
             pthread_barrier_wait( &h->rts->init_done );
             goto smx_terminate_net;
         }
@@ -575,7 +574,6 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
                         " port '%s' timed out", h->conf_port_name );
             }
             SMX_LOG_NET( h, error, "failed to read dynamic configuration" );
-            pthread_barrier_wait( &h->rts->pre_init_done );
             pthread_barrier_wait( &h->rts->init_done );
             goto smx_terminate_net;
         }
@@ -585,7 +583,6 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
             if( h->dyn_conf == NULL )
             {
                 SMX_LOG( h, error, "unable to parse dynamic configuration" );
-                pthread_barrier_wait( &h->rts->pre_init_done );
                 pthread_barrier_wait( &h->rts->init_done );
                 goto smx_terminate_net;
             }
@@ -601,7 +598,6 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
     if( h->conf == NULL )
     {
         SMX_LOG_NET( h, error, "no net configuration available" );
-        pthread_barrier_wait( &h->rts->pre_init_done );
         pthread_barrier_wait( &h->rts->init_done );
         goto smx_terminate_net;
     }
