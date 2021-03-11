@@ -87,9 +87,6 @@ void smx_profiler_log_ch( smx_net_t* net, smx_channel_t* ch, smx_msg_t* msg,
 void smx_profiler_log_msg( smx_net_t* net, smx_msg_t* msg,
         smx_profiler_action_msg_t action )
 {
-#ifndef SMX_PROFILER_MSG
-    return;
-#endif
     if( net == NULL || !net->has_profiler || msg == NULL )
         return;
     switch(action)
