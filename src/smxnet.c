@@ -471,7 +471,7 @@ int smx_net_run( pthread_t* ths, int idx, void* box_impl( void* arg ), void* h )
                 strerror( errno ) );
         return -1;
     }
-    sprintf( id_str, "%du", net->id );
+    sprintf( id_str, "smx_net_%d", net->id );
     pthread_setname_np( thread, id_str );
     ths[idx] = thread;
     return 0;
@@ -517,7 +517,9 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
         {
             if( strcmp( h->rts->shared_state[i]->key, shared_state_key ) == 0 )
             {
-                h->shared_state = h->rts->shared_state[i];
+                h->shared_state = h->rts->shared_state[i]->state;
+                SMX_LOG_NET( h, notice, "using already allocated shared state"
+                        " with key '%s'", shared_state_key );
                 break;
             }
         }
@@ -543,9 +545,9 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
             }
         }
         pthread_mutex_unlock( &h->rts->net_mutex );
+        SMX_LOG_NET( h, notice, "pre init done" );
     }
 
-    SMX_LOG_NET( h, notice, "pre init done" );
     pthread_barrier_wait( &h->rts->pre_init_done );
 
     if( h->conf_port_name != NULL )
