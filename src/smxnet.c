@@ -22,75 +22,66 @@
 #include "smxutils.h"
 
 /*****************************************************************************/
-int smx_net_collector_check_avaliable( void* h, smx_collector_t* collector,
-        smx_channel_t* ch )
-{
-    int cur_count;
-    pthread_mutex_lock( &collector->col_mutex );
-    while( collector->state == SMX_CHANNEL_PENDING )
-    {
-        smx_profiler_log_ch( h, ch, NULL,
-                SMX_PROFILER_ACTION_CH_READ_COLLECTOR_BLOCK,
-                collector->count );
-        SMX_LOG_NET( h, debug, "waiting for message on collector" );
-        pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
-    }
-    cur_count = collector->count;
-    if( collector->count > 0 )
-    {
-        collector->count--;
-    }
-    else
-    {
-        SMX_LOG_NET( h, debug, "collector state change %d -> %d", collector->state,
-                SMX_CHANNEL_PENDING );
-        collector->state = SMX_CHANNEL_PENDING;
-    }
-    pthread_mutex_unlock( &collector->col_mutex );
-    return cur_count;
-}
-
-/*****************************************************************************/
 smx_msg_t* smx_net_collector_read( void* h, smx_collector_t* collector,
         smx_channel_t** in, int count_in, int* last_idx )
 {
-    int cur_count, i, ch_count, ready_cnt;
+    int i, ch_count, ready_cnt;
     smx_msg_t* msg = NULL;
     smx_channel_t* ch = NULL;
+    int rc = 0;
 
-    cur_count = smx_net_collector_check_avaliable( h, collector, in[0] );
-
-    if( cur_count > 0 )
+    pthread_mutex_lock( &collector->col_mutex );
+    while( collector->state == SMX_CHANNEL_PENDING && rc == 0 )
     {
-        ch_count = count_in;
-        i = *last_idx;
-        while( ch_count > 0)
-        {
-            i++;
-            if( i >= count_in )
-                i = 0;
-            ch_count--;
-            ready_cnt = smx_channel_ready_to_read( in[i] );
-            if( ready_cnt > 0 )
-            {
-                ch = in[i];
-                *last_idx = i;
-                break;
-            }
-        }
-        if( ch == NULL )
-        {
-            SMX_LOG_NET( h, error,
-                    "something went wrong: no msg ready in collector (count: %d)",
-                    cur_count );
-            return NULL;
-        }
-        SMX_LOG_NET( h, info, "read from collector (new count: %d)",
-                cur_count - 1 );
-        msg = smx_channel_read( h, ch );
-        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ_COLLECTOR,
-                cur_count - 1 );
+        smx_profiler_log_ch( h, in[0], NULL,
+                SMX_PROFILER_ACTION_CH_READ_COLLECTOR_BLOCK,
+                collector->count );
+        SMX_LOG_NET( h, debug, "waiting for message on collector" );
+        rc = pthread_cond_wait( &collector->col_cv, &collector->col_mutex );
     }
+
+    if( collector->count == 0 )
+    {
+        SMX_LOG_NET( h, warn, "collector is ready but count is 0, aborting" );
+        pthread_mutex_unlock( &collector->col_mutex );
+        return NULL;
+    }
+
+    ch_count = count_in;
+    i = *last_idx;
+    while( ch_count > 0)
+    {
+        i++;
+        if( i >= count_in )
+            i = 0;
+        ch_count--;
+        ready_cnt = smx_channel_ready_to_read( in[i] );
+        if( ready_cnt > 0 )
+        {
+            ch = in[i];
+            *last_idx = i;
+            break;
+        }
+    }
+    if( ch == NULL )
+    {
+        SMX_LOG_NET( h, error,
+                "something went wrong: no msg ready in collector (count: %d)",
+                collector->count );
+        pthread_mutex_unlock( &collector->col_mutex );
+        return NULL;
+    }
+    msg = smx_channel_read( h, ch );
+    collector->count--;
+    SMX_LOG_NET( h, info, "read from collector (new count: %d)",
+            collector->count );
+    smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ_COLLECTOR,
+            collector->count );
+    if( collector->count == 0 )
+    {
+        smx_channel_change_collector_state( ch, SMX_CHANNEL_PENDING );
+    }
+    pthread_mutex_unlock( &collector->col_mutex );
     return msg;
 }
 

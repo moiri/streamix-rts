@@ -121,18 +121,6 @@
     ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->shared_state )
 
 /**
- * Check whether messages are available on the collector and block until a
- * message is made available or a producer terminates.
- *
- * @param h         pointer to the net handler
- * @param collector pointer to the net collector structure
- * @param ch        pointer to the last channel which was read from
- * @return          the number of currently available messages in the collector
- */
-int smx_net_collector_check_avaliable( void* h, smx_collector_t* collector,
-        smx_channel_t* ch );
-
-/**
  * Read from a collector of a net.
  *
  * @param h         pointer to the net handler
