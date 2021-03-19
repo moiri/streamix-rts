@@ -1,5 +1,10 @@
 # `v0.7.0` (latest)
 
+### Bug Fixes
+
+ - fix concurrency issue with collector mutex: move collector operations inside
+   channel mutex locks. This will avoid unnecessary executions of `smx_rn` nets.
+
 ### Changes
 
  - Add more lttng probes to allow for tracing blocking operations.
