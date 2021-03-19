@@ -66,18 +66,19 @@ int smx_rn( void* h, void* state )
     smx_collector_t* collector = net->attr;
 
     msg = smx_net_collector_read( h, collector, chs_in, count_in, last_idx );
-    if(msg != NULL)
-    {
-        for( i=0; i<count_out; i++ ) {
-            if( i == count_out - 1 )
-                smx_channel_write( h, chs_out[i], msg );
-            else
-            {
-                msg_copy = smx_msg_copy( h, msg );
-                smx_channel_write( h, chs_out[i], msg_copy );
-            }
+    if( msg == NULL )
+        return SMX_NET_END;
+
+    for( i=0; i<count_out; i++ ) {
+        if( i == count_out - 1 )
+            smx_channel_write( h, chs_out[i], msg );
+        else
+        {
+            msg_copy = smx_msg_copy( h, msg );
+            smx_channel_write( h, chs_out[i], msg_copy );
         }
     }
+
     return SMX_NET_RETURN;
 }
 

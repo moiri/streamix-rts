@@ -235,6 +235,22 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
             ch->source->err = SMX_CHANNEL_ERR_UNINITIALISED;
             return NULL;
     }
+    if( ch->collector != NULL && ch->fifo->copy == 0 )
+    {
+        pthread_mutex_lock( &ch->collector->col_mutex );
+        ch->collector->count--;
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_WRITE_COLLECTOR,
+                ch->collector->count );
+        smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ_COLLECTOR,
+                ch->collector->count );
+        SMX_LOG_CH( ch, info, "read from collector (new count: %d)",
+                ch->collector->count );
+        if( ch->collector->count == 0 )
+        {
+            smx_channel_change_collector_state( ch, SMX_CHANNEL_PENDING );
+        }
+        pthread_mutex_unlock( &ch->collector->col_mutex );
+    }
     // notify producer that space is available
     smx_channel_change_write_state( ch, SMX_CHANNEL_READY );
     smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_READ,
@@ -461,7 +477,7 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
             ch->sink->err = SMX_CHANNEL_ERR_NO_TARGET;
             SMX_LOG_CH( ch, warn,
                     "write aborted: consumer '%s(%d)' has terminated",
-                    ch->sink->net->name, ch->sink->net->id );
+                    ch->source->net->name, ch->source->net->id );
         }
         pthread_mutex_unlock( &ch->ch_mutex );
         smx_msg_destroy( h, msg, true );
