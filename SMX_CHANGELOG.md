@@ -8,6 +8,7 @@
 ### Changes
 
  - Add more lttng probes to allow for tracing blocking operations.
+ - Disable mutex locks on log by default (dangerous in when using TT nets).
 
 ### New Features
 
