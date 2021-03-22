@@ -57,8 +57,8 @@ all: directories $(STATLIB) $(DYNLIB)
 debug: CFLAGS += $(DEBUG_FLAGS)
 debug: all
 
-unsafe: CFLAGS += -DSMX_LOG_UNSAFE
-unsafe: all
+lock: CFLAGS += -DSMX_LOG_LOCK
+lock: all
 
 no-log: CFLAGS += -DSMX_LOG_DISABLE
 no-log: all

@@ -29,12 +29,12 @@
 /**
  * The logger macro for all types of logs.
  */
-#if defined(SMX_LOG_UNSAFE)
-#define SMX_LOG_INTERN SMX_LOG_FREE
+#if defined(SMX_LOG_LOCK)
+#define SMX_LOG_INTERN SMX_LOG_MUTEX
 #elif defined(SMX_LOG_DISABLE)
 #define SMX_LOG_INTERN SMX_LOG_NOOP
 #else
-#define SMX_LOG_INTERN SMX_LOG_LOCK
+#define SMX_LOG_INTERN SMX_LOG_FREE
 #endif
 
 /**
@@ -46,12 +46,12 @@
     SMX_LOG_INTERN( level, ch->cat, format,  ##__VA_ARGS__ )
 
 /**
- * @def SMX_LOG_LOCK()
+ * @def SMX_LOG_MUTEX()
  *
  * The logger macro performing a mutex lock/unlock before logging to prevent
  * any issue of priority inversion.
  */
-#define SMX_LOG_LOCK( level, cat, format, ... ) do {\
+#define SMX_LOG_MUTEX( level, cat, format, ... ) do {\
     pthread_mutex_lock( smx_get_mlog() );\
     zlog_ ## level( cat, format, ##__VA_ARGS__ );\
     pthread_mutex_unlock( smx_get_mlog() ); } while( 0 )
