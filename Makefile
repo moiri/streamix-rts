@@ -60,6 +60,9 @@ debug: all
 unsafe: CFLAGS += -DSMX_LOG_UNSAFE
 unsafe: all
 
+no-log: CFLAGS += -DSMX_LOG_DISABLE
+no-log: all
+
 $(STATLIB): $(OBJECTS)
 	ar -cq $@ $^
 

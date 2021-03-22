@@ -29,10 +29,12 @@
 /**
  * The logger macro for all types of logs.
  */
-#ifndef SMX_LOG_UNSAFE
-#define SMX_LOG_INTERN SMX_LOG_LOCK
-#else
+#if defined(SMX_LOG_UNSAFE)
 #define SMX_LOG_INTERN SMX_LOG_FREE
+#elif defined(SMX_LOG_DISABLE)
+#define SMX_LOG_INTERN SMX_LOG_NOOP
+#else
+#define SMX_LOG_INTERN SMX_LOG_LOCK
 #endif
 
 /**
@@ -61,6 +63,14 @@
  */
 #define SMX_LOG_FREE( level, cat, format, ... )\
     zlog_ ## level( cat, format, ##__VA_ARGS__ )
+
+/**
+ * @def SMX_LOG_NOP()
+ *
+ * The logger macro doing nothing at all.
+ */
+#define SMX_LOG_NOOP( level, cat, format, ... )\
+    do {} while(0)
 
 /**
  * @def SMX_LOG_MAIN( cat, level, format, ... )
