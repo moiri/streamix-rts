@@ -311,6 +311,7 @@ struct smx_net_s
     char*               impl;         /**< the name of the box implementation */
     void*               state;
     void*               shared_state;
+    const char*         shared_state_key;
     smx_rts_t*          rts;
     struct timespec     last_count_wall;   /**< start time of a net (after init) */
     struct timespec     start_wall;   /**< start time of a net (after init) */

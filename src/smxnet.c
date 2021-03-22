@@ -133,6 +133,8 @@ smx_net_t* smx_net_create( unsigned int id, const char* name,
             "dyn_conf_timeout" );
     net->expected_rate = smx_net_get_int_prop( rts->conf, name, impl, id,
             "expected_rate" );
+    net->shared_state_key = smx_net_get_string_prop( rts->conf, name, impl, id,
+            "shared_state_key" );
 
     rts->net_cnt++;
     SMX_LOG_MAIN( net, info, "create net instance %s(%d)", name, id );
@@ -491,17 +493,22 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
     if( h->has_profiler )
         SMX_LOG_NET( h, notice, "profiler enabled" );
 
-    if( init_shared != NULL && cleanup_shared != NULL )
+    if( h->shared_state_key == NULL )
+    {
+        h->shared_state_key = shared_state_key;
+    }
+    if( init_shared != NULL && cleanup_shared != NULL
+            && h->shared_state_key != NULL )
     {
         SMX_LOG_NET( h, notice, "pre init net" );
         pthread_mutex_lock( &h->rts->net_mutex );
         for( i = 0; i < h->rts->shared_state_cnt; i++ )
         {
-            if( strcmp( h->rts->shared_state[i]->key, shared_state_key ) == 0 )
+            if( strcmp( h->rts->shared_state[i]->key, h->shared_state_key ) == 0 )
             {
                 h->shared_state = h->rts->shared_state[i]->state;
                 SMX_LOG_NET( h, notice, "using already allocated shared state"
-                        " with key '%s'", shared_state_key );
+                        " with key '%s'", h->shared_state_key );
                 break;
             }
         }
@@ -509,13 +516,16 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
         {
             h->rts->shared_state[h->rts->shared_state_cnt] = smx_malloc(
                     sizeof( struct smx_rts_shared_state_s ) );
-            h->rts->shared_state[h->rts->shared_state_cnt]->key = shared_state_key;
-            h->rts->shared_state[h->rts->shared_state_cnt]->cleanup = cleanup_shared;
+            h->rts->shared_state[h->rts->shared_state_cnt]->key =
+                h->shared_state_key;
+            h->rts->shared_state[h->rts->shared_state_cnt]->cleanup =
+                cleanup_shared;
             h->rts->shared_state[h->rts->shared_state_cnt]->state = NULL;
             rc = init_shared( h, &h->shared_state );
-            h->rts->shared_state[h->rts->shared_state_cnt]->state = h->shared_state;
+            h->rts->shared_state[h->rts->shared_state_cnt]->state =
+                h->shared_state;
             SMX_LOG_NET( h, notice, "shared state allocated with key '%s' at"
-                    " position '%d'", shared_state_key,
+                    " position '%d'", h->shared_state_key,
                     h->rts->shared_state_cnt );
             h->rts->shared_state_cnt++;
             if( rc < 0 )
