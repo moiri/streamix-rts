@@ -1,0 +1,585 @@
+.TH "include/smxnet.h" 3 "Mon Mar 29 2021" "Version v0.7.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxnet.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <bson\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include 'smxtypes\&.h'\fP
+.br
+\fC#include 'smxlog\&.h'\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSMXNET_H\fP"
+.br
+.ti -1c
+.RI "#define \fBSMX_LOG\fP(h,  level,  format, \&.\&.\&.)   \fBSMX_LOG_NET\fP( h, level, format, ##__VA_ARGS__ )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_GET_CONF\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->conf )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_GET_ID\fP(h)   ( ( h == NULL ) ? \-1 : ( ( smx_net_t* )h )\->id )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_GET_NAME\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->name )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_GET_IMPL\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->impl )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_GET_STATE\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->state )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_GET_SHARED_STATE\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->shared_state )"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "smx_msg_t * \fBsmx_net_collector_read\fP (void *h, smx_collector_t *collector, smx_channel_t **in, int count_in, int *last_idx)"
+.br
+.ti -1c
+.RI "smx_net_t * \fBsmx_net_create\fP (unsigned int id, const char *name, const char *impl, const char *cat_name, smx_rts_t *rts, int prio)"
+.br
+.ti -1c
+.RI "void \fBsmx_net_destroy\fP (smx_net_t *h)"
+.br
+.ti -1c
+.RI "bool \fBsmx_net_get_boolean_prop\fP (bson_t *conf, const char *name, const char *impl, unsigned int id, const char *prop)"
+.br
+.ti -1c
+.RI "int \fBsmx_net_get_int_prop\fP (bson_t *conf, const char *name, const char *impl, unsigned int id, const char *prop)"
+.br
+.ti -1c
+.RI "int \fBsmx_net_get_json_doc\fP (smx_net_t *h, bson_t *conf, const char *name, const char *impl, unsigned int id)"
+.br
+.ti -1c
+.RI "int \fBsmx_net_get_json_doc_item\fP (smx_net_t *h, bson_t *conf, const char *search_str)"
+.br
+.ti -1c
+.RI "const char * \fBsmx_net_get_string_prop\fP (bson_t *conf, const char *name, const char *impl, unsigned int id, const char *prop)"
+.br
+.ti -1c
+.RI "void \fBsmx_net_init\fP (smx_net_t *h, int indegree, int outdegree)"
+.br
+.ti -1c
+.RI "void \fBsmx_net_report_rate_warning\fP (smx_net_t *h)"
+.br
+.ti -1c
+.RI "int \fBsmx_net_run\fP (pthread_t *ths, int idx, void *box_impl(void *arg), void *h)"
+.br
+.RI "create pthred of net "
+.ti -1c
+.RI "void * \fBsmx_net_start_routine\fP (smx_net_t *h, int impl(void *, void *), int init(void *, void **), void cleanup(void *, void *))"
+.br
+.RI "the start routine of a thread associated to a box "
+.ti -1c
+.RI "void * \fBsmx_net_start_routine_with_shared_state\fP (smx_net_t *h, int impl(void *, void *), int init(void *, void **), void cleanup(void *, void *), int init_shared(void *, void **), void cleanup_shared(void *), const char *shared_state_key)"
+.br
+.ti -1c
+.RI "void \fBsmx_net_terminate\fP (smx_net_t *h)"
+.br
+.RI "Set all channel states to end and send termination signal to all output channels\&. "
+.ti -1c
+.RI "int \fBsmx_net_update_state\fP (smx_net_t *h, int state)"
+.br
+.RI "Update the state of the box\&. "
+.ti -1c
+.RI "void \fBsmx_net_wait_end\fP (pthread_t th)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\\n\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Net definitions for the runtime system library of Streamix 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define SMX_LOG(h, level, format,  \&.\&.\&.)   \fBSMX_LOG_NET\fP( h, level, format, ##__VA_ARGS__ )"
+This macro allows to log events to the log file\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.br
+\fIlevel\fP Note that this parameter is not a string but the literal name of the box (without quotation marks)\&. Use one of the following levels:
+.IP "\(bu" 2
+\fCfatal\fP: everything went wrong
+.IP "\(bu" 2
+\fCerror\fP: an error occured and the net has to terminate
+.IP "\(bu" 2
+\fCwarn\fP: The net can continue to execute but the result might be faulty
+.IP "\(bu" 2
+\fCnotice\fP: A useful information to report that occurs on initialisation, cleanup, or rarely during execution\&.
+.IP "\(bu" 2
+\fCinfo\fP: A useful information to report that occurs during execution\&.
+.IP "\(bu" 2
+\fCdebug\fP: Debug information\&. 
+.PP
+.br
+\fIformat\fP The \fCprintf\fP format string\&. 
+.br
+\fI\&.\&.\&.\fP The required arguments to be replaced in the printf format string\&. 
+.RE
+.PP
+
+.SS "#define SMX_NET_GET_CONF(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->conf )"
+Get the net configuration structure\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+The net configuration structure of type \fCbson_t\fP\&. 
+.RE
+.PP
+
+.SS "#define SMX_NET_GET_ID(h)   ( ( h == NULL ) ? \-1 : ( ( smx_net_t* )h )\->id )"
+Get the net id\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+The net id of type \fCunsigned int\fP\&. 
+.RE
+.PP
+
+.SS "#define SMX_NET_GET_IMPL(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->impl )"
+Get the box implementation name\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+A pointer to the box implementation name of type \fCconst char*\fP\&. 
+.RE
+.PP
+
+.SS "#define SMX_NET_GET_NAME(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->name )"
+Get the net name\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+A pointer to the net name of type \fCconst char*\fP\&. 
+.RE
+.PP
+
+.SS "#define SMX_NET_GET_SHARED_STATE(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->shared_state )"
+Get the allocated shared state of the net instance\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+A pointer to the shared state or NULL\&. 
+.RE
+.PP
+
+.SS "#define SMX_NET_GET_STATE(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->state )"
+Get the allocated state of the net instance\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+A pointer to the state or NULL\&. 
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "smx_msg_t* smx_net_collector_read (void * h, smx_collector_t * collector, smx_channel_t ** in, int count_in, int * last_idx)"
+Read from a collector of a net\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIcollector\fP pointer to the net collector structure 
+.br
+\fIin\fP pointer to the input port array 
+.br
+\fIcount_in\fP number of input ports 
+.br
+\fIlast_idx\fP pointer to the state variable storing the last port index 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the message that was read or NULL if no message was read 
+.RE
+.PP
+
+.SS "smx_net_t* smx_net_create (unsigned int id, const char * name, const char * impl, const char * cat_name, smx_rts_t * rts, int prio)"
+Create a new net instance\&. This includes
+.IP "\(bu" 2
+creating a zlog category
+.IP "\(bu" 2
+assigning the net-specifix XML configuartion
+.IP "\(bu" 2
+assigning the net signature
+.PP
+.PP
+\fBParameters\fP
+.RS 4
+\fIid\fP a unique net identifier 
+.br
+\fIname\fP the name of the net 
+.br
+\fIimpl\fP the name of the box implementation 
+.br
+\fIcat_name\fP the name of the zlog category 
+.br
+\fIrts\fP a pointer to the main rts structure 
+.br
+\fIprio\fP the RT thread priority (0 means no rt thread) 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a pointer to the ctreated net or NULL 
+.RE
+.PP
+
+.SS "void smx_net_destroy (smx_net_t * h)"
+Destroy a net
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.RE
+.PP
+
+.SS "bool smx_net_get_boolean_prop (bson_t * conf, const char * name, const char * impl, unsigned int id, const char * prop)"
+Get a boolean property configuration setting for the current net\&.
+.PP
+The function hiearchically searches for a confic that is specific for
+.IP "1." 4
+this net id
+.IP "2." 4
+this net name
+.IP "3." 4
+the box implementation of this net
+.IP "4." 4
+all nets
+.PP
+.PP
+If a hit is found, the function returns te config and does not continue searching\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIconf\fP The input buffer of the app configuration 
+.br
+\fIname\fP The name of the net 
+.br
+\fIimpl\fP The box implemntation name 
+.br
+\fIid\fP The id of the net 
+.br
+\fIprop\fP The name of the property\&.
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the boolean property 
+.RE
+.PP
+
+.SS "int smx_net_get_int_prop (bson_t * conf, const char * name, const char * impl, unsigned int id, const char * prop)"
+Get a int property configuration setting for the current net\&.
+.PP
+The function hiearchically searches for a confic that is specific for
+.IP "1." 4
+this net id
+.IP "2." 4
+this net name
+.IP "3." 4
+the box implementation of this net
+.IP "4." 4
+all nets
+.PP
+.PP
+If a hit is found, the function returns te config and does not continue searching\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIconf\fP The input buffer of the app configuration 
+.br
+\fIname\fP The name of the net 
+.br
+\fIimpl\fP The box implemntation name 
+.br
+\fIid\fP The id of the net 
+.br
+\fIprop\fP The name of the property\&.
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the boolean property 
+.RE
+.PP
+
+.SS "int smx_net_get_json_doc (smx_net_t * h, bson_t * conf, const char * name, const char * impl, unsigned int id)"
+Get the appropriate json configuration for the current net\&.
+.PP
+The function hiearchically searches for a confic that is specific for
+.IP "1." 4
+this net id
+.IP "2." 4
+this net name
+.IP "3." 4
+the box implementation of this net
+.IP "4." 4
+all nets
+.PP
+.PP
+If a hit is found, the function returns te config and does not continue searching\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIconf\fP The input buffer of the app configuration 
+.br
+\fIname\fP The name of the net 
+.br
+\fIimpl\fP The box implemntation name 
+.br
+\fIid\fP The id of the net
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+0 on success, -1 if nothing was found\&. 
+.RE
+.PP
+
+.SS "int smx_net_get_json_doc_item (smx_net_t * h, bson_t * conf, const char * search_str)"
+Get the json configuration for a given search string\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIconf\fP The input buffer of the app configuration 
+.br
+\fIsearch_str\fP The hierachical search string 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+0 on success, -1 if nothing was found\&. 
+.RE
+.PP
+
+.SS "const char* smx_net_get_string_prop (bson_t * conf, const char * name, const char * impl, unsigned int id, const char * prop)"
+Get a string property configuration setting for the current net\&.
+.PP
+The function hiearchically searches for a confic that is specific for
+.IP "1." 4
+this net id
+.IP "2." 4
+this net name
+.IP "3." 4
+the box implementation of this net
+.IP "4." 4
+all nets
+.PP
+.PP
+If a hit is found, the function returns te config and does not continue searching\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIconf\fP The input buffer of the app configuration 
+.br
+\fIname\fP The name of the net 
+.br
+\fIimpl\fP The box implemntation name 
+.br
+\fIid\fP The id of the net 
+.br
+\fIprop\fP The name of the property\&.
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+the string property 
+.RE
+.PP
+
+.SS "void smx_net_init (smx_net_t * h, int indegree, int outdegree)"
+Initialise a net
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIindegree\fP number of input ports 
+.br
+\fIoutdegree\fP number of output ports 
+.RE
+.PP
+
+.SS "void smx_net_report_rate_warning (smx_net_t * h)"
+Logs a warning if the net rate is lower or higher that the expected net rate by 20%\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP A pointer to the net handler\&. 
+.RE
+.PP
+
+.SS "int smx_net_run (pthread_t * ths, int idx, void * box_implvoid *arg, void * h)"
+
+.PP
+create pthred of net 
+.PP
+\fBParameters\fP
+.RS 4
+\fIths\fP the target array to store the thread id 
+.br
+\fIidx\fP the index of where to store the thread id in the target array 
+.br
+\fIbox_impl(\fP arg ) function pointer to the box implementation 
+.br
+\fIh\fP pointer to the net handler 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+0 on success, -1 on failure 
+.RE
+.PP
+
+.SS "void* smx_net_start_routine (smx_net_t * h, int  implvoid *, void *, int  initvoid *, void **, void  cleanupvoid *, void *)"
+
+.PP
+the start routine of a thread associated to a box 
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIimpl(\fP arg ) pointer to the net implementation function 
+.br
+\fIinit(\fP arg ) pointer to the net intitialisation function 
+.br
+\fIcleanup(\fP arg ) pointer to the net cleanup function 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+returns NULL 
+.RE
+.PP
+
+.SS "void* smx_net_start_routine_with_shared_state (smx_net_t * h, int  implvoid *, void *, int  initvoid *, void **, void  cleanupvoid *, void *, int  init_sharedvoid *, void **, void  cleanup_sharedvoid *, const char * shared_state_key)"
+The same as \fBsmx_net_start_routine()\fP but this includes handlers to initialize and cleanup shared state\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP A pointer to the net handler 
+.br
+\fIimpl(\fP arg ) A pointer to the net implementation function 
+.br
+\fIinit(\fP arg ) A pointer to the net intitialisation function 
+.br
+\fIcleanup(\fP arg ) A pointer to the net cleanup function 
+.br
+\fIinit_shared(\fP arg ) A pointer to the shared state intitialisation function 
+.br
+\fIcleanup_shared(\fP arg ) A pointer to the shared state cleanup function 
+.br
+\fIshared_state_key\fP The key under which the shared state will be stored\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+returns NULL 
+.RE
+.PP
+
+.SS "void smx_net_terminate (smx_net_t * h)"
+
+.PP
+Set all channel states to end and send termination signal to all output channels\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.RE
+.PP
+
+.SS "int smx_net_update_state (smx_net_t * h, int state)"
+
+.PP
+Update the state of the box\&. Update the state of the box to indicate wheter computaion needs to scontinue or terminate\&. The state can either be forced by the box implementation (see \fCstate\fP) or depends on the state of the triggering producers\&. Note that non-triggering producers may still be alive but the thread will still terminate if all triggering producers are terminated\&. This is to prevent a while(1) type of behaviour because no blocking will occur to slow the thread execution\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIstate\fP state set by the box implementation\&. If set to SMX_NET_CONTINUE, the box will not terminate\&. If set to SMX_NET_END, the box will terminate\&. If set to SMX_NET_RETURN (or 0) this function will determine wheter a box terminates or not 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+SMX_NET_CONTINUE if there is at least one triggeringr producer alive\&. SMX_BOX_TERINATE if all triggering prodicers are terminated\&. 
+.RE
+.PP
+
+.SS "void smx_net_wait_end (pthread_t th)"
+Wait for all nets to terminate by joining the net threads\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIth\fP The thread id 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.

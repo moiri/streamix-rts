@@ -1,0 +1,176 @@
+.TH "include/box_smx_rn.h" 3 "Mon Mar 29 2021" "Version v0.7.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/box_smx_rn.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'smxtypes\&.h'\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBBOX_SMX_RN_H\fP"
+.br
+.ti -1c
+.RI "#define \fBSMX_INDEGREE_smx_rn\fP   0"
+.br
+.ti -1c
+.RI "#define \fBSMX_OUTDEGREE_smx_rn\fP   0"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBsmx_connect_rn\fP (smx_channel_t *ch, smx_net_t *rn)"
+.br
+.ti -1c
+.RI "void \fBsmx_net_destroy_rn\fP (smx_net_t *rn)"
+.br
+.RI "Destroy copy sync structure\&. "
+.ti -1c
+.RI "void \fBsmx_net_init_rn\fP (smx_net_t *rn)"
+.br
+.RI "Initialize copy synchronizer structure\&. "
+.ti -1c
+.RI "int \fBsmx_rn\fP (void *h, void *state)"
+.br
+.RI "the box implementattion of a routing node (former known as copy sync) "
+.ti -1c
+.RI "int \fBsmx_rn_init\fP (void *h, void **state)"
+.br
+.ti -1c
+.RI "void \fBsmx_rn_cleanup\fP (void *h, void *state)"
+.br
+.ti -1c
+.RI "void * \fBstart_routine_smx_rn\fP (void *h)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\\n\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Routing node box implementation for the runtime system library of Streamix 
+.SH "Function Documentation"
+.PP 
+.SS "void smx_connect_rn (smx_channel_t * ch, smx_net_t * rn)"
+Connect a routing node to a channel
+.PP
+\fBParameters\fP
+.RS 4
+\fIch\fP the target channel 
+.br
+\fIrn\fP a pointer to the net handler
+.RE
+.PP
+\fBAuthor\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\\n\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Routing node box implementation for the runtime system library of Streamix 
+.SS "void smx_net_destroy_rn (smx_net_t * rn)"
+
+.PP
+Destroy copy sync structure\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIrn\fP a pointer to the net handler 
+.RE
+.PP
+
+.SS "void smx_net_init_rn (smx_net_t * rn)"
+
+.PP
+Initialize copy synchronizer structure\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIrn\fP a pointer to the net handler 
+.RE
+.PP
+
+.SS "int smx_rn (void * h, void * state)"
+
+.PP
+the box implementattion of a routing node (former known as copy sync) A routing node reads from any port where data is available and copies it to every output\&. The read order is first come first serve with peaking wheter data is available\&. The cp sync is only blocking on read if no input channel has data available\&. The copied data is written to the output channel in order how they appear in the list\&. Writing is blocking\&. All outputs must be written before new input is accepted\&.
+.PP
+In order to provide fairness the routing node remembers the last port index from which a message was read\&. The next time the rn is executed it will search for available messages starting from the last port index +1\&. This means that a routing node is not pure\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP a pointer to the net handler 
+.br
+\fIstate\fP a pointer to the persistent state structure 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+returns the state of the box 
+.RE
+.PP
+
+.SS "void smx_rn_cleanup (void * h, void * state)"
+Cleanup the routing node by freeing the state variable\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIstate\fP pointer to the state variable 
+.RE
+.PP
+
+.SS "int smx_rn_init (void * h, void ** state)"
+Initialises the routing node\&. The state is allocated with an integer which is used to remember the last port index from which a message was read\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIstate\fP pointer to the state variable 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+0 on success, -1 on failure 
+.RE
+.PP
+
+.SS "void* start_routine_smx_rn (void * h)"
+This function is predefined and must not be changed\&. It will be passed to the net thread upon creation and will be executed as soon as the thread is started\&. This function calls a macro which is define in the RTS and handles the initialisation, the main loop of the net and the cleanup\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP A pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+This function always returns NULL\&. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.

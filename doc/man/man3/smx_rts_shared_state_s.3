@@ -1,0 +1,40 @@
+.TH "smx_rts_shared_state_t" 3 "Mon Mar 29 2021" "Version v0.7.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+smx_rts_shared_state_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <smxtypes\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "const char * \fBkey\fP"
+.br
+.ti -1c
+.RI "void * \fBstate\fP"
+.br
+.ti -1c
+.RI "void(* \fBcleanup\fP )(void *)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+A shared state item
+.PP
+\fBsmx_rts_shared_state_s\fP 
+.SH "Field Documentation"
+.PP 
+.SS "void( * smx_rts_shared_state_t::cleanup) (void *)"
+The cleanup function to free the shared state item\&. 
+.SS "const char* smx_rts_shared_state_t::key"
+The name of the shared state item\&. This is used to reference the item\&. 
+.SS "void* smx_rts_shared_state_t::state"
+The actual state\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.

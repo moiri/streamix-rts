@@ -1,0 +1,283 @@
+.TH "include/smxmsg.h" 3 "Mon Mar 29 2021" "Version v0.7.0" "libsmxrts" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/smxmsg.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include 'smxtypes\&.h'\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSMX_MSG_COPY\fP(h,  msg)   \fBsmx_msg_copy\fP( h, msg )"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_CREATE\fP(h,  data,  dsize,  fcopy,  ffree,  funpack)   \fBsmx_msg_create\fP( h, data, dsize, fcopy, ffree, funpack )"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_DESTROY\fP(h,  msg)   \fBsmx_msg_destroy\fP( h, msg, 1 )"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_FILTER\fP(msg,  count, \&.\&.\&.)   \fBsmx_msg_filter\fP( msg, count, ##__VA_ARGS__ )"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_UNPACK\fP(msg)   \fBsmx_msg_unpack\fP( msg )"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_SET_TYPE\fP(msg,  type)   \fBsmx_msg_set_type\fP( msg, type )"
+.br
+.ti -1c
+.RI "#define \fBSMX_MSG_PREVENT_BACKUP\fP(msg)   \fBsmx_msg_prevent_backup\fP( msg )"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "smx_msg_t * \fBsmx_msg_copy\fP (void *h, smx_msg_t *msg)"
+.br
+.RI "make a deep copy of a message "
+.ti -1c
+.RI "smx_msg_t * \fBsmx_msg_create\fP (void *h, void *data, size_t size, void *(*copy)(void *data, size_t size), void(*destroy)(void *data), void *(*unpack)(void *data))"
+.br
+.RI "Create a message structure\&. "
+.ti -1c
+.RI "void * \fBsmx_msg_data_copy\fP (void *data, size_t size)"
+.br
+.RI "Default copy function to perform a shallow copy of the message data\&. "
+.ti -1c
+.RI "void \fBsmx_msg_data_destroy\fP (void *data)"
+.br
+.RI "Default destroy function to destroy the data inside a message\&. "
+.ti -1c
+.RI "int \fBsmx_msg_filter\fP (smx_msg_t *msg, int count,\&.\&.\&.)"
+.br
+.ti -1c
+.RI "void * \fBsmx_msg_data_unpack\fP (void *data)"
+.br
+.RI "Default unpack function for the message payload\&. "
+.ti -1c
+.RI "void \fBsmx_msg_destroy\fP (void *h, smx_msg_t *msg, int deep)"
+.br
+.RI "Destroy a message structure\&. "
+.ti -1c
+.RI "void \fBsmx_msg_prevent_backup\fP (smx_msg_t *msg)"
+.br
+.ti -1c
+.RI "void * \fBsmx_msg_unpack\fP (smx_msg_t *msg)"
+.br
+.RI "Unpack the message payload\&. "
+.ti -1c
+.RI "int \fBsmx_msg_set_type\fP (smx_msg_t *msg, const char *type)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\\n\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Message definitions for the runtime system library of Streamix 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define SMX_MSG_COPY(h, msg)   \fBsmx_msg_copy\fP( h, msg )"
+Make a deep copy of a message\&. For details refer to \fBsmx_msg_copy()\fP\&. 
+.SS "#define SMX_MSG_CREATE(h, data, dsize, fcopy, ffree, funpack)   \fBsmx_msg_create\fP( h, data, dsize, fcopy, ffree, funpack )"
+Create a message structure\&. For details refer to \fBsmx_msg_create()\fP\&. 
+.SS "#define SMX_MSG_DESTROY(h, msg)   \fBsmx_msg_destroy\fP( h, msg, 1 )"
+Destroy a message structure\&. For details refer to \fBsmx_msg_destroy()\fP\&. 
+.SS "#define SMX_MSG_FILTER(msg, count,  \&.\&.\&.)   \fBsmx_msg_filter\fP( msg, count, ##__VA_ARGS__ )"
+Checks wether any of the provided filter match with the message type\&. For more details refer to smx_msg_filer()\&. 
+.SS "#define SMX_MSG_PREVENT_BACKUP(msg)   \fBsmx_msg_prevent_backup\fP( msg )"
+Prevent a message from creating backups in decoupled channels\&. 
+.SS "#define SMX_MSG_SET_TYPE(msg, type)   \fBsmx_msg_set_type\fP( msg, type )"
+Set the type of the message payload\&. The type can be an arbitrary string\&. For details refer to \fBsmx_msg_set_type()\fP\&. 
+.SS "#define SMX_MSG_UNPACK(msg)   \fBsmx_msg_unpack\fP( msg )"
+Unpack the message payload\&. For details refer to \fBsmx_msg_unpack()\fP\&. 
+.SH "Function Documentation"
+.PP 
+.SS "smx_msg_t* smx_msg_copy (void * h, smx_msg_t * msg)"
+
+.PP
+make a deep copy of a message 
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fImsg\fP pointer to the message structure to copy 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+pointer to the newly created message structure
+.RE
+.PP
+\fBAuthor\fP
+.RS 4
+Simon Maurer 
+.RE
+.PP
+\fBLicense:\\n\fP
+.RS 4
+This Source Code Form is subject to the terms of the Mozilla Public License, v\&. 2\&.0\&. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/\&.
+.RE
+.PP
+Message definitions for the runtime system library of Streamix 
+.SS "smx_msg_t* smx_msg_create (void * h, void * data, size_t size, void *(*)(void *data, size_t size) copy, void(*)(void *data) destroy, void *(*)(void *data) unpack)"
+
+.PP
+Create a message structure\&. Allows to create a message structure and attach handlers to modify the data in the message structure\&. If defined, the init function handler is called after the message structure is created\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fIdata\fP a pointer to the data to be added to the message 
+.br
+\fIsize\fP the size of the data 
+.br
+\fIcopy\fP a pointer to a function perfroming a deep copy of the data in the message structure\&. If NULL is passed the default function \fBsmx_msg_data_copy()\fP will be used\&. Refer to \fBsmx_msg_data_copy()\fP for information on function arguments and return value\&. 
+.br
+\fIdestroy\fP a pointer to a function freeing the memory of the data in the message structure\&. If NULL is passed the default function \fBsmx_msg_data_destroy()\fP will be used\&. Refer to \fBsmx_msg_data_destroy()\fP for information on function arguments and return value\&. 
+.br
+\fIunpack\fP a pointer to a function that unpacks the message data\&. If NULL is passed the default function \fBsmx_msg_data_unpack()\fP will be used\&. Refer to \fBsmx_msg_data_unpack()\fP for information on function arguments and return value\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a pointer to the created message structure 
+.RE
+.PP
+
+.SS "void* smx_msg_data_copy (void * data, size_t size)"
+
+.PP
+Default copy function to perform a shallow copy of the message data\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIdata\fP a void pointer to the data structure 
+.br
+\fIsize\fP the size of the data 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a void pointer to the data 
+.RE
+.PP
+
+.SS "void smx_msg_data_destroy (void * data)"
+
+.PP
+Default destroy function to destroy the data inside a message\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIdata\fP a void pointer to the data to be freed (shallow) 
+.RE
+.PP
+
+.SS "void* smx_msg_data_unpack (void * data)"
+
+.PP
+Default unpack function for the message payload\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIdata\fP a void pointer to the message payload\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a void pointer to the unpacked message payload\&. 
+.RE
+.PP
+
+.SS "void smx_msg_destroy (void * h, smx_msg_t * msg, int deep)"
+
+.PP
+Destroy a message structure\&. Allows to destroy a message structure\&. If defined (see \fBsmx_msg_create()\fP), the destroy function handler is called before the message structure is freed\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP pointer to the net handler 
+.br
+\fImsg\fP a pointer to the message structure to be destroyed 
+.br
+\fIdeep\fP a flag to indicate whether the data shoudl be deleted as well if msg->destroy() is NULL this flag is ignored 
+.RE
+.PP
+
+.SS "int smx_msg_filter (smx_msg_t * msg, int count,  \&.\&.\&.)"
+Checks wether the message type matches any of the strings passed as arguments\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fImsg\fP The message to be checked 
+.br
+\fIcount\fP The number of filter arguments passed to the function 
+.br
+\fI\&.\&.\&.\fP Any number of string arguments\&. If the message type matches any of these the filter check passed\&. NULL is a valid argument\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+The index of the mathcing filer on success or -1 on failure\&. 
+.RE
+.PP
+
+.SS "void smx_msg_prevent_backup (smx_msg_t * msg)"
+Prevents a message from being copied to the backup space in a decoupled channel\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fImsg\fP A pointer to the message structure\&. 
+.RE
+.PP
+
+.SS "int smx_msg_set_type (smx_msg_t * msg, const char * type)"
+Set the type of the message payload\&. The type can be an arbitrary string\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fImsg\fP A pointer to the message where the type will be set\&. 
+.br
+\fItype\fP An arbitrary string definig the type\&. This function will allocate the string in memory\&. 
+.RE
+.PP
+
+.SS "void* smx_msg_unpack (smx_msg_t * msg)"
+
+.PP
+Unpack the message payload\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fImsg\fP a pointer to the message structure to be destroyed 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+a void pointer to the payload 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libsmxrts from the source code\&.
