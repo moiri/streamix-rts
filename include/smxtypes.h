@@ -226,6 +226,7 @@ struct smx_collector_s
     pthread_mutex_t     col_mutex;  /**< mutual exclusion */
     pthread_cond_t      col_cv;     /**< conditional variable to trigger box */
     int                 count;      /**< collection of channel counts */
+    int                 ch_count;   /**< number of connected channels */
     smx_channel_state_t state;      /**< state of the channel */
 };
 
