@@ -1,4 +1,13 @@
-# `v0.7.0` (latest)
+# `v0.7.1` (latest)
+
+### Bug Fixes
+
+ - Terminate a routing node if all input channels have terminated and not
+   whenever any input channel terminates.
+
+
+-------------------
+# `v0.7.0`
 
 ### Bug Fixes
 
