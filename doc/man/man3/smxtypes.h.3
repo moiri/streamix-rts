@@ -1,4 +1,4 @@
-.TH "include/smxtypes.h" 3 "Mon Mar 29 2021" "Version v0.7.0" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxtypes.h" 3 "Thu Apr 15 2021" "Version v0.7.1" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -235,6 +235,9 @@ This is used to nondeterministically merge channels with a copy synchronyzer tha
 .PP
 \fBData Fields:\fP
 .RS 4
+int \fIch_count\fP number of connected channels 
+.br
+.PP
 pthread_cond_t \fIcol_cv\fP conditional variable to trigger box 
 .br
 .PP
