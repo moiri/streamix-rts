@@ -28,6 +28,7 @@ void smx_connect_rn( smx_channel_t* ch, smx_net_t* rn )
         return;
     }
     ch->collector = rn->attr;
+    ch->collector->ch_count++;
 }
 
 /*****************************************************************************/

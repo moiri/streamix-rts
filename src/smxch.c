@@ -548,6 +548,7 @@ smx_collector_t* smx_collector_create()
     pthread_mutex_init( &collector->col_mutex, &mutexattr_prioinherit );
     pthread_cond_init( &collector->col_cv, NULL );
     collector->count = 0;
+    collector->ch_count = 0;
     collector->state = SMX_CHANNEL_PENDING;
     return collector;
 }
@@ -568,11 +569,19 @@ void smx_collector_terminate( smx_channel_t* ch )
 {
     if( ch->collector == NULL )
         return;
-
-    zlog_debug( ch->cat, "mark collector as stale" );
     pthread_mutex_lock( &ch->collector->col_mutex );
-    smx_channel_change_collector_state( ch, SMX_CHANNEL_END );
+    ch->collector->ch_count--;
+    zlog_debug( ch->cat, "input channel has terminated, new count: %d",
+            ch->collector->ch_count );
     pthread_mutex_unlock( &ch->collector->col_mutex );
+
+    if( ch->collector->ch_count == 0 )
+    {
+        zlog_debug( ch->cat, "mark collector as stale" );
+        pthread_mutex_lock( &ch->collector->col_mutex );
+        smx_channel_change_collector_state( ch, SMX_CHANNEL_END );
+        pthread_mutex_unlock( &ch->collector->col_mutex );
+    }
 }
 
 /*****************************************************************************/
