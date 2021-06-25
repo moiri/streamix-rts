@@ -1,4 +1,4 @@
-.TH "include/smxnet.h" 3 "Thu Apr 15 2021" "Version v0.7.1" "libsmxrts" \" -*- nroff -*-
+.TH "include/smxnet.h" 3 "Fri Jun 25 2021" "Version v0.7.2" "libsmxrts" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -28,6 +28,9 @@ include/smxnet.h
 .RI "#define \fBSMX_NET_GET_CONF\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->conf )"
 .br
 .ti -1c
+.RI "#define \fBSMX_NET_GET_COUNT\fP(h)   ( ( h == NULL ) ? \-1 : ( ( smx_net_t* )h )\->count )"
+.br
+.ti -1c
 .RI "#define \fBSMX_NET_GET_ID\fP(h)   ( ( h == NULL ) ? \-1 : ( ( smx_net_t* )h )\->id )"
 .br
 .ti -1c
@@ -37,10 +40,16 @@ include/smxnet.h
 .RI "#define \fBSMX_NET_GET_IMPL\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->impl )"
 .br
 .ti -1c
+.RI "#define \fBSMX_NET_GET_PRIO\fP(h)   ( ( h == NULL ) ? \-1 : ( ( smx_net_t* )h )\->priority )"
+.br
+.ti -1c
 .RI "#define \fBSMX_NET_GET_STATE\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->state )"
 .br
 .ti -1c
 .RI "#define \fBSMX_NET_GET_SHARED_STATE\fP(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->shared_state )"
+.br
+.ti -1c
+.RI "#define \fBSMX_NET_IS_FIRST_RUN\fP(h)   ( ( h == NULL ) ? 0 : ( ( ( smx_net_t* )h )\->count == 1 ? 1 : 0 ) )"
 .br
 .in -1c
 .SS "Functions"
@@ -158,6 +167,20 @@ The net configuration structure of type \fCbson_t\fP\&.
 .RE
 .PP
 
+.SS "#define SMX_NET_GET_COUNT(h)   ( ( h == NULL ) ? \-1 : ( ( smx_net_t* )h )\->count )"
+Get the current net loop count\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+The current net loop count or -1 on failure\&. 
+.RE
+.PP
+
 .SS "#define SMX_NET_GET_ID(h)   ( ( h == NULL ) ? \-1 : ( ( smx_net_t* )h )\->id )"
 Get the net id\&.
 .PP
@@ -200,6 +223,20 @@ A pointer to the net name of type \fCconst char*\fP\&.
 .RE
 .PP
 
+.SS "#define SMX_NET_GET_PRIO(h)   ( ( h == NULL ) ? \-1 : ( ( smx_net_t* )h )\->priority )"
+Get the net thread priority\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+The net thread priority or -1 on failure\&. 
+.RE
+.PP
+
 .SS "#define SMX_NET_GET_SHARED_STATE(h)   ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )\->shared_state )"
 Get the allocated shared state of the net instance\&.
 .PP
@@ -225,6 +262,20 @@ Get the allocated state of the net instance\&.
 \fBReturns\fP
 .RS 4
 A pointer to the state or NULL\&. 
+.RE
+.PP
+
+.SS "#define SMX_NET_IS_FIRST_RUN(h)   ( ( h == NULL ) ? 0 : ( ( ( smx_net_t* )h )\->count == 1 ? 1 : 0 ) )"
+Check if the current net run is the first run\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIh\fP The pointer to the net handler\&. 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1 if net is executing for the first time, 0 otherwise 
 .RE
 .PP
 

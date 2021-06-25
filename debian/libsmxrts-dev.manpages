@@ -169,12 +169,14 @@ doc/man/man3/smx_net_finalize_tf.3
 doc/man/man3/SMX_NET_FINALIZE_TF.3
 doc/man/man3/smx_net_get_boolean_prop.3
 doc/man/man3/SMX_NET_GET_CONF.3
+doc/man/man3/SMX_NET_GET_COUNT.3
 doc/man/man3/SMX_NET_GET_ID.3
 doc/man/man3/SMX_NET_GET_IMPL.3
 doc/man/man3/smx_net_get_int_prop.3
 doc/man/man3/smx_net_get_json_doc.3
 doc/man/man3/smx_net_get_json_doc_item.3
 doc/man/man3/SMX_NET_GET_NAME.3
+doc/man/man3/SMX_NET_GET_PRIO.3
 doc/man/man3/SMX_NET_GET_SHARED_STATE.3
 doc/man/man3/SMX_NET_GET_STATE.3
 doc/man/man3/smx_net_get_string_prop.3
@@ -186,6 +188,7 @@ doc/man/man3/smx_net_init_rn.3
 doc/man/man3/SMX_NET_INIT_RN.3
 doc/man/man3/smx_net_init_tf.3
 doc/man/man3/SMX_NET_INIT_TF.3
+doc/man/man3/SMX_NET_IS_FIRST_RUN.3
 doc/man/man3/smx_net_report_rate_warning.3
 doc/man/man3/SMX_NET_RETURN.3
 doc/man/man3/smx_net_run.3
