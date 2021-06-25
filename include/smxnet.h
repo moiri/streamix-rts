@@ -57,6 +57,19 @@
     ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf )
 
 /**
+ * @def SMX_NET_GET_COUNT()
+ *
+ * Get the current net loop count.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  The current net loop count or -1 on failure.
+ */
+#define SMX_NET_GET_COUNT( h )\
+    ( ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->count )
+
+/**
  * @def SMX_NET_GET_ID()
  *
  * Get the net id.
@@ -95,6 +108,19 @@
     ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->impl )
 
 /**
+ * @def SMX_NET_GET_PRIO()
+ *
+ * Get the net thread priority.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  The net thread priority or -1 on failure.
+ */
+#define SMX_NET_GET_PRIO( h )\
+    ( ( h == NULL ) ? -1 : ( ( smx_net_t* )h )->priority )
+
+/**
  * @def SMX_NET_GET_STATE()
  *
  * Get the allocated state of the net instance.
@@ -119,6 +145,20 @@
  */
 #define SMX_NET_GET_SHARED_STATE( h )\
     ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->shared_state )
+
+/**
+ * @def SMX_NET_IS_FIRST_RUN()
+ *
+ * Check if the current net run is the first run.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  1 if net is executing for the first time, 0 otherwise
+ */
+#define SMX_NET_IS_FIRST_RUN( h )\
+    ( ( h == NULL ) ? 0 : ( ( ( smx_net_t* )h )->count == 1 ? 1 : 0 ) )
+
 
 /**
  * Read from a collector of a net.

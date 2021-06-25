@@ -1,4 +1,12 @@
-# `v0.7.1` (latest)
+# `v0.7.2` (latest)
+
+### New Features
+
+ - Add getter defines for net attributes (loop count, thread prio).
+
+
+-------------------
+# `v0.7.1`
 
 ### Bug Fixes
 
