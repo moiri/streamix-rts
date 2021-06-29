@@ -345,6 +345,16 @@ bool smx_channel_set_content_filter( smx_channel_t* ch,
 bool smx_channel_set_filter( smx_net_t* h, smx_channel_t* ch, int count, ... );
 
 /**
+ * Return a human-readable error message, give an error code.
+ *
+ * @param err
+ *  The error code to transform.
+ * @return
+ *  A human-readable error message.
+ */
+const char* smx_channel_strerror( smx_channel_err_t err );
+
+/**
  * Send the termination signal to a channel sink
  *
  * @param ch    pointer to the channel

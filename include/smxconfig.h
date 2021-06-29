@@ -104,4 +104,59 @@ const char* smx_config_get_string( bson_t* conf, const char* search,
 const char* smx_config_get_string_err( bson_t* conf, const char* search,
         unsigned int* len, smx_config_error_t* err );
 
+/**
+ * Get a boolean from the config file.
+ *
+ * @param[in] conf
+ *  The pointer to th econfig file.
+ * @param[in] search
+ *  A dot-notation key like "a.b.c.d".
+ * @param[out] val
+ *  An output buffer to store the boolean value. This is only valid of the
+ *  function returns successfully.
+ * @return
+ *  A negative error code or 0 on success.
+ */
+int smx_config_init_bool( bson_t* conf, const char* search, bool* val );
+
+/**
+ * Get a double from the config file.
+ *
+ * @param[in] conf
+ *  The pointer to th econfig file.
+ * @param[in] search
+ *  A dot-notation key like "a.b.c.d".
+ * @param[out] val
+ *  An output buffer to store the double value. This is only valid of the
+ *  function returns successfully.
+ * @return
+ *  A negative error code or 0 on success.
+ */
+int smx_config_init_double( bson_t* conf, const char* search, double* val );
+
+/**
+ * Get an int from the config file.
+ *
+ * @param[in] conf
+ *  The pointer to th econfig file.
+ * @param[in] search
+ *  A dot-notation key like "a.b.c.d".
+ * @param[out] val
+ *  An output buffer to store the int value. This is only valid of the
+ *  function returns successfully.
+ * @return
+ *  A negative error code or 0 on success.
+ */
+int smx_config_init_int( bson_t* conf, const char* search, int* val );
+
+/**
+ * Return a human-readable error message, give an error code.
+ *
+ * @param err
+ *  The error code to transform.
+ * @return
+ *  A human-readable error message.
+ */
+const char* smx_config_strerror( smx_config_error_t err );
+
 #endif /* SMXCONFIG_H */

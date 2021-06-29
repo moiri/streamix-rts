@@ -345,6 +345,38 @@ bool smx_channel_set_filter( smx_net_t* h, smx_channel_t* ch, int count, ... )
 }
 
 /*****************************************************************************/
+const char* smx_channel_strerror( smx_channel_err_t err )
+{
+    const char* unknown = "unknown error";
+    switch( err )
+    {
+        case SMX_CHANNEL_ERR_NONE:
+            return "no error";
+        case SMX_CHANNEL_ERR_NO_DEFAULT:
+            return "no default message in decoupled read";
+        case SMX_CHANNEL_ERR_NO_TARGET:
+            return "connecting net has terminated";
+        case SMX_CHANNEL_ERR_DL_MISS:
+            return "connecting net missed its deadline";
+        case SMX_CHANNEL_ERR_NO_DATA:
+            return "the channel has no data";
+        case SMX_CHANNEL_ERR_NO_SPACE:
+            return "the channel has no space";
+        case SMX_CHANNEL_ERR_FILTER:
+            return "type filter missmatch";
+        case SMX_CHANNEL_ERR_UNINITIALISED:
+            return "the channel is not initialized";
+        case SMX_CHANNEL_ERR_TIMEOUT:
+            return "the channel operation timed out";
+        case SMX_CHANNEL_ERR_CV:
+            return "the conditional variable lock failed";
+        default:
+            return unknown;
+    }
+    return unknown;
+}
+
+/*****************************************************************************/
 void smx_channel_terminate_sink( smx_channel_t* ch )
 {
     zlog_debug( ch->cat, "mark as stale" );

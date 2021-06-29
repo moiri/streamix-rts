@@ -76,15 +76,15 @@ typedef struct smx_net_sig_s smx_net_sig_t;           /**< ::smx_net_sig_s */
 enum smx_channel_err_e
 {
     SMX_CHANNEL_ERR_NONE = 0,      /**< no error */
-    SMX_CHANNEL_ERR_NO_DEFAULT,    /**< no default message for decoupled read */
-    SMX_CHANNEL_ERR_NO_TARGET,     /**< connecting net has terminated */
-    SMX_CHANNEL_ERR_DL_MISS,       /**< connecting net missed its deadline */
-    SMX_CHANNEL_ERR_NO_DATA,       /**< unexpectedly, the channel has no data */
-    SMX_CHANNEL_ERR_NO_SPACE,      /**< unexpectedly, the channel has no space */
-    SMX_CHANNEL_ERR_FILTER,        /**< the msg type does not match the filter */
-    SMX_CHANNEL_ERR_UNINITIALISED, /**< the channel was never initialised */
-    SMX_CHANNEL_ERR_TIMEOUT,       /**< the channel operation timed out */
-    SMX_CHANNEL_ERR_CV,            /**< the conditional variable lock failed */
+    SMX_CHANNEL_ERR_NO_DEFAULT = -99,    /**< no default message for decoupled read */
+    SMX_CHANNEL_ERR_NO_TARGET = -98,     /**< connecting net has terminated */
+    SMX_CHANNEL_ERR_DL_MISS = -97,       /**< connecting net missed its deadline */
+    SMX_CHANNEL_ERR_NO_DATA = -96,       /**< unexpectedly, the channel has no data */
+    SMX_CHANNEL_ERR_NO_SPACE = -95,      /**< unexpectedly, the channel has no space */
+    SMX_CHANNEL_ERR_FILTER = -94,        /**< the msg type does not match the filter */
+    SMX_CHANNEL_ERR_UNINITIALISED = -93, /**< the channel was never initialised */
+    SMX_CHANNEL_ERR_TIMEOUT = -92,       /**< the channel operation timed out */
+    SMX_CHANNEL_ERR_CV = -91,            /**< the conditional variable lock failed */
 };
 
 /**
@@ -118,9 +118,9 @@ enum smx_channel_type_e
  */
 enum smx_config_error_e
 {
-    SMX_CONFIG_ERROR_NO_ERROR,  /**< No error */
-    SMX_CONFIG_ERROR_BAD_TYPE,  /**< The item exists but the type does not match */
-    SMX_CONFIG_ERROR_NO_VALUE   /**< The item does not exist */
+    SMX_CONFIG_ERROR_NO_ERROR = 0,  /**< No error */
+    SMX_CONFIG_ERROR_BAD_TYPE = -199,  /**< The item exists but the type does not match */
+    SMX_CONFIG_ERROR_NO_VALUE = -198   /**< The item does not exist */
 };
 
 /**

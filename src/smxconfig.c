@@ -120,3 +120,63 @@ const char* smx_config_get_string_err( bson_t* conf, const char* search,
         *err = SMX_CONFIG_ERROR_NO_VALUE;
     return NULL;
 }
+
+/*****************************************************************************/
+int smx_config_init_bool( bson_t* conf, const char* search, bool* val )
+{
+    bool res;
+    smx_config_error_t err;
+    res = smx_config_get_bool_err( conf, search, &err );
+    if( err != SMX_CONFIG_ERROR_NO_ERROR )
+    {
+        return err;
+    }
+    *val = res;
+    return 0;
+}
+
+/*****************************************************************************/
+int smx_config_init_double( bson_t* conf, const char* search, double* val )
+{
+    double res;
+    smx_config_error_t err;
+    res = smx_config_get_double_err( conf, search, &err );
+    if( err != SMX_CONFIG_ERROR_NO_ERROR )
+    {
+        return err;
+    }
+    *val = res;
+    return 0;
+}
+
+/*****************************************************************************/
+int smx_config_init_int( bson_t* conf, const char* search, int* val )
+{
+    int res;
+    smx_config_error_t err;
+    res = smx_config_get_int_err( conf, search, &err );
+    if( err != SMX_CONFIG_ERROR_NO_ERROR )
+    {
+        return err;
+    }
+    *val = res;
+    return 0;
+}
+
+/*****************************************************************************/
+const char* smx_config_strerror( smx_config_error_t err )
+{
+    const char* unknown = "unknown error";
+    switch( err )
+    {
+        case SMX_CONFIG_ERROR_NO_ERROR:
+            return "no error";
+        case SMX_CONFIG_ERROR_BAD_TYPE:
+            return "bad type";
+        case SMX_CONFIG_ERROR_NO_VALUE:
+            return "no value found";
+        default:
+            return unknown;
+    }
+    return unknown;
+}

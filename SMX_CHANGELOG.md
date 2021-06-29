@@ -1,4 +1,15 @@
-# `v0.7.2` (latest)
+# `v0.7.3` (latest)
+
+### New Features
+
+ - Add init config getter functions for a more convenient way to detect missing
+   values.
+ - Add strerror function for config errors.
+ - Add strerror function for channel errors.
+
+
+-------------------
+# `v0.7.2`
 
 ### New Features
 
