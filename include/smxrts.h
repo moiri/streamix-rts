@@ -197,7 +197,36 @@ void smx_program_cleanup( smx_rts_t* rts );
  * @param log_conf    the path of the log config file to be loaded
  * @return a pointer to the RTS structure which holds the network information.
  */
-smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf );
+smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
+        const char** app_conf_maps, int app_conf_count );
+
+/**
+ * Read a BSON file
+ *
+ * @param path
+ *  The path to the BSON file.
+ * @param doc
+ *  An initialised bson document where the BSON data will be stored.
+ * @return
+ *  0 on success, -1 on failure
+ */
+int smx_program_init_bson_file( const char* path, bson_t* doc );
+
+/**
+ * Read and parse a app configuration file.
+ *
+ * @param conf
+ *  The path to the configuration file.
+ * @param doc
+ *  An initialised bson document where the configuration data will be stored.
+ * @param name
+ *  A pointer to a location where the name pointer of the app will be stored.
+ * @return
+ *  0 on success, -1 on failure
+ */
+int smx_program_init_conf( const char* conf, bson_t* doc, const char** name );
+int smx_program_init_maps( const char* path, bson_t* doc, bson_iter_t* i_maps,
+        bson_t* payload );
 
 /**
  * Initialize the synchronisation barrier to make sure all nets finish

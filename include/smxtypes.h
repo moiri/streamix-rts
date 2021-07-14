@@ -17,6 +17,7 @@
 #ifndef SMXTYPES_H
 #define SMXTYPES_H
 
+#define SMX_CONFIG_MAX_MAP_ITEMS      1000
 #define SMX_MSG_RAW_TYPE 0
 #define SMX_MSG_RAW_TYPE_STR "raw"
 #define SMX_MSG_INT_TYPE 1
@@ -49,6 +50,8 @@ typedef enum smx_channel_state_e smx_channel_state_t; /**< #smx_channel_state_e 
 typedef enum smx_channel_type_e smx_channel_type_t;   /**< #smx_channel_type_e */
 /** #smx_config_error_e */
 typedef enum smx_config_error_e smx_config_error_t;
+/** #smx_config_map_error_e */
+typedef enum smx_config_map_error_e smx_config_map_error_t;
 /** #smx_profiler_action_e */
 typedef enum smx_profiler_action_ch_e smx_profiler_action_ch_t;
 typedef enum smx_profiler_action_msg_e smx_profiler_action_msg_t;
@@ -69,6 +72,10 @@ typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
 typedef struct smx_msg_s smx_msg_t;
 typedef struct smx_net_s smx_net_t;                   /**< ::smx_net_s */
 typedef struct smx_net_sig_s smx_net_sig_t;           /**< ::smx_net_sig_s */
+/** ::smx_msg_tsmem_data_map_s */
+typedef struct smx_config_data_map_s smx_config_data_map_t;
+/** ::smx_msg_tsmem_data_maps_s */
+typedef struct smx_config_data_maps_s smx_config_data_maps_t;
 
 /**
  * The error state of a channel end
@@ -121,6 +128,23 @@ enum smx_config_error_e
     SMX_CONFIG_ERROR_NO_ERROR = 0,  /**< No error */
     SMX_CONFIG_ERROR_BAD_TYPE = -199,  /**< The item exists but the type does not match */
     SMX_CONFIG_ERROR_NO_VALUE = -198   /**< The item does not exist */
+};
+
+/**
+ * The list of config read errors.
+ */
+enum smx_config_map_error_e
+{
+    SMX_CONFIG_MAP_ERROR_NO_ERROR = 0,  /**< No error */
+    SMX_CONFIG_MAP_ERROR_BAD_ROOT_TYPE = -299,
+    SMX_CONFIG_MAP_ERROR_BAD_MAP_TYPE = -298,
+    SMX_CONFIG_MAP_ERROR_MISSING_SRC_KEY = -297,
+    SMX_CONFIG_MAP_ERROR_MISSING_SRC_DEF = -296,
+    SMX_CONFIG_MAP_ERROR_MISSING_TGT_KEY = -295,
+    SMX_CONFIG_MAP_ERROR_MISSING_TGT_DEF = -294,
+    SMX_CONFIG_MAP_ERROR_MAP_COUNT_EXCEEDED = -293,
+    SMX_CONFIG_MAP_ERROR_NO_MAP_ITEM = -292,
+    SMX_CONFIG_MAP_ERROR_BAD_TYPE_OPTION = -291,
 };
 
 /**
@@ -228,6 +252,35 @@ struct smx_collector_s
     int                 count;      /**< collection of channel counts */
     int                 ch_count;   /**< number of connected channels */
     smx_channel_state_t state;      /**< state of the channel */
+};
+
+/**
+ * This structure defines an input key mapping
+ */
+struct smx_config_data_map_s
+{
+    const char* src_path;    /**< The source value location (use dot-notation) */
+    const char* tgt_path;    /**< The target value location (use dot-notation) */
+    bson_iter_t tgt_iter;    /**< The target value location iterator  */
+    bson_type_t type;
+    union {
+        double v_double;
+        int64_t v_int64;
+        int32_t v_int32;
+        bool v_bool;
+    } fallback;
+};
+
+/**
+ *
+ */
+struct smx_config_data_maps_s
+{
+    smx_config_data_map_t items[SMX_CONFIG_MAX_MAP_ITEMS];
+    int count;
+    bool is_extended;
+    bson_t* tgt_payload;
+    bson_t mapped_payload;
 };
 
 /**
