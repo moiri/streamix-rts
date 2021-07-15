@@ -193,12 +193,19 @@ void smx_program_cleanup( smx_rts_t* rts );
  * Initialize the rts structure, read the configuration files, and initialize
  * the log.
  *
- * @param app_conf    the path of the application config file to be loaded
- * @param log_conf    the path of the log config file to be loaded
- * @return a pointer to the RTS structure which holds the network information.
+ * @param app_conf
+ *  The path of the application config file to be loaded.
+ * @param log_conf
+ *  The path of the log config file to be loaded.
+ * @param app_conf_maps
+ *  The path list of the config map files to be loaded.
+ * @param app_conf_map_count
+ *  The number of config map files.
+ * @return
+ *  A pointer to the RTS structure which holds the network information.
  */
 smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
-        const char** app_conf_maps, int app_conf_count );
+        const char** app_conf_maps, int app_conf_map_count );
 
 /**
  * Read a BSON file
@@ -213,7 +220,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
 int smx_program_init_bson_file( const char* path, bson_t* doc );
 
 /**
- * Read and parse a app configuration file.
+ * Read and parse an app configuration file.
  *
  * @param conf
  *  The path to the configuration file.
@@ -225,6 +232,22 @@ int smx_program_init_bson_file( const char* path, bson_t* doc );
  *  0 on success, -1 on failure
  */
 int smx_program_init_conf( const char* conf, bson_t* doc, const char** name );
+
+/**
+ * Read and parse an app configuration map file.
+ *
+ * @param path
+ *  The path to the configuration map file.
+ * @param doc
+ *  An initialised bson document where the root mapping data will be stored.
+ * @param i_maps
+ *  An output parameter where the map list iterator will be stored.
+ * @param payload
+ *  An uninitialised bson document wehre the payload to be mapped will be
+ *  stored.
+ * @return
+ *  0 on success, -1 on failure
+ */
 int smx_program_init_maps( const char* path, bson_t* doc, bson_iter_t* i_maps,
         bson_t* payload );
 
@@ -232,7 +255,8 @@ int smx_program_init_maps( const char* path, bson_t* doc, bson_iter_t* i_maps,
  * Initialize the synchronisation barrier to make sure all nets finish
  * intialisation befor staring the main loop.
  *
- * @param rts a pointer to the RTS structure which holds the network information.
+ * @param rts
+ *  A pointer to the RTS structure which holds the network information.
  */
 void smx_program_init_run( smx_rts_t* rts );
 

@@ -1,4 +1,9 @@
-# `v0.7.3` (latest)
+# `v0.8.0` (latest)
+
+### Changes
+
+ - `smx_program_init()` now expects additional parameters `app_conf_maps` and
+   `app_conf_map_count`.
 
 ### New Features
 
@@ -6,6 +11,8 @@
    values.
  - Add strerror function for config errors.
  - Add strerror function for channel errors.
+ - Allow config maps to overwrite config settings. This is useful to create
+   several configuration flavors without changing the default config.
 
 
 -------------------
