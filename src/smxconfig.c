@@ -666,8 +666,11 @@ double smx_config_get_double_err( bson_t* conf, const char* search,
     if( bson_iter_init( &iter, conf ) && bson_iter_find_descendant( &iter,
                 search, &child ) )
     {
-        if( BSON_ITER_HOLDS_DOUBLE( &child ) )
-            return bson_iter_double( &child );
+        if( BSON_ITER_HOLDS_DOUBLE( &child )
+                || BSON_ITER_HOLDS_BOOL( &child )
+                || BSON_ITER_HOLDS_INT32( &child )
+                || BSON_ITER_HOLDS_INT64( &child ) )
+            return bson_iter_as_double( &child );
         else
             *err = SMX_CONFIG_ERROR_BAD_TYPE;
     }
