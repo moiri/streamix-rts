@@ -14,6 +14,10 @@
  - Allow config maps to overwrite config settings. This is useful to create
    several configuration flavors without changing the default config.
 
+### Bug Fixes
+
+ - Improve config read function for double values.
+
 
 -------------------
 # `v0.7.2`
