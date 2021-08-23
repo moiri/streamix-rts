@@ -126,7 +126,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
     pthread_mutex_init( &rts->net_mutex, &mutexattr_prioinherit );
     clock_gettime( CLOCK_MONOTONIC, &rts->start_wall );
 
-    SMX_LOG_MAIN( main, notice, "using libsmxrtl version: %s",
+    SMX_LOG_MAIN( main, notice, "using libsmxrts version: %s",
             LIBSMXRTS_VERSION );
     SMX_LOG_MAIN( main, notice, "using libbson version: %s",
             bson_get_version() );
