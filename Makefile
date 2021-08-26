@@ -38,7 +38,7 @@ INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   $(INC_SMXZLOG) \
 			   -I.
 
-LINK_DIR = -L/usr/local/lib
+LINK_DIR = -L/usr/local/lib $(LINK_SMXZLOG)
 
 LINK_FILE = -lpthread \
 	-lbson-1.0 \
