@@ -35,14 +35,14 @@ INCLUDES = $(LOC_INC_DIR)/*.h
 
 INCLUDES_DIR = -I$(LOC_INC_DIR) \
 			   -I/usr/include/libbson-1.0 \
-			   -I/usr/include/smx/libsmxzlog-0.1 \
+			   $(INC_SMXZLOG) \
 			   -I.
 
 LINK_DIR = -L/usr/local/lib
 
 LINK_FILE = -lpthread \
 	-lbson-1.0 \
-	-lsmxzlog-0.1 \
+	$(LIB_SMXZLOG) \
 	-llttng-ust \
 	-ldl
 
