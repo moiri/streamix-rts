@@ -12,13 +12,10 @@ VREV = 0
 VDEB = 1
 
 # the RTS library
-LIB_SMXZLOG = -lzlog-1.2
+LIB_SMXZLOG = -lsmxzlog-0.2
 
 # the include path of the smxzlog header files
 INC_SMXZLOG = -I/usr/include/smx/libsmxzlog-0.2
-
-# the library path of the smxzlog libs
-LINK_SMXZLOG = -L/usr/lib/x86_64-linux-gnu/libsmxzlog-0.2
 
 # the name of the library
 LIBNAME = smxrts
