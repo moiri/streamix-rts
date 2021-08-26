@@ -5,6 +5,7 @@
  - `smx_program_init()` now expects additional parameters `app_conf_maps` and
    `app_conf_map_count`.
  - install include files to versioned folder.
+ - remove debian stuff to handle this in a seperate wrapper.
 
 ### New Features
 
