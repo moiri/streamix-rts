@@ -2,14 +2,6 @@
 
 The runtime system (RTS) for the coordination language Streamix.
 
-## Installation
-
-A Debian package is distributed with the repository. Use the command
-
-    sudo apt install __path_to_deb__
-
-where `__path_to_deb__` defines the path to the local Debian package.
-
 ## Building
 
 To build the RTS from scratch run the following commands:
