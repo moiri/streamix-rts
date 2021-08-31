@@ -1,4 +1,12 @@
-# `v0.8.0` (latest)
+# `v0.8.1` (latest)
+
+### New Features
+
+ - Improve config data maps to increase usability
+
+
+-------------------
+# `v0.8.0`
 
 ### Changes
 
