@@ -262,6 +262,7 @@ struct smx_config_data_map_s
     const char* src_path;    /**< The source value location (use dot-notation) */
     const char* tgt_path;    /**< The target value location (use dot-notation) */
     bson_iter_t tgt_iter;    /**< The target value location iterator  */
+    bson_t* src_payload;
     bson_type_t type;
     union {
         double v_double;

@@ -18,20 +18,25 @@ int smx_config_data_maps_apply( smx_config_data_maps_t* maps,
         bson_t* src_payload )
 {
     int i, rc;
+    bson_t* src_payload_item = src_payload;
 
     if( maps == NULL )
         return false;
 
     if( maps->is_extended )
     {
-        return smx_config_data_maps_apply_ext( maps, src_payload );
+        return smx_config_data_maps_apply_ext( maps, src_payload_item );
     }
     else
     {
         for( i = 0; i < maps->count; i++ )
         {
+            if( maps->items[i].src_payload != NULL )
+            {
+                src_payload_item = maps->items[i].src_payload;
+            }
             rc = smx_config_data_maps_apply_base( &maps->items[i],
-                    src_payload );
+                    src_payload_item );
             if( rc < 0 )
             {
                 return rc;
@@ -182,9 +187,17 @@ int smx_config_data_maps_apply_ext_iter( bson_iter_t* i_tgt,
 /******************************************************************************/
 void smx_config_data_maps_cleanup( smx_config_data_maps_t* maps )
 {
+    int i;
     if( maps == NULL )
         return;
 
+    for( i = 0 ; i < maps->count; i++ )
+    {
+        if( maps->items[i].src_payload != NULL )
+        {
+            bson_destroy( maps->items[i].src_payload );
+        }
+    }
     bson_destroy( &maps->mapped_payload );
     free( maps );
 }
@@ -249,18 +262,23 @@ int smx_config_data_map_append_val( const char* dot_key,
     const bson_oid_t* oid;
     bson_oid_t oid_init;
     char oid_str[25];
+    bson_t* src_payload_item = src_payload;
 
     for( i = 0; i < maps->count; i++ )
     {
+        if( maps->items[i].src_payload != NULL )
+        {
+            src_payload_item = maps->items[i].src_payload;
+        }
         if( strcmp( dot_key, maps->items[i].tgt_path ) == 0 )
         {
             if( strcmp( maps->items[i].src_path, "." ) == 0 )
             {
-                BSON_APPEND_DOCUMENT( payload, iter_key, src_payload );
+                BSON_APPEND_DOCUMENT( payload, iter_key, src_payload_item );
                 return 0;
             }
 
-            if( smx_config_data_map_get_iter( src_payload,
+            if( smx_config_data_map_get_iter( src_payload_item,
                         maps->items[i].src_path, &src_child ) )
             {
                 if( maps->items[i].type == BSON_TYPE_UNDEFINED )
@@ -408,6 +426,10 @@ bool smx_config_data_map_can_write_int32( bson_iter_t* i_src )
 bool smx_config_data_map_get_iter( bson_t* data, const char* map,
         bson_iter_t* child )
 {
+    if( map == NULL )
+    {
+        return false;
+    }
     bson_iter_t iter;
     return bson_iter_init( &iter, data )
             && bson_iter_find_descendant( &iter, map, child );
@@ -422,6 +444,7 @@ int smx_config_data_map_init( bson_t* payload,
     bson_iter_t i_tgt;
     map->src_path = NULL;
     map->tgt_path = NULL;
+    map->src_payload = NULL;
     map->type = BSON_TYPE_UNDEFINED;
 
     while( bson_iter_next( i_map ) )
@@ -432,7 +455,7 @@ int smx_config_data_map_init( bson_t* payload,
             if( BSON_ITER_HOLDS_UTF8( i_map ) )
             {
                 rc = smx_config_data_map_init_tgt_utf8( payload, map,
-                        i_map, is_extended );
+                        bson_iter_utf8( i_map, NULL ), is_extended );
                 if( rc < 0 )
                 {
                     return rc;
@@ -478,8 +501,8 @@ int smx_config_data_map_init_tgt_doc( bson_t* payload,
         key = bson_iter_key( i_tgt );
         if( ( strcmp( key, "path" ) == 0 ) && BSON_ITER_HOLDS_UTF8( i_tgt ) )
         {
-            rc = smx_config_data_map_init_tgt_utf8( payload, map, i_tgt,
-                    is_extended );
+            rc = smx_config_data_map_init_tgt_utf8( payload, map,
+                    bson_iter_utf8( i_tgt, NULL ), is_extended );
             if( rc < 0 )
             {
                 return rc;
@@ -526,9 +549,9 @@ int smx_config_data_map_init_tgt_doc( bson_t* payload,
 
 /******************************************************************************/
 int smx_config_data_map_init_tgt_utf8( bson_t* data,
-        smx_config_data_map_t* map, bson_iter_t* i_tgt, bool* is_extended )
+        smx_config_data_map_t* map, const char* tgt_path, bool* is_extended )
 {
-    map->tgt_path = bson_iter_utf8( i_tgt, NULL );
+    map->tgt_path = tgt_path;
     if( !smx_config_data_map_get_iter( data, map->tgt_path,
                 &map->tgt_iter ) )
     {

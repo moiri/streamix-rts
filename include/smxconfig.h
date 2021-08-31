@@ -247,7 +247,7 @@ int smx_config_data_map_init_tgt_doc( bson_t* payload,
  *  0 on success, -1 on failure.
  */
 int smx_config_data_map_init_tgt_utf8( bson_t* payload,
-        smx_config_data_map_t* map, bson_iter_t* i_tgt, bool* is_extended );
+        smx_config_data_map_t* map, const char* tgt_path, bool* is_extended );
 
 /**
  * Return a humanreadable error string, given a an error code.
