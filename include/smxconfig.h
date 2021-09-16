@@ -109,6 +109,9 @@ bson_t* smx_config_data_maps_get_mapped_payload( smx_config_data_maps_t* maps );
 int smx_config_data_maps_init( bson_iter_t* i_fields, bson_t* data,
         smx_config_data_maps_t* maps );
 
+int smx_config_data_maps_init_raw( bson_t* data,
+        smx_config_data_maps_t* maps );
+
 /**
  * Append a mapped value if defined in the mapping list.
  *

@@ -35,11 +35,14 @@ int smx_config_data_maps_apply( smx_config_data_maps_t* maps,
             {
                 src_payload_item = maps->items[i].src_payload;
             }
-            rc = smx_config_data_maps_apply_base( &maps->items[i],
-                    src_payload_item );
-            if( rc < 0 )
+            if( src_payload_item != NULL && maps->items[i].src_path != NULL )
             {
-                return rc;
+                rc = smx_config_data_maps_apply_base( &maps->items[i],
+                        src_payload_item );
+                if( rc < 0 )
+                {
+                    return rc;
+                }
             }
         }
     }
@@ -269,6 +272,10 @@ int smx_config_data_map_append_val( const char* dot_key,
         if( maps->items[i].src_payload != NULL )
         {
             src_payload_item = maps->items[i].src_payload;
+        }
+        if( src_payload_item == NULL || maps->items[i].src_path == NULL )
+        {
+            continue;
         }
         if( strcmp( dot_key, maps->items[i].tgt_path ) == 0 )
         {

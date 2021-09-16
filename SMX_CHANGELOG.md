@@ -1,4 +1,13 @@
-# `v0.8.1` (latest)
+# `v0.8.2` (latest)
+
+### Bug Fixes
+
+ - Fix a problem with data mappings when payloads or source paths are not
+   defined.
+
+
+-------------------
+# `v0.8.1`
 
 ### New Features
 
