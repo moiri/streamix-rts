@@ -11,6 +11,7 @@
 
 #include <zlog.h>
 #include <pthread.h>
+#include "smxtypes.h"
 
 #ifndef SMXLOG_H
 #define SMXLOG_H
@@ -43,41 +44,7 @@
  * The logger macro for channel-specific logs.
  */
 #define SMX_LOG_CH( ch, level, format, ... )\
-    SMX_LOG_INTERN( level, ch->cat, format,  ##__VA_ARGS__ )
-
-/**
- * @def SMX_LOG_MUTEX()
- *
- * The logger macro performing a mutex lock/unlock before logging to prevent
- * any issue of priority inversion.
- */
-#define SMX_LOG_MUTEX( level, cat, format, ... ) do {\
-    pthread_mutex_lock( smx_get_mlog() );\
-    zlog_ ## level( cat, format, ##__VA_ARGS__ );\
-    pthread_mutex_unlock( smx_get_mlog() ); } while( 0 )
-
-/**
- * @def SMX_LOG_FREE()
- *
- * The logger macro without locking.
- */
-#define SMX_LOG_FREE( level, cat, format, ... )\
-    zlog_ ## level( cat, format, ##__VA_ARGS__ )
-
-/**
- * @def SMX_LOG_NOP()
- *
- * The logger macro doing nothing at all.
- */
-#define SMX_LOG_NOOP( level, cat, format, ... )\
-    do {} while(0)
-
-/**
- * @def SMX_LOG_MAIN( cat, level, format, ... )
- * A macro to log to a globally defined category `cat` on log level `level`.
- */
-#define SMX_LOG_MAIN( cat, level, format, ... )\
-    SMX_LOG_INTERN( level, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ )
+    SMX_LOG_INTERN( level, ch->log, ch->cat, format, ##__VA_ARGS__ )
 
 /**
  * @def SMX_LOG_NET()
@@ -85,21 +52,58 @@
  * Refer top SMX_LOG() for more information.
  */
 #define SMX_LOG_NET( net, level, format, ... )\
-    SMX_LOG_INTERN( level, SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )
+    SMX_LOG_INTERN( level, SMX_SIG_LOG( net ), SMX_SIG_CAT( net ), format, ##__VA_ARGS__ )
 
 /**
- * Define mutex protection and main categories for zlog. Further, initialise
- * zlog with the configuration file.
+ * @def SMX_LOG_MUTEX()
  *
- * @param log_conf
- *  A pointer to the zlog configuration file.
+ * The logger macro performing a mutex lock/unlock before logging to prevent
+ * any issue of priority inversion.
  */
-int smx_log_init( const char* log_conf );
+#define SMX_LOG_MUTEX( level, log, cat, format, ... ) do {\
+    pthread_mutex_lock( smx_get_mlog() );\
+    SMX_LOG_MASKED( level, log, cat, format, ##__VA_ARGS__);\
+    pthread_mutex_unlock( smx_get_mlog() ); } while( 0 )
 
 /**
- * Cleanup zlog
+ * @def SMX_LOG_FREE()
+ *
+ * The logger macro without locking.
  */
-void smx_log_cleanup();
+#define SMX_LOG_FREE( level, log, cat, format, ... )\
+    SMX_LOG_MASKED( level, log, cat, format, ##__VA_ARGS__)
+
+/**
+ * @def SMX_LOG_RAW()
+ *
+ * The logger macro to simply log a message.
+ */
+#define SMX_LOG_RAW( level, cat, format, ... )\
+    zlog_ ## level( cat, format, ##__VA_ARGS__ )
+
+/**
+ * @def SMX_LOG_MASKED()
+ *
+ * The logger macro to avoid logging consecutive log messages
+ */
+#define SMX_LOG_MASKED( level, log, cat, format, ... )\
+    if( smx_log_mask( log, cat, format, ##__VA_ARGS__ ) == 0 )\
+        SMX_LOG_RAW( level, cat, format, ##__VA_ARGS__ )
+
+/**
+ * @def SMX_LOG_NOP()
+ *
+ * The logger macro doing nothing at all.
+ */
+#define SMX_LOG_NOOP( level, log, cat, format, ... )\
+    do {} while(0)
+
+/**
+ * @def SMX_LOG_MAIN( cat, level, format, ... )
+ * A macro to log to a globally defined category `cat` on log level `level`.
+ */
+#define SMX_LOG_MAIN( cat, level, format, ... )\
+    SMX_LOG_INTERN( level, NULL, smx_get_zcat_ ## cat(), format,  ##__VA_ARGS__ )
 
 /**
  * Get the global zlog mutex handler
@@ -135,5 +139,37 @@ zlog_category_t* smx_get_zcat_msg();
  * @return a pointer to the zlog category
  */
 zlog_category_t* smx_get_zcat_net();
+
+/**
+ * Cleanup zlog
+ */
+void smx_log_cleanup();
+
+/**
+ * Define mutex protection and main categories for zlog. Further, initialise
+ * zlog with the configuration file.
+ *
+ * @param log_conf
+ *  A pointer to the zlog configuration file.
+ */
+int smx_log_init( const char* log_conf );
+
+/**
+ * Maks consecutive identical log messages.
+ *
+ * @param log
+ *  A pointer to the log buffer structure.
+ * @param cat
+ *  A pointer to the log category structure.
+ * @param format
+ *  The format of the current log message.
+ * @param ...
+ *  Variadic arguments used in the format string.
+ * @return
+ *  The consecutive identical log message count or -1 if the log message does
+ *  not match the last message.
+ */
+int smx_log_mask( smx_log_buffer_t* log, zlog_category_t* cat,
+        const char* format, ... );
 
 #endif /* SMXLOG_H */

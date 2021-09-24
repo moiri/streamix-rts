@@ -70,6 +70,7 @@ typedef struct smx_guard_s smx_guard_t;               /**< ::smx_guard_s */
  * Refer to the structure definition for more information ::smx_msg_s.
  */
 typedef struct smx_msg_s smx_msg_t;
+typedef struct smx_log_buffer_s smx_log_buffer_t;     /**< ::smx_log_buffer_s */
 typedef struct smx_net_s smx_net_t;                   /**< ::smx_net_s */
 typedef struct smx_net_sig_s smx_net_sig_t;           /**< ::smx_net_sig_s */
 /** ::smx_msg_tsmem_data_map_s */
@@ -218,6 +219,7 @@ struct smx_channel_s
     smx_channel_end_t*  source;     /**< ::smx_channel_end_s */
     zlog_category_t*    cat;        /**< zlog category of a channel end */
     pthread_mutex_t     ch_mutex;   /**< mutual exclusion */
+    smx_log_buffer_t*   log;        /**< ::smx_log_buffer_s */
 };
 
 /**
@@ -322,6 +324,20 @@ struct smx_guard_s
 };
 
 /**
+ * This structure is used to store that last log message in order to decide
+ * whether 
+ */
+struct smx_log_buffer_s
+{
+    /** The buffer for the last message */
+    char last[1000];
+    /** The log message accumulator */
+    unsigned long long count;
+    /** The log category of the first log entry */
+    zlog_category_t* cat;
+};
+
+/**
  * @brief A Streamix message structure
  *
  * The structure contains handlers that can be used to manipulate data.
@@ -368,6 +384,7 @@ struct smx_net_s
     void*               shared_state;
     const char*         shared_state_key;
     smx_rts_t*          rts;
+    smx_log_buffer_t*   log;          /**< ::smx_log_buffer_s */
     struct timespec     last_count_wall;   /**< start time of a net (after init) */
     struct timespec     start_wall;   /**< start time of a net (after init) */
     struct timespec     end_wall;     /**< end time of a net (befoer cleanup) */

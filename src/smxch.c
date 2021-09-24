@@ -75,6 +75,13 @@ smx_channel_t* smx_channel_create( int* ch_cnt, int len,
     if( ch == NULL )
         return NULL;
 
+    ch->log = smx_malloc( sizeof( struct smx_log_buffer_s ) );
+    if( ch->log == NULL )
+    {
+        free( ch );
+        return NULL;
+    }
+
     SMX_LOG_MAIN( ch, info, "create channel '%s(%d)' of length %d", name, id,
             len );
     pthread_mutexattr_init( &mutexattr_prioinherit );
@@ -93,6 +100,8 @@ smx_channel_t* smx_channel_create( int* ch_cnt, int len,
     ch->source = smx_channel_create_end();
     ch->source->state = SMX_CHANNEL_PENDING;
     ch->sink->state = SMX_CHANNEL_READY;
+    ch->log->cat = NULL;
+    ch->log->count = 0;
     if( ( type == SMX_FIFO_D ) || ( type == SMX_D_FIFO_D ) )
     {
         // do not block on decouped output
@@ -133,6 +142,8 @@ void smx_channel_destroy( smx_channel_t* ch )
         return;
     SMX_LOG_MAIN( ch, debug, "destroy channel '%s(%d)' (msg count: %d)",
             ch->name, ch->id, ch->fifo->count );
+    if( ch->log != NULL )
+        free( ch->log );
     if( ch->name != NULL )
         free( ch->name );
     smx_guard_destroy( ch->guard );

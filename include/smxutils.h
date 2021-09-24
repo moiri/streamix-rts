@@ -80,6 +80,18 @@
     ( ( smx_net_t* )h )->cat
 
 /**
+ * Macro to get the net logger buffer.
+ */
+#define SMX_SIG_LOG( h )\
+    ( h == NULL ) ? NULL : SMX_SIG_LOG_NC( h )
+
+/**
+ * Macro to get the net logger buffer without sanity checks.
+ */
+#define SMX_SIG_LOG_NC( h )\
+    ( ( smx_net_t* )h )->log
+
+/**
  * Macro to get the port signature of a net.
  */
 #define SMX_SIG_PORT( h, box_name, port_name, mode )\

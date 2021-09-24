@@ -96,6 +96,13 @@ smx_net_t* smx_net_create( unsigned int id, const char* name,
         free( net );
         return NULL;
     }
+    net->log = smx_malloc( sizeof( struct smx_log_buffer_s ) );
+    if( net->log == NULL )
+    {
+        free( net->sig );
+        free( net );
+        return NULL;
+    }
     net->last_count_wall.tv_sec = 0;
     net->last_count_wall.tv_nsec = 0;
     net->start_wall.tv_sec = 0;
@@ -109,6 +116,8 @@ smx_net_t* smx_net_create( unsigned int id, const char* name,
     net->sig->out.ports = NULL;
     net->sig->out.count = 0;
     net->sig->out.len = 0;
+    net->log->cat = NULL;
+    net->log->count = 0;
 
     net->rts = rts;
     net->state = NULL;
@@ -165,6 +174,10 @@ void smx_net_destroy( smx_net_t* h )
             if( h->sig->out.ports != NULL )
                 free( h->sig->out.ports );
             free( h->sig );
+        }
+        if( h->log != NULL )
+        {
+            free( h->log );
         }
         free( h );
     }

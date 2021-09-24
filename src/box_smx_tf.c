@@ -259,9 +259,14 @@ void smx_tf_wait( smx_net_t* h )
     pfd.revents = 0;
     poll_res = poll( &pfd, 1, 0 ); // non-blocking poll to check for timer event
     if( -1 == poll_res )
+    {
         SMX_LOG_NET( h, error, "timerfd poll: %d", errno );
+    }
     else if( poll_res > 0 )
-        SMX_LOG_NET( h, notice, "no wait time, tf timer interval missed: %d", poll_res );
+    {
+        SMX_LOG_NET( h, notice, "no wait time, tf timer interval missed: %d",
+                poll_res );
+    }
 
     if( -1 == read( timer->fd, &expired, sizeof( uint64_t ) ) )
         SMX_LOG_NET( h, error, "timerfd read: %d", errno );
