@@ -904,8 +904,16 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         new_count = fifo->count;
         if( fifo->overwrite > 1 )
         {
-            SMX_LOG_CH( ch, notice, "tail of fifo was overwritten %d times",
-                    fifo->overwrite );
+            if( fifo->length > 1 )
+            {
+                SMX_LOG_CH( ch, notice, "tail of fifo was overwritten %d times",
+                        fifo->overwrite );
+            }
+            else
+            {
+                SMX_LOG_CH( ch, info, "tail of fifo was overwritten %d times",
+                        fifo->overwrite );
+            }
         }
         fifo->overwrite = 0;
 
@@ -923,7 +931,14 @@ int smx_d_fifo_write( void* h, smx_channel_t* ch, smx_fifo_t* fifo,
         smx_msg_destroy( h, msg_tmp, true );
         if( fifo->overwrite == 1 )
         {
-            SMX_LOG_CH( ch, notice, "overwrite tail of fifo" );
+            if( fifo->length > 1 )
+            {
+                SMX_LOG_CH( ch, notice, "overwrite tail of fifo" );
+            }
+            else
+            {
+                SMX_LOG_CH( ch, info, "overwrite tail of fifo" );
+            }
         }
         smx_profiler_log_ch( h, ch, msg, SMX_PROFILER_ACTION_CH_OVERWRITE,
                 fifo->length );
