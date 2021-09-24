@@ -1,4 +1,13 @@
-# `v0.8.2` (latest)
+# `v0.8.3` (latest)
+
+### Changes
+
+ - Only log FIFO tail overwrite to `notice` if the FIFO length `>1`,
+   use `info` otherwise.
+
+
+-------------------
+# `v0.8.2`
 
 ### Bug Fixes
 
