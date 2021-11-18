@@ -101,6 +101,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
             bson_destroy( &payload );
             goto error;
         }
+        bson_destroy( &maps.mapped_payload );
         bson_destroy( &mapping );
         bson_destroy( &payload );
     }
@@ -141,6 +142,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
     return rts;
 
 error:
+    bson_destroy( &maps.mapped_payload );
     bson_destroy( &mapping );
     bson_destroy( &tgt );
     exit( 0 );
