@@ -4,6 +4,7 @@
 
  - Fix channel timeout handling (nsec values were simply added without taking
    spilling to seconds into account)
+ - Fix memory leak in config maps.
 
 
 -------------------
