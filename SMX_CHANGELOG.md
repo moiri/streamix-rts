@@ -1,4 +1,13 @@
-# `v0.8.3` (latest)
+# `v0.8.4` (latest)
+
+### Bug Fixes
+
+ - Fix channel timeout handling (nsec values were simply added without taking
+   spilling to seconds into account)
+
+
+-------------------
+# `v0.8.3`
 
 ### Changes
 
