@@ -170,6 +170,7 @@ void smx_channel_destroy_end( smx_channel_end_t* end )
 smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
 {
     int rc = 0;
+    int nsec_sum;
     struct timespec ts;
     smx_msg_t* msg = NULL;
     if( ch == NULL )
@@ -196,7 +197,13 @@ smx_msg_t* smx_channel_read( void* h, smx_channel_t* ch )
         {
             clock_gettime( CLOCK_REALTIME, &ts );
             ts.tv_sec += ch->source->timeout.tv_sec;
-            ts.tv_nsec += ch->source->timeout.tv_nsec;
+            nsec_sum = ts.tv_nsec + ch->source->timeout.tv_nsec;
+            if( nsec_sum > 1000000000 )
+            {
+                ts.tv_sec++;
+                nsec_sum -= 1000000000;
+            }
+            ts.tv_nsec = nsec_sum;
             SMX_LOG_CH( ch, debug, "wait timeout set to %ld, %ld",
                     ch->source->timeout.tv_sec, ch->source->timeout.tv_nsec );
             rc = pthread_cond_timedwait( &ch->source->ch_cv,
@@ -400,6 +407,7 @@ void smx_channel_terminate_source( smx_channel_t* ch )
 int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
 {
     int rc = 0;
+    int nsec_sum;
     bool abort = false;
     int new_count;
     int i;
@@ -476,7 +484,13 @@ int smx_channel_write( void* h, smx_channel_t* ch, smx_msg_t* msg )
         {
             clock_gettime( CLOCK_REALTIME, &ts );
             ts.tv_sec += ch->sink->timeout.tv_sec;
-            ts.tv_nsec += ch->sink->timeout.tv_nsec;
+            nsec_sum = ts.tv_nsec + ch->sink->timeout.tv_nsec;
+            if( nsec_sum > 1000000000 )
+            {
+                ts.tv_sec++;
+                nsec_sum -= 1000000000;
+            }
+            ts.tv_nsec = nsec_sum;
             SMX_LOG_CH( ch, debug, "wait timeout set to %ld, %ld",
                     ch->sink->timeout.tv_sec, ch->sink->timeout.tv_nsec );
             rc = pthread_cond_timedwait( &ch->sink->ch_cv,
