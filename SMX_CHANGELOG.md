@@ -1,4 +1,12 @@
-# `v0.8.4` (latest)
+# `v0.9.0` (latest)
+
+### Changes
+
+ - Versionize dvl packageV
+
+
+-------------------
+# `v0.8.4`
 
 ### Bug Fixes
 
