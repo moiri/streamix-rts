@@ -67,7 +67,7 @@
  *  The argument structure of type `bson_t*` or NULL.
  */
 #define SMX_NET_GET_ARGUMENTS( h )\
-    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->args )
+    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->rts->args )
 
 /**
  * @def SMX_NET_GET_COUNT()
