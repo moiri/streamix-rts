@@ -205,7 +205,22 @@ void smx_program_cleanup( smx_rts_t* rts );
  *  A pointer to the RTS structure which holds the network information.
  */
 smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
-        const char** app_conf_maps, int app_conf_map_count );
+        const char** app_conf_maps, int app_conf_map_count,
+        const char* arg_file, const char* args );
+
+/**
+ * Read and parse custom arguments passed to the streamix app as JSON file or
+ * JSON string. If a JSON string is passed, the JSON file will be ignored.
+ *
+ * @param arg_str
+ *  A JSON string. If this is set, `arg_file` will be ignored.
+ * @param arg_file
+ *  A path to a JSON file. This is only considered if `arg_str` is NULL.
+ * @param rts
+ *  A pointer to the RTS structure where the args will be stored.
+ */
+int smx_program_init_args( const char* arg_str, const char* arg_file,
+        smx_rts_t* rts );
 
 /**
  * Read a BSON file

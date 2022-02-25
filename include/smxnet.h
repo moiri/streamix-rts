@@ -51,10 +51,23 @@
  * @param h
  *  The pointer to the net handler.
  * @return
- *  The net configuration structure of type `bson_t`.
+ *  The net configuration structure of type `bson_t*` or NULL.
  */
 #define SMX_NET_GET_CONF( h )\
     ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->conf )
+
+/**
+ * @def SMX_NET_GET_ARGUMENTS()
+ *
+ * Get the net argument structure.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @return
+ *  The argument structure of type `bson_t*` or NULL.
+ */
+#define SMX_NET_GET_ARGUMENTS( h )\
+    ( ( h == NULL ) ? NULL : ( ( smx_net_t* )h )->args )
 
 /**
  * @def SMX_NET_GET_COUNT()

@@ -420,6 +420,7 @@ struct smx_rts_s
     pthread_barrier_t pre_init_done;/**< the barrier for syncing pre initialisation */
     pthread_barrier_t init_done;    /**< the barrier for syncing initialisation */
     void* conf;                     /**< the application configuration */
+    void* args;                     /**< the application arguments */
     pthread_t ths[SMX_MAX_NETS];    /**< the array holding all thread ids */
     smx_channel_t* chs[SMX_MAX_CHS];/**< the array holding all channel pointers */
     smx_net_t* nets[SMX_MAX_NETS];  /**< the array holdaing all net pointers */

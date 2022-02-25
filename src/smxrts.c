@@ -28,6 +28,10 @@ void smx_program_cleanup( smx_rts_t* rts )
     }
     pthread_mutex_destroy( &rts->net_mutex );
     bson_destroy( rts->conf );
+    if( rts->args != NULL )
+    {
+        bson_destroy( rts->args );
+    }
     pthread_barrier_destroy( &rts->init_done );
     clock_gettime( CLOCK_MONOTONIC, &rts->end_wall );
     elapsed_wall = ( rts->end_wall.tv_sec - rts->start_wall.tv_sec );
@@ -40,7 +44,8 @@ void smx_program_cleanup( smx_rts_t* rts )
 
 /*****************************************************************************/
 smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
-        const char** app_conf_maps, int app_conf_map_count )
+        const char** app_conf_maps, int app_conf_map_count,
+        const char* arg_file, const char* arg_str )
 {
     int i, rc;
     bson_t tgt, payload, mapping;
@@ -121,6 +126,14 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
     rts->end_wall.tv_sec = 0;
     rts->end_wall.tv_nsec = 0;
     rts->conf = bson_copy( &tgt );
+    rts->args = NULL;
+
+    rc = smx_program_init_args( arg_str, arg_file, rts );
+    if( rc < 0 )
+    {
+        goto error;
+    }
+
     pthread_mutexattr_init( &mutexattr_prioinherit );
     pthread_mutexattr_setprotocol( &mutexattr_prioinherit,
             PTHREAD_PRIO_INHERIT );
@@ -173,6 +186,40 @@ int smx_program_init_bson_file( const char* path, bson_t* doc )
     }
 
     bson_json_reader_destroy( reader );
+
+    return 0;
+}
+
+/*****************************************************************************/
+int smx_program_init_args( const char* arg_str, const char* arg_file,
+        smx_rts_t* rts )
+{
+    int rc;
+    bson_error_t error;
+
+    if( arg_str != NULL )
+    {
+        rts->args = bson_new_from_json( ( const uint8_t* )arg_str, -1, &error );
+        if( rts->args == NULL )
+        {
+            SMX_LOG_MAIN( main, error, "failed to parse argument '%s': %s",
+                    arg_str, error.message );
+            return -1;
+        }
+    }
+    else if( arg_file != NULL )
+    {
+        rts->args = bson_new();
+        rc = smx_program_init_bson_file( arg_file, rts->args );
+        if( rc < 0 )
+        {
+            bson_destroy( rts->args );
+            rts->args = NULL;
+            SMX_LOG_MAIN( main, error, "failed to parse argument file '%s'",
+                    arg_file );
+            return -1;
+        }
+    }
 
     return 0;
 }
