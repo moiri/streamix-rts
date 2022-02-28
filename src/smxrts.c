@@ -128,7 +128,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
     rts->conf = bson_copy( &tgt );
     rts->args = NULL;
 
-    rc = smx_program_init_args( arg_str, arg_file, rts );
+    rc = smx_program_init_args( arg_str, arg_file, name, rts );
     if( rc < 0 )
     {
         goto error;
@@ -192,10 +192,11 @@ int smx_program_init_bson_file( const char* path, bson_t* doc )
 
 /*****************************************************************************/
 int smx_program_init_args( const char* arg_str, const char* arg_file,
-        smx_rts_t* rts )
+        const char* name, smx_rts_t* rts )
 {
     int rc;
     bson_error_t error;
+    const char* key;
 
     if( arg_str != NULL )
     {
@@ -219,6 +220,19 @@ int smx_program_init_args( const char* arg_str, const char* arg_file,
                     arg_file );
             return -1;
         }
+    }
+
+    if( rts->args == NULL )
+    {
+        rts->args = bson_new();
+    }
+
+    key = "experiment_id";
+    if( !bson_has_field( rts->args, key ) )
+    {
+        BSON_APPEND_UTF8( rts->args, key, name );
+        SMX_LOG_MAIN( main, warn, "no experiment ID defined in arguments"
+                ", falling back to '%s'", name );
     }
 
     return 0;

@@ -220,7 +220,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
  *  A pointer to the RTS structure where the args will be stored.
  */
 int smx_program_init_args( const char* arg_str, const char* arg_file,
-        smx_rts_t* rts );
+        const char* name, smx_rts_t* rts );
 
 /**
  * Read a BSON file
