@@ -97,7 +97,14 @@ void smx_config_data_maps_cleanup( smx_config_data_maps_t* maps );
 bson_t* smx_config_data_maps_get_mapped_payload( smx_config_data_maps_t* maps );
 
 /**
+ * Get a map structure given a map key.
  *
+ * @param maps
+ *  A pointer to the mapping list.
+ * @param key
+ *  The map key to serach for.
+ * @return
+ *  A pointer to the map or NULL on failure.
  */
 smx_config_data_map_t* smx_config_data_maps_get_map_by_key(
         smx_config_data_maps_t* maps, const char* key );
