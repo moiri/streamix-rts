@@ -259,7 +259,14 @@ struct smx_collector_s
  */
 struct smx_config_data_map_s
 {
+    const char* key;         /**< A unique key to identify the map item */
     const char* src_path;    /**< The source value location (use dot-notation) */
+    /**
+     * The source value location iterator. This is only valid after the
+     * mapping has been applied and my serve for future operations on the
+     * source value.
+     */
+    bson_iter_t src_iter;
     const char* tgt_path;    /**< The target value location (use dot-notation) */
     bson_iter_t tgt_iter;    /**< The target value location iterator  */
     bson_t* src_payload;

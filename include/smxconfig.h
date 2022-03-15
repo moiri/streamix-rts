@@ -97,6 +97,12 @@ void smx_config_data_maps_cleanup( smx_config_data_maps_t* maps );
 bson_t* smx_config_data_maps_get_mapped_payload( smx_config_data_maps_t* maps );
 
 /**
+ *
+ */
+smx_config_data_map_t* smx_config_data_maps_get_map_by_key(
+        smx_config_data_maps_t* maps, const char* key );
+
+/**
  * Initialise an input-output key map array.
  *
  * @param i_fields

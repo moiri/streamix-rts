@@ -54,7 +54,7 @@ int smx_config_data_maps_apply( smx_config_data_maps_t* maps,
 int smx_config_data_maps_apply_base( smx_config_data_map_t* key_map,
         bson_t* src_payload )
 {
-    bson_iter_t iter;
+    bson_iter_t* iter;
 
     if( strcmp( key_map->src_path, "." ) == 0 )
     {
@@ -82,38 +82,39 @@ int smx_config_data_maps_apply_base( smx_config_data_map_t* key_map,
                 key_map->fallback.v_int32 );
     }
     if( smx_config_data_map_get_iter( src_payload, key_map->src_path,
-                &iter ) )
+                &key_map->src_iter ) )
     {
+        iter = &key_map->src_iter;
         if( BSON_ITER_HOLDS_BOOL( &key_map->tgt_iter ) )
         {
-            if( smx_config_data_map_can_write_bool( &iter ) )
+            if( smx_config_data_map_can_write_bool( iter ) )
             {
                 bson_iter_overwrite_bool( &key_map->tgt_iter,
-                        bson_iter_as_bool( &iter ) );
+                        bson_iter_as_bool( iter ) );
             }
         }
         else if( BSON_ITER_HOLDS_DOUBLE( &key_map->tgt_iter ) )
         {
-            if( smx_config_data_map_can_write_double( &iter ) )
+            if( smx_config_data_map_can_write_double( iter ) )
             {
                 bson_iter_overwrite_double( &key_map->tgt_iter,
-                        bson_iter_as_double( &iter ) );
+                        bson_iter_as_double( iter ) );
             }
         }
         else if( BSON_ITER_HOLDS_INT64( &key_map->tgt_iter ) )
         {
-            if( smx_config_data_map_can_write_int64( &iter ) )
+            if( smx_config_data_map_can_write_int64( iter ) )
             {
                 bson_iter_overwrite_int64( &key_map->tgt_iter,
-                        bson_iter_as_int64( &iter ) );
+                        bson_iter_as_int64( iter ) );
             }
         }
         else if( BSON_ITER_HOLDS_INT32( &key_map->tgt_iter ) )
         {
-            if( smx_config_data_map_can_write_int32( &iter ) )
+            if( smx_config_data_map_can_write_int32( iter ) )
             {
                 bson_iter_overwrite_int32( &key_map->tgt_iter,
-                    bson_iter_int32( &iter ) );
+                    bson_iter_int32( iter ) );
             }
         }
     }
@@ -216,6 +217,24 @@ bson_t* smx_config_data_maps_get_mapped_payload(
 }
 
 /******************************************************************************/
+smx_config_data_map_t* smx_config_data_maps_get_map_by_key(
+        smx_config_data_maps_t* maps, const char* key )
+{
+    int i;
+
+    for( i = 0; i < maps->count; i++ )
+    {
+        if( maps->items[i].key != NULL
+                && strcmp( key, maps->items[i].key ) == 0 )
+        {
+            return &maps->items[i];
+        }
+    }
+
+    return NULL;
+}
+
+/******************************************************************************/
 int smx_config_data_maps_init( bson_iter_t* i_fields, bson_t* data,
         smx_config_data_maps_t* maps )
 {
@@ -261,11 +280,11 @@ int smx_config_data_map_append_val( const char* dot_key,
         smx_config_data_maps_t* maps )
 {
     int i;
-    bson_iter_t src_child;
     const bson_oid_t* oid;
     bson_oid_t oid_init;
     char oid_str[25];
     bson_t* src_payload_item = src_payload;
+    bson_iter_t* src_child;
 
     for( i = 0; i < maps->count; i++ )
     {
@@ -286,71 +305,72 @@ int smx_config_data_map_append_val( const char* dot_key,
             }
 
             if( smx_config_data_map_get_iter( src_payload_item,
-                        maps->items[i].src_path, &src_child ) )
+                        maps->items[i].src_path, &maps->items[i].src_iter ) )
             {
+                src_child = &maps->items[i].src_iter;
                 if( maps->items[i].type == BSON_TYPE_UNDEFINED )
                 {
                     BSON_APPEND_VALUE( payload, iter_key,
-                            bson_iter_value( &src_child ) );
+                            bson_iter_value( src_child ) );
                 }
                 else if( maps->items[i].type == BSON_TYPE_UTF8 )
                 {
-                    if( BSON_ITER_HOLDS_OID( &src_child ) )
+                    if( BSON_ITER_HOLDS_OID( src_child ) )
                     {
-                        oid = bson_iter_oid( &src_child );
+                        oid = bson_iter_oid( src_child );
                         bson_oid_to_string( oid, oid_str );
                         BSON_APPEND_UTF8( payload, iter_key, oid_str );
                     }
-                    else if( BSON_ITER_HOLDS_UTF8( &src_child ) )
+                    else if( BSON_ITER_HOLDS_UTF8( src_child ) )
                     {
                         BSON_APPEND_UTF8( payload, iter_key,
-                                bson_iter_utf8( &src_child, NULL ) );
+                                bson_iter_utf8( src_child, NULL ) );
                     }
                 }
                 else if( maps->items[i].type == BSON_TYPE_OID )
                 {
-                    if( BSON_ITER_HOLDS_UTF8( &src_child ) )
+                    if( BSON_ITER_HOLDS_UTF8( src_child ) )
                     {
                         bson_oid_init_from_string( &oid_init,
-                                bson_iter_utf8( &src_child, NULL ) );
+                                bson_iter_utf8( src_child, NULL ) );
                         BSON_APPEND_OID( payload, iter_key, &oid_init );
                     }
-                    else if( BSON_ITER_HOLDS_OID( &src_child ) )
+                    else if( BSON_ITER_HOLDS_OID( src_child ) )
                     {
                         BSON_APPEND_OID( payload, iter_key,
-                                bson_iter_oid( &src_child ) );
+                                bson_iter_oid( src_child ) );
                     }
                 }
                 else if( maps->items[i].type == BSON_TYPE_INT32 )
                 {
-                    if( smx_config_data_map_can_write_int32( &src_child ) )
+                    if( smx_config_data_map_can_write_int32( src_child ) )
                     {
                         BSON_APPEND_INT32( payload, iter_key,
-                                bson_iter_int32( &src_child ) );
+                                bson_iter_int32( src_child ) );
                     }
                 }
                 else if( maps->items[i].type == BSON_TYPE_INT64 )
                 {
-                    if( smx_config_data_map_can_write_int64( &src_child ) )
+                    if( smx_config_data_map_can_write_int64( src_child ) )
                     {
                         BSON_APPEND_INT64( payload, iter_key,
-                                bson_iter_as_int64( &src_child ) );
+                                bson_iter_as_int64( src_child ) );
                     }
                 }
                 else if( maps->items[i].type == BSON_TYPE_DOUBLE )
                 {
-                    if( smx_config_data_map_can_write_double( &src_child ) )
+                    if( smx_config_data_map_can_write_double( src_child ) )
                     {
                         BSON_APPEND_DOUBLE( payload, iter_key,
-                                bson_iter_as_double( &src_child ) );
+                                bson_iter_as_double( src_child ) );
                     }
                 }
                 else if( maps->items[i].type == BSON_TYPE_BOOL )
                 {
-                    if( smx_config_data_map_can_write_bool( &src_child ) )
+                    if( smx_config_data_map_can_write_bool( src_child ) )
                     {
                         BSON_APPEND_BOOL( payload, iter_key,
-                                bson_iter_as_bool( &src_child ) );
+                                bson_iter_as_bool( src_child ) );
                     }
                 }
                 return 0;
@@ -449,6 +469,7 @@ int smx_config_data_map_init( bson_t* payload,
     int rc;
     const char* key;
     bson_iter_t i_tgt;
+    map->key = NULL;
     map->src_path = NULL;
     map->tgt_path = NULL;
     map->src_payload = NULL;
@@ -479,6 +500,11 @@ int smx_config_data_map_init( bson_t* payload,
                 && BSON_ITER_HOLDS_UTF8( i_map ) )
         {
             map->src_path = bson_iter_utf8( i_map, NULL );
+        }
+        else if( ( strcmp( key, "key" ) == 0 )
+                && BSON_ITER_HOLDS_UTF8( i_map ) )
+        {
+            map->key = bson_iter_utf8( i_map, NULL );
         }
     }
 
