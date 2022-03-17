@@ -501,6 +501,14 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
             && h->shared_state_key != NULL )
     {
         SMX_LOG_NET( h, notice, "pre init net" );
+        if( h->static_conf == NULL )
+        {
+            SMX_LOG_NET( h, error, "no static net configuration available" );
+            pthread_barrier_wait( &h->rts->pre_init_done );
+            pthread_barrier_wait( &h->rts->init_done );
+            goto smx_terminate_net;
+        }
+
         pthread_mutex_lock( &h->rts->net_mutex );
         for( i = 0; i < h->rts->shared_state_cnt; i++ )
         {
