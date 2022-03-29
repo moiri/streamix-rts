@@ -267,6 +267,7 @@ struct smx_config_data_map_s
      * source value.
      */
     bson_iter_t src_iter;
+    bool is_src_iter_set;
     const char* tgt_path;    /**< The target value location (use dot-notation) */
     bson_iter_t tgt_iter;    /**< The target value location iterator  */
     bson_t* src_payload;

@@ -17,7 +17,7 @@
 int smx_config_data_maps_apply( smx_config_data_maps_t* maps,
         bson_t* src_payload )
 {
-    int i, rc;
+    int i, rc, err = 0;
     bson_t* src_payload_item = src_payload;
 
     if( maps == NULL )
@@ -41,13 +41,13 @@ int smx_config_data_maps_apply( smx_config_data_maps_t* maps,
                         src_payload_item );
                 if( rc < 0 )
                 {
-                    return rc;
+                    err = rc;
                 }
             }
         }
     }
 
-    return 0;
+    return err;
 }
 
 /******************************************************************************/
@@ -84,6 +84,7 @@ int smx_config_data_maps_apply_base( smx_config_data_map_t* key_map,
     if( smx_config_data_map_get_iter( src_payload, key_map->src_path,
                 &key_map->src_iter ) )
     {
+        key_map->is_src_iter_set = true;
         iter = &key_map->src_iter;
         if( BSON_ITER_HOLDS_BOOL( &key_map->tgt_iter ) )
         {
@@ -307,6 +308,7 @@ int smx_config_data_map_append_val( const char* dot_key,
             if( smx_config_data_map_get_iter( src_payload_item,
                         maps->items[i].src_path, &maps->items[i].src_iter ) )
             {
+                maps->items[i].is_src_iter_set = true;
                 src_child = &maps->items[i].src_iter;
                 if( maps->items[i].type == BSON_TYPE_UNDEFINED )
                 {
@@ -469,6 +471,7 @@ int smx_config_data_map_init( bson_t* payload,
     int rc;
     const char* key;
     bson_iter_t i_tgt;
+    map->is_src_iter_set = false;
     map->key = NULL;
     map->src_path = NULL;
     map->tgt_path = NULL;
