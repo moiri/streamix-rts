@@ -2,7 +2,13 @@
 
 ### Changes
 
- - Versionize dvl packageV
+ - Versioning dvl package
+ - Make static config pre-requisite for pre-initialisation
+
+### New Features
+
+ - Allow to pass a read-only JSON structure to the RTS.
+ - Extends data mappings with a key to later identify a mapping.
 
 
 -------------------
