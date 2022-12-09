@@ -1,4 +1,12 @@
-# `v0.9.0` (latest)
+# `v0.9.1` (latest)
+
+### Bug Fixes
+
+ - Fix log dependency
+
+
+-------------------
+# `v0.9.0`
 
 ### Changes
 
