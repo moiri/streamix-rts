@@ -15,6 +15,28 @@
 #define SMXCH_H
 
 /**
+ * @def SMX_CHANNEL_SET_BACKUP()
+ *
+ * Store a backup message to a channel. This can be used to ansure that ar
+ * decoupled input port always provides a valid message.
+ *
+ * @param h
+ *  The pointer to the net handler.
+ * @param box_name
+ *  The name of the box. Note that this is not a string but the literal name of
+ *  the box (without quotation marks).
+ * @param ch_name
+ *  The name of the input port. Note that this is not a string but the literal
+ *  name of the port (without quotation marks).
+ * @param msg
+ *  A pointer to a message to back up.
+ * @return
+ *  0 on success, -1 on failure
+ */
+#define SMX_CHANNEL_SET_BACKUP( h, box_name, ch_name, msg )\
+    smx_channel_set_backup( SMX_SIG_PORT( h, box_name, ch_name, in ), msg )
+
+/**
  * @def SMX_CHANNEL_READ()
  *
  * Read from a streamix channel by accessing a net input port.
@@ -310,6 +332,17 @@ int smx_channel_ready_to_read( smx_channel_t* ch );
  * @return      number of available space in a channel or -1 on failure
  */
 int smx_channel_ready_to_write( smx_channel_t* ch );
+
+/**
+ * Set a backup message to a decouple input port. This allows to read from a
+ * decoupled port without ever having received a message.
+ *
+ * @param ch
+ *  A pointer to the channel.
+ * @return
+ *  0 on success, -1 on failure.
+ */
+int smx_channel_set_backup( smx_channel_t* ch, smx_msg_t* msg );
 
 /**
  * Set a channel filter to only allow messages of a certain content to be

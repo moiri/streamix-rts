@@ -311,6 +311,27 @@ int smx_channel_ready_to_write( smx_channel_t* ch )
 }
 
 /*****************************************************************************/
+int smx_channel_set_backup( smx_channel_t* ch, smx_msg_t* msg )
+{
+    if( ch == NULL || ch->fifo == NULL || msg == NULL )
+    {
+        return -1;
+    }
+
+    if( ch->fifo->backup != NULL )
+    {
+        SMX_LOG_CH( ch, warn,
+                "cannot add backup message: message already exists" );
+        return -1;
+    }
+    pthread_mutex_lock( &ch->ch_mutex );
+    ch->fifo->backup = msg;
+    pthread_mutex_unlock( &ch->ch_mutex );
+    SMX_LOG_CH( ch, notice, "backup message added" );
+    return 0;
+}
+
+/*****************************************************************************/
 bool smx_channel_set_content_filter( smx_channel_t* ch,
         bool filter( smx_net_t*, smx_msg_t* ) )
 {

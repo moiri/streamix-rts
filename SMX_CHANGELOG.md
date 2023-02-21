@@ -1,4 +1,12 @@
-# `v0.9.1` (latest)
+# `v0.9.2` (latest)
+
+### New Features
+
+ - Allow to set the backup buffer of a channel through an input port.
+
+
+-------------------
+# `v0.9.1`
 
 ### Bug Fixes
 
