@@ -354,6 +354,7 @@ struct smx_net_s
 {
     bool                has_profiler; /**< is profiler enabled? */
     bool                has_type_filter; /**< is type filter enabled? */
+    bool                is_disabled; /**< is net disabled */
     /** the thread priority of the net. 0 means ET, >0 means TT */
     int                 priority;
     unsigned int        id;           /**< a unique net id */

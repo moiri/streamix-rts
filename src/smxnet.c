@@ -127,6 +127,8 @@ smx_net_t* smx_net_create( unsigned int id, const char* name,
             "profiler" );
     net->has_type_filter = smx_net_get_boolean_prop( rts->conf, name, impl, id,
             "type_filter" );
+    net->is_disabled = smx_net_get_boolean_prop( rts->conf, name, impl, id,
+            "is_disabled" );
     net->conf_port_name = smx_net_get_string_prop( rts->conf, name, impl, id,
             "dyn_conf_port" );
     net->conf_port_timeout = smx_net_get_int_prop( rts->conf, name, impl, id,
@@ -488,6 +490,11 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
     {
         SMX_LOG_MAIN( main, fatal, "unable to start net: not initialised" );
         return NULL;
+    }
+
+    if( h->is_disabled )
+    {
+        goto smx_terminate_net;
     }
 
     if( h->has_profiler )
