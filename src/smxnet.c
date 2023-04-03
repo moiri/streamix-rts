@@ -494,6 +494,9 @@ void* smx_net_start_routine_with_shared_state( smx_net_t* h,
 
     if( h->is_disabled )
     {
+        SMX_LOG_NET( h, notice, "net was disabled through configuration" );
+        pthread_barrier_wait( &h->rts->pre_init_done );
+        pthread_barrier_wait( &h->rts->init_done );
         goto smx_terminate_net;
     }
 
