@@ -1,4 +1,12 @@
-# `v0.9.2` (latest)
+# `v0.9.3` (latest)
+
+### New Features
+
+ - Allow to disable a net through the configuration option `is_disabled`.
+
+
+-------------------
+# `v0.9.2`
 
 ### New Features
 
