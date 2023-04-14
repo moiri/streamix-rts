@@ -54,16 +54,15 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
     smx_config_data_maps_t maps;
     const char* name;
 
-    bson_init( &tgt );
     rc = smx_log_init( log_conf );
-
     if( rc < 0 ) {
         fprintf( stderr, "error: failed to initialise zlog, aborting\n" );
-        goto error;
+        exit( 0 );
     }
 
     SMX_LOG_MAIN( main, notice, "using log configuration file '%s'", log_conf );
 
+    bson_init( &tgt );
     rc = smx_program_init_conf( app_conf, &tgt, &name );
     if( rc < 0 )
     {
@@ -79,6 +78,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
                 &payload );
         if( rc < 0 )
         {
+            bson_destroy( &mapping );
             goto error;
         }
         if( bson_iter_recurse( &i_maps, &i_map ) )
@@ -88,25 +88,25 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
             {
                 SMX_LOG_MAIN( main, fatal, "failed to init config map: %s",
                         smx_config_data_map_strerror( rc ) );
-                goto error;
+                goto error_map;
             }
             rc = smx_config_data_maps_apply( &maps, &payload );
             if( rc < 0 )
             {
                 SMX_LOG_MAIN( main, fatal, "failed to apply config map: %s",
                         smx_config_data_map_strerror( rc ) );
-                goto error;
+                bson_destroy( &maps.mapped_payload );
+                goto error_map;
             }
             bson_destroy( &tgt );
             bson_copy_to( &maps.mapped_payload, &tgt );
+            bson_destroy( &maps.mapped_payload );
         }
         else
         {
             SMX_LOG_MAIN( main, fatal, "failed to iterate maps array" );
-            bson_destroy( &payload );
-            goto error;
+            goto error_map;
         }
-        bson_destroy( &maps.mapped_payload );
         bson_destroy( &mapping );
         bson_destroy( &payload );
     }
@@ -131,6 +131,8 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
     rc = smx_program_init_args( arg_str, arg_file, name, rts );
     if( rc < 0 )
     {
+        bson_destroy( rts->conf );
+        free( rts );
         goto error;
     }
 
@@ -154,10 +156,12 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
 
     return rts;
 
-error:
-    bson_destroy( &maps.mapped_payload );
+error_map:
+    bson_destroy( &payload );
     bson_destroy( &mapping );
+error:
     bson_destroy( &tgt );
+    smx_log_cleanup();
     exit( 0 );
 }
 
