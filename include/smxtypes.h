@@ -259,8 +259,15 @@ struct smx_collector_s
  */
 struct smx_config_data_map_s
 {
+    void* h;
     const char* key;         /**< A unique key to identify the map item */
     const char* src_path;    /**< The source value location (use dot-notation) */
+    /**
+     * An optional prefix to be prpended to the source path. This is useful if
+     * several batches of maps are initialised where source paths might
+     * coincide.
+     */
+    const char* src_prefix;
     /**
      * The source value location iterator. This is only valid after the
      * mapping has been applied and my serve for future operations on the
@@ -285,6 +292,7 @@ struct smx_config_data_map_s
  */
 struct smx_config_data_maps_s
 {
+    void* h;
     smx_config_data_map_t items[SMX_CONFIG_MAX_MAP_ITEMS];
     int count;
     bool is_extended;

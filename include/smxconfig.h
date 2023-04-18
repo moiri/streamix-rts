@@ -122,8 +122,16 @@ smx_config_data_map_t* smx_config_data_maps_get_map_by_key(
 int smx_config_data_maps_init( bson_iter_t* i_fields, bson_t* data,
         smx_config_data_maps_t* maps );
 
-int smx_config_data_maps_init_raw( bson_t* data,
-        smx_config_data_maps_t* maps );
+/**
+ * Set a net handler to enable logging.
+ *
+ * @param maps
+ *  A pointer to the map list.
+ * @param h
+ *  A pointer to the net handler.
+ */
+void smx_config_data_maps_init_net_handler( smx_config_data_maps_t* maps,
+        void* h );
 
 /**
  * Append a mapped value if defined in the mapping list.
@@ -224,6 +232,17 @@ bool smx_config_data_map_get_iter( bson_t* data, const char* map,
  */
 int smx_config_data_map_init( bson_t* payload, bson_iter_t* i_map,
         bool* is_extended, smx_config_data_map_t* map );
+
+/**
+ * Set a source path prefix.
+ *
+ * @param map
+ *  A pointer to the map item where the source prefix will be used.
+ * @param prefix
+ *  The prefix to be set.
+ */
+void smx_config_data_map_init_src_prefix( smx_config_data_map_t* map,
+        const char* prefix );
 
 /**
  * Initialise the key map target item if it is of type DOCUMENT.
