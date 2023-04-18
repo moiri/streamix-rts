@@ -1,4 +1,24 @@
-# `v0.9.3` (latest)
+# `v0.10.0` (latest)
+
+### New Features
+
+ - Add logging to mapping functions.
+ - Allow to set a source map prefix to distinguish between different source
+   payloads.
+ - Allow to disable a net through the configuration option `is_disabled`.
+
+### Changes
+
+ - A new major version is required due to potential alignment problems in
+   structures.
+
+### Bug Fixes
+
+ - Fix memory leaks when RTS initialisation fails.
+
+
+-------------------
+# `v0.9.3` (deprecated)
 
 ### New Features
 

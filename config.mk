@@ -7,8 +7,8 @@
 
 # The version number of the box library ($(VMAJ).$(VMIN).$(VREV))
 VMAJ = 0
-VMIN = 9
-VREV = 3
+VMIN = 10
+VREV = 0
 VDEB = 1
 
 # the RTS library
