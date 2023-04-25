@@ -40,7 +40,7 @@
  *
  * This macro performs a NOP
  */
-#define SMX_SET_READ_TIMEOUT( h, box_name, ch_name )\
+#define SMX_SET_READ_TIMEOUT( h, box_name, ch_name, sec, nsec )\
     asm( "nop" )
 
 /**
@@ -48,7 +48,7 @@
  *
  * This macro performs a NOP
  */
-#define SMX_SET_WRITE_TIMEOUT( h, box_name, ch_name )\
+#define SMX_SET_WRITE_TIMEOUT( h, box_name, ch_name, sec, nsec )\
     asm( "nop" )
 
 #endif /* SMX_TESTING */
