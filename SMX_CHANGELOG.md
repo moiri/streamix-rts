@@ -1,4 +1,12 @@
-# `v0.10.0` (latest)
+# `v0.10.1` (latest)
+
+### Bug Fixes
+
+ - Fix macro signature for setting a channel read timeout in test modus.
+
+
+-------------------
+# `v0.10.0`
 
 ### New Features
 
