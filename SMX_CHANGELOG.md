@@ -1,3 +1,11 @@
+# `v0.10.2` (latest)
+
+### Bug Fixes
+
+ - Fix segfault on app name if a map is passed but no `experiment_id` is set.
+
+
+-------------------
 # `v0.10.1` (latest)
 
 ### Bug Fixes

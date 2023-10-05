@@ -246,7 +246,7 @@ int smx_program_init_bson_file( const char* path, bson_t* doc );
  * @return
  *  0 on success, -1 on failure
  */
-int smx_program_init_conf( const char* conf, bson_t* doc, const char** name );
+int smx_program_init_conf( const char* conf, bson_t* doc, char** name );
 
 /**
  * Read and parse an app configuration map file.

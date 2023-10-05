@@ -52,7 +52,7 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
     bson_iter_t i_map, i_maps;
     pthread_mutexattr_t mutexattr_prioinherit;
     smx_config_data_maps_t maps;
-    const char* name;
+    char* name = NULL;
 
     rc = smx_log_init( log_conf );
     if( rc < 0 ) {
@@ -160,6 +160,10 @@ error_map:
     bson_destroy( &payload );
     bson_destroy( &mapping );
 error:
+    if( name != NULL )
+    {
+        free( name );
+    }
     bson_destroy( &tgt );
     smx_log_cleanup();
     exit( 0 );
@@ -243,7 +247,7 @@ int smx_program_init_args( const char* arg_str, const char* arg_file,
 }
 
 /*****************************************************************************/
-int smx_program_init_conf( const char* conf, bson_t* doc, const char** name )
+int smx_program_init_conf( const char* conf, bson_t* doc, char** name )
 {
     int rc;
     bson_iter_t iter;
@@ -264,7 +268,7 @@ int smx_program_init_conf( const char* conf, bson_t* doc, const char** name )
 
     if( bson_iter_init_find( &iter, doc, "_name" ) )
     {
-        *name = bson_iter_utf8( &iter, NULL );
+        *name = bson_iter_dup_utf8( &iter, NULL );
         SMX_LOG_MAIN( main, notice, "successfully parsed config file '%s'",
                 conf );
     }
