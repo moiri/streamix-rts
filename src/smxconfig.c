@@ -686,6 +686,7 @@ int smx_config_data_map_init_tgt_utf8( bson_t* data,
         smx_config_data_map_t* map, const char* tgt_path, bool* is_extended )
 {
     map->tgt_path = tgt_path;
+    bson_type_t type;
     if( !smx_config_data_map_get_iter( data, map->tgt_path,
                 &map->tgt_iter ) )
     {
@@ -694,43 +695,48 @@ int smx_config_data_map_init_tgt_utf8( bson_t* data,
     if( BSON_ITER_HOLDS_BOOL( &map->tgt_iter ) )
     {
         map->fallback.v_bool = bson_iter_bool( &map->tgt_iter );
-        map->type = BSON_TYPE_BOOL;
+        type = BSON_TYPE_BOOL;
     }
     else if( BSON_ITER_HOLDS_INT32( &map->tgt_iter ) )
     {
         map->fallback.v_int32 = bson_iter_int32( &map->tgt_iter );
-        map->type = BSON_TYPE_INT32;
+        type = BSON_TYPE_INT32;
     }
     else if( BSON_ITER_HOLDS_INT64( &map->tgt_iter ) )
     {
         map->fallback.v_int64 = bson_iter_int64( &map->tgt_iter );
-        map->type = BSON_TYPE_INT64;
+        type = BSON_TYPE_INT64;
     }
     else if( BSON_ITER_HOLDS_DOUBLE( &map->tgt_iter ) )
     {
         map->fallback.v_double = bson_iter_double(
                 &map->tgt_iter );
-        map->type = BSON_TYPE_DOUBLE;
+        type = BSON_TYPE_DOUBLE;
     }
     else
     {
         *is_extended = true;
         if( BSON_ITER_HOLDS_ARRAY( &map->tgt_iter ) )
         {
-            map->type = BSON_TYPE_ARRAY;
+            type = BSON_TYPE_ARRAY;
         }
         else if( BSON_ITER_HOLDS_DOCUMENT( &map->tgt_iter ) )
         {
-            map->type = BSON_TYPE_DOCUMENT;
+            type = BSON_TYPE_DOCUMENT;
         }
         else if( BSON_ITER_HOLDS_UTF8( &map->tgt_iter ) )
         {
-            map->type = BSON_TYPE_UTF8;
+            type = BSON_TYPE_UTF8;
         }
         else if( BSON_ITER_HOLDS_OID( &map->tgt_iter ) )
         {
-            map->type = BSON_TYPE_OID;
+            type = BSON_TYPE_OID;
         }
+    }
+
+    if( map->type == BSON_TYPE_UNDEFINED )
+    {
+        map->type = type;
     }
 
     return 0;
