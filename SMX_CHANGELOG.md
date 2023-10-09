@@ -1,4 +1,12 @@
-# `v0.10.2` (latest)
+# `v0.10.3` (latest)
+
+### Bug Fixes
+
+ - Make maps independent of target key order (type and path).
+
+
+-------------------
+# `v0.10.2`
 
 ### Bug Fixes
 
