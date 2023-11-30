@@ -1,4 +1,13 @@
-# `v0.10.3` (latest)
+# `v0.10.4` (latest)
+
+### Bug Fixes
+
+ - Fix memory leak.
+ - Fix configuration map memory  initialisation.
+
+
+-------------------
+# `v0.10.3`
 
 ### Bug Fixes
 
