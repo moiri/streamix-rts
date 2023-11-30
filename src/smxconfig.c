@@ -264,13 +264,26 @@ smx_config_data_map_t* smx_config_data_maps_get_map_by_key(
 int smx_config_data_maps_init( bson_iter_t* i_fields, bson_t* data,
         smx_config_data_maps_t* maps )
 {
-    int rc;
+    int rc, i;
     maps->h = NULL;
     maps->count = 0;
     maps->is_extended = false;
     maps->tgt_payload = data;
     bson_copy_to( data, &maps->mapped_payload );
     bson_iter_t i_field;
+
+    for( i = 0; i < SMX_CONFIG_MAX_MAP_ITEMS; i++ )
+    {
+        maps->items[i].is_src_iter_set = false;
+        maps->items[i].key = NULL;
+        maps->items[i].src_path = NULL;
+        maps->items[i].src_prefix = NULL;
+        maps->items[i].tgt_path = NULL;
+        maps->items[i].src_payload = NULL;
+        maps->items[i].type = BSON_TYPE_UNDEFINED;
+        maps->items[i].h = NULL;
+    }
+
     while( bson_iter_next( i_fields ) )
     {
         if( maps->count >= SMX_CONFIG_MAX_MAP_ITEMS )
