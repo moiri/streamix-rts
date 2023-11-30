@@ -153,6 +153,10 @@ smx_rts_t* smx_program_init( const char* app_conf, const char* log_conf,
     SMX_LOG_MAIN( main, notice, "start thread main" );
 
     bson_destroy( &tgt );
+    if( name != NULL )
+    {
+        free( name );
+    }
 
     return rts;
 
