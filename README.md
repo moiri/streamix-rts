@@ -1,3 +1,6 @@
+> :warning: WARNING  
+> This repo was migrated to https://github.com/humdek-unibe-ch/smx-core-rts
+
 # Streamix RTS `smxrts`
 
 The runtime system (RTS) for the coordination language Streamix.
